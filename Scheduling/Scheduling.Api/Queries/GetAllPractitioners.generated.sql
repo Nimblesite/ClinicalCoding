@@ -1,0 +1,1 @@
+SELECT fhir_Practitioner.Id, fhir_Practitioner.Identifier, fhir_Practitioner.Active, fhir_Practitioner.NameFamily, fhir_Practitioner.NameGiven, fhir_Practitioner.Qualification, fhir_Practitioner.Specialty, fhir_Practitioner.TelecomEmail, fhir_Practitioner.TelecomPhone FROM fhir_Practitioner ORDER BY fhir_Practitioner.NameFamily , fhir_Practitioner.NameGiven 
