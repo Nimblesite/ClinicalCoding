@@ -21,7 +21,6 @@
     <PackageReference Include="Npgsql" Version="9.0.2" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.3.0" />
     <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.5" />
-    <PackageReference Include="MelbourneDev.Gatekeeper" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +28,7 @@
     <ProjectReference Include="../../Clinical/Clinical.Sync/Clinical.Sync.csproj" />
     <ProjectReference Include="../../Scheduling/Scheduling.Api/Scheduling.Api.csproj" />
     <ProjectReference Include="../../Scheduling/Scheduling.Sync/Scheduling.Sync.csproj" />
+    <ProjectReference Include="../../Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj" />
   </ItemGroup>
 
   <!-- Copy Dashboard.Web wwwroot for Playwright tests -->

@@ -12,12 +12,12 @@
 
   <ItemGroup>
     <PackageReference Include="Npgsql" Version="9.0.2" />
-    <PackageReference Include="MelbourneDev.DataProvider" Version="0.1.0" />
-    <PackageReference Include="MelbourneDev.Lql.Postgres" Version="0.1.0" />
-    <PackageReference Include="MelbourneDev.Sync.Postgres" Version="0.1.0" />
-    <PackageReference Include="MelbourneDev.Selecta" Version="0.1.0" />
-    <PackageReference Include="MelbourneDev.Migration" Version="0.1.0" />
-    <PackageReference Include="MelbourneDev.Migration.Postgres" Version="0.1.0" />
+    <PackageReference Include="Nimblesite.DataProvider.Core" Version="0.2.0-beta" />
+    <PackageReference Include="Nimblesite.Lql.Postgres" Version="0.2.0-beta" />
+    <PackageReference Include="Nimblesite.Sync.Postgres" Version="0.2.0-beta" />
+    <PackageReference Include="Selecta" Version="0.4.0" />
+    <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="0.2.0-beta" />
+    <PackageReference Include="Nimblesite.DataProvider.Migration.Postgres" Version="0.2.0-beta" />
   </ItemGroup>
 
   <ItemGroup>
