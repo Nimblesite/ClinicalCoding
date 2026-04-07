@@ -17,20 +17,35 @@ global using GetPermissionByCodeError = Outcome.Result<
 global using GetPermissionByCodeOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPermissionByCode>,
     Nimblesite.Sql.Model.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetPermissionByCode>, Nimblesite.Sql.Model.SqlError>;
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetPermissionByCode>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetRolePermissionsError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetRolePermissions>,
     Nimblesite.Sql.Model.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.GetRolePermissions>, Nimblesite.Sql.Model.SqlError>;
+>.Error<
+    System.Collections.Immutable.ImmutableList<Generated.GetRolePermissions>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetRolePermissionsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetRolePermissions>,
     Nimblesite.Sql.Model.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetRolePermissions>, Nimblesite.Sql.Model.SqlError>;
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetRolePermissions>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetSessionRevokedError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>,
     Nimblesite.Sql.Model.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>, Nimblesite.Sql.Model.SqlError>;
+>.Error<
+    System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetSessionRevokedOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>,
     Nimblesite.Sql.Model.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>, Nimblesite.Sql.Model.SqlError>;
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>,
+    Nimblesite.Sql.Model.SqlError
+>;

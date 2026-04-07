@@ -1,13 +1,16 @@
 global using System;
 global using Generated;
 global using Microsoft.Extensions.Logging;
-global using Npgsql;
-global using Outcome;
 global using Nimblesite.Sql.Model;
 global using Nimblesite.Sync.Core;
 global using Nimblesite.Sync.Postgres;
+global using Npgsql;
+global using Outcome;
 // Sync result type aliases
-global using BoolSyncError = Outcome.Result<bool, Nimblesite.Sync.Core.SyncError>.Error<bool, Nimblesite.Sync.Core.SyncError>;
+global using BoolSyncError = Outcome.Result<bool, Nimblesite.Sync.Core.SyncError>.Error<
+    bool,
+    Nimblesite.Sync.Core.SyncError
+>;
 global using GetAllPractitionersError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetAllPractitioners>,
     Nimblesite.Sql.Model.SqlError
@@ -19,16 +22,25 @@ global using GetAllPractitionersError = Outcome.Result<
 global using GetAllPractitionersOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetAllPractitioners>,
     Nimblesite.Sql.Model.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetAllPractitioners>, Nimblesite.Sql.Model.SqlError>;
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetAllPractitioners>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetAppointmentByIdError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetAppointmentById>,
     Nimblesite.Sql.Model.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.GetAppointmentById>, Nimblesite.Sql.Model.SqlError>;
+>.Error<
+    System.Collections.Immutable.ImmutableList<Generated.GetAppointmentById>,
+    Nimblesite.Sql.Model.SqlError
+>;
 // GetAppointmentById query result type aliases
 global using GetAppointmentByIdOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetAppointmentById>,
     Nimblesite.Sql.Model.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetAppointmentById>, Nimblesite.Sql.Model.SqlError>;
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetAppointmentById>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetAppointmentsByPatientError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetAppointmentsByPatient>,
     Nimblesite.Sql.Model.SqlError
@@ -70,7 +82,10 @@ global using GetPractitionerByIdError = Outcome.Result<
 global using GetPractitionerByIdOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPractitionerById>,
     Nimblesite.Sql.Model.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetPractitionerById>, Nimblesite.Sql.Model.SqlError>;
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetPractitionerById>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetUpcomingAppointmentsError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUpcomingAppointments>,
     Nimblesite.Sql.Model.SqlError
@@ -86,9 +101,15 @@ global using GetUpcomingAppointmentsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUpcomingAppointments>,
     Nimblesite.Sql.Model.SqlError
 >;
-global using InsertError = Outcome.Result<int, Nimblesite.Sql.Model.SqlError>.Error<int, Nimblesite.Sql.Model.SqlError>;
+global using InsertError = Outcome.Result<int, Nimblesite.Sql.Model.SqlError>.Error<
+    int,
+    Nimblesite.Sql.Model.SqlError
+>;
 // Insert result type aliases
-global using InsertOk = Outcome.Result<int, Nimblesite.Sql.Model.SqlError>.Ok<int, Nimblesite.Sql.Model.SqlError>;
+global using InsertOk = Outcome.Result<int, Nimblesite.Sql.Model.SqlError>.Ok<
+    int,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using SearchPractitionersError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.SearchPractitionersBySpecialty>,
     Nimblesite.Sql.Model.SqlError
@@ -104,13 +125,25 @@ global using SearchPractitionersOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.SearchPractitionersBySpecialty>,
     Nimblesite.Sql.Model.SqlError
 >;
-global using StringSyncError = Outcome.Result<string, Nimblesite.Sync.Core.SyncError>.Error<string, Nimblesite.Sync.Core.SyncError>;
-global using StringSyncOk = Outcome.Result<string, Nimblesite.Sync.Core.SyncError>.Ok<string, Nimblesite.Sync.Core.SyncError>;
+global using StringSyncError = Outcome.Result<string, Nimblesite.Sync.Core.SyncError>.Error<
+    string,
+    Nimblesite.Sync.Core.SyncError
+>;
+global using StringSyncOk = Outcome.Result<string, Nimblesite.Sync.Core.SyncError>.Ok<
+    string,
+    Nimblesite.Sync.Core.SyncError
+>;
 global using SyncLogListError = Outcome.Result<
     System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
     Nimblesite.Sync.Core.SyncError
->.Error<System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>, Nimblesite.Sync.Core.SyncError>;
+>.Error<
+    System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
+    Nimblesite.Sync.Core.SyncError
+>;
 global using SyncLogListOk = Outcome.Result<
     System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
     Nimblesite.Sync.Core.SyncError
->.Ok<System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>, Nimblesite.Sync.Core.SyncError>;
+>.Ok<
+    System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
+    Nimblesite.Sync.Core.SyncError
+>;

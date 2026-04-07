@@ -1,4 +1,4 @@
-# agent-pmo:d58c330
+# agent-pmo:29b9dcf
 # =============================================================================
 # Standard Makefile — HealthcareSamples
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
@@ -49,12 +49,12 @@ lint: fmt-check
 ## fmt: Format all code in-place
 fmt:
 	@echo "==> Formatting..."
-	dotnet csharpier .
+	dotnet csharpier format .
 
 ## fmt-check: Check formatting without modifying
 fmt-check:
 	@echo "==> Checking format..."
-	dotnet csharpier . --check
+	dotnet csharpier check .
 
 ## clean: Remove all build artifacts
 clean:

@@ -1,45 +1,71 @@
 ---
 name: upgrade-packages
-description: Upgrade all dependencies/packages to their latest versions for C#/.NET. Use when the user says "upgrade packages", "update dependencies", "bump versions", "update packages", or "upgrade deps".
+description: Upgrade all dependencies/packages to their latest versions for C#/.NET and Python. Use when the user says "upgrade packages", "update dependencies", "bump versions", "update packages", or "upgrade deps".
 argument-hint: "[--check-only] [--major] [package-name]"
 ---
-<!-- agent-pmo:d58c330 -->
+<!-- agent-pmo:29b9dcf -->
 
 # Upgrade Packages
 
-Upgrade all project dependencies to their latest compatible (or latest major, if `--major`) versions.
+Upgrade all project dependencies to their latest compatible (or latest major, if `--major`) versions for HealthcareSamples (C#/.NET primary, Python embedding service + scripts).
 
 ## Arguments
 
-- `--check-only` -- List outdated packages without upgrading. Stop after Step 2.
-- `--major` -- Include major version bumps (breaking changes). Without this flag, stay within semver-compatible ranges.
+- `--check-only` — List outdated packages without upgrading. Stop after Step 2.
+- `--major` — Include major version bumps (breaking changes). Without this flag, stay within semver-compatible ranges.
 - Any other argument is treated as a specific package name to upgrade (instead of all packages).
 
-## Step 1 -- Detect language and package manager
+## Step 1 — Detect language and package manager
 
-This is a C#/.NET repo. Manifest files:
-- `HealthcareSamples.sln`
-- `Directory.Build.props`
-- Individual `.csproj` files across Clinical, Scheduling, ICD10, Dashboard, and Shared projects
+Inspect the repo for these manifest files:
 
-## Step 2 -- List outdated packages
+| Manifest file | Language | Package manager |
+|---|---|---|
+| `*.csproj` / `*.sln` | C# / .NET | NuGet (dotnet) |
+| `Directory.Build.props` | C# / .NET | NuGet (dotnet) — central version pinning |
+| `requirements.txt` | Python (ICD10/embedding-service, ICD10/scripts/CreateDb) | pip |
 
+This repo uses both. Process .NET first, then Python.
+
+## Step 2 — List outdated packages
+
+Run the appropriate command BEFORE upgrading anything. Show the user what will change.
+
+### C# / .NET (NuGet)
 ```bash
-dotnet list package --outdated
+dotnet list HealthcareSamples.sln package --outdated
 ```
-
-For transitive dependencies too: `dotnet list package --outdated --include-transitive`
+For transitive dependencies too: `dotnet list HealthcareSamples.sln package --outdated --include-transitive`
 
 **Read the docs:** https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-list-package
 
+### Python (pip)
+The Python pieces use plain `requirements.txt` files. Install each in a venv and run `pip list --outdated`:
+```bash
+# embedding service
+python -m venv /tmp/embedding-venv
+/tmp/embedding-venv/bin/pip install -r ICD10/embedding-service/requirements.txt
+/tmp/embedding-venv/bin/pip list --outdated
+
+# DB scripts
+python -m venv /tmp/scripts-venv
+/tmp/scripts-venv/bin/pip install -r ICD10/scripts/CreateDb/requirements.txt
+/tmp/scripts-venv/bin/pip list --outdated
+```
+
+**Read the docs:** https://pip.pypa.io/en/stable/cli/pip_install/#cmdoption-U
+
 If `--check-only` was passed, **stop here** and report the outdated list.
 
-## Step 3 -- Read the official upgrade docs
+## Step 3 — Read the official upgrade docs
 
 **Before running any upgrade command, you MUST fetch and read the official documentation URL listed above for the detected package manager.** Use WebFetch to retrieve the page. This ensures you use the correct flags and understand the behavior. Do not guess at flags or options from memory.
 
-## Step 4 -- Upgrade packages
+## Step 4 — Upgrade packages
 
+Run the upgrade. If a specific package name was given as an argument, upgrade only that package.
+
+### C# / .NET (NuGet)
 There is NO single `dotnet upgrade-all` command. You must upgrade each package individually:
 ```bash
 # For each outdated package from Step 2:
@@ -58,7 +84,17 @@ dotnet outdated --upgrade
 ```
 **Read the docs:** https://github.com/dotnet-outdated/dotnet-outdated
 
-## Step 5 -- Verify the upgrade
+### Python (pip)
+For `requirements.txt`:
+```bash
+/tmp/embedding-venv/bin/pip install --upgrade -r ICD10/embedding-service/requirements.txt
+/tmp/embedding-venv/bin/pip freeze > ICD10/embedding-service/requirements.txt
+
+/tmp/scripts-venv/bin/pip install --upgrade -r ICD10/scripts/CreateDb/requirements.txt
+/tmp/scripts-venv/bin/pip freeze > ICD10/scripts/CreateDb/requirements.txt
+```
+
+## Step 5 — Verify the upgrade
 
 After upgrading, run the project's build and test suite to confirm nothing broke:
 
@@ -68,17 +104,17 @@ make ci
 
 If tests fail:
 1. Read the failure output carefully
-2. Check the changelog / migration guide for the upgraded packages
+2. Check the changelog / migration guide for the upgraded packages (fetch the release notes URL if available)
 3. Fix breaking changes in the code
 4. Re-run tests
-5. If stuck after 3 attempts on the same failure, report it to the user
+5. If stuck after 3 attempts on the same failure, report it to the user with the error details and the package that caused it
 
-## Step 6 -- Report
+## Step 6 — Report
 
 Provide a summary:
 
 - Packages upgraded (old version -> new version)
-- Packages skipped (and why)
+- Packages skipped (and why, e.g., major version bump without `--major` flag)
 - Build/test result after upgrade
 - Any breaking changes that were fixed
 - Any packages that could not be upgraded (with error details)
@@ -90,8 +126,8 @@ Provide a summary:
 - **Always run tests after upgrading** to catch breakage immediately
 - **Never remove packages** unless they were explicitly deprecated and replaced
 - **Never downgrade packages** unless rolling back a broken upgrade
-- **Never modify lockfiles manually** -- let the package manager regenerate them
-- **Commit nothing** -- leave changes in the working tree for the user to review
+- **Never modify lockfiles manually** — let the package manager regenerate them
+- **Commit nothing** — leave changes in the working tree for the user to review
 
 ## Success criteria
 
