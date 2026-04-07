@@ -29,6 +29,7 @@
     <ProjectReference Include="../../Scheduling/Scheduling.Api/Scheduling.Api.csproj" />
     <ProjectReference Include="../../Scheduling/Scheduling.Sync/Scheduling.Sync.csproj" />
     <ProjectReference Include="../../Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj" />
+    <ProjectReference Include="../../ICD10/ICD10.TestSupport/ICD10.TestSupport.csproj" />
   </ItemGroup>
 
   <!-- Copy Dashboard.Web wwwroot for Playwright tests -->

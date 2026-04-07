@@ -87,7 +87,7 @@ coverage-check:
 	@echo "==> Checking coverage thresholds..."
 	@COBERTURA=$$(find TestResults -name 'coverage.cobertura.xml' | head -1); \
 	if [ -z "$$COBERTURA" ]; then echo "FAIL: No coverage.cobertura.xml found"; exit 1; fi; \
-	LINE_RATE=$$(grep -oP 'line-rate="\K[^"]+' "$$COBERTURA" | head -1); \
+	LINE_RATE=$$(awk 'match($$0, /line-rate="[0-9.]+"/) { s=substr($$0, RSTART+11, RLENGTH-12); print s; exit }' "$$COBERTURA"); \
 	PCT=$$(awk "BEGIN{printf \"%.1f\", $${LINE_RATE:-0}*100}"); \
 	PCT_INT=$$(awk "BEGIN{printf \"%d\", $${LINE_RATE:-0}*100}"); \
 	echo "Line coverage: $${PCT}% (threshold: $(COVERAGE_THRESHOLD)%)"; \

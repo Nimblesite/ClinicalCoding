@@ -15,7 +15,23 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: changeme
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TEST_POSTGRES_CONNECTION: Host=localhost;Database=postgres;Username=postgres;Password=changeme
+      ICD10_TEST_CONNECTION_STRING: Host=localhost;Database=postgres;Username=postgres;Password=changeme
     steps:
       - uses: actions/checkout@v4
 
@@ -23,8 +39,31 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Start embedding service
+        run: |
+          cd ICD10/embedding-service
+          docker compose up -d --build
+          # Wait until /health responds 200 (model load can take ~60s)
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              echo "Embedding service ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Embedding service failed to become healthy"
+          docker compose logs
+          exit 1
+
       - run: dotnet restore
       - run: dotnet tool restore
+
+      - name: Install Playwright browsers
+        run: |
+          dotnet build Dashboard/Dashboard.Integration.Tests/Dashboard.Integration.Tests.csproj --configuration Release
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          playwright install --with-deps chromium
 
       - name: Lint
         run: make lint

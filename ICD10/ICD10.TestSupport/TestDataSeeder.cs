@@ -1,14 +1,20 @@
+using System.Net.Http.Json;
+using System.Text.Json;
 using Npgsql;
 
-namespace ICD10.Api.Tests;
+namespace ICD10.TestSupport;
 
 /// <summary>
 /// Seeds ICD-10 reference data into a PostgreSQL test database.
 /// All column names are lowercase to match PostgresDdlGenerator output.
 /// </summary>
-internal static class TestDataSeeder
+public static class TestDataSeeder
 {
-    internal static void Seed(NpgsqlConnection conn)
+    /// <summary>
+    /// Seeds chapters, blocks, categories, codes, ACHI blocks and ACHI codes
+    /// required by both API and Dashboard E2E tests.
+    /// </summary>
+    public static void Seed(NpgsqlConnection conn)
     {
         SeedChapters(conn);
         SeedBlocks(conn);
@@ -22,7 +28,7 @@ internal static class TestDataSeeder
     /// Seeds embeddings by calling the embedding service at localhost:8000.
     /// If the service is unavailable, silently returns (search tests will fail via skip check).
     /// </summary>
-    internal static void SeedEmbeddings(NpgsqlConnection conn)
+    public static void SeedEmbeddings(NpgsqlConnection conn)
     {
         var icdItems = new (string EmbId, string CodeId, string Text)[]
         {
@@ -454,6 +460,30 @@ internal static class TestDataSeeder
                 "Type 2 diabetes mellitus without complications",
                 "Type 2 diabetes mellitus without complications",
                 "adult-onset diabetes; non-insulin-dependent diabetes"
+            ),
+            (
+                "code-e11-0",
+                "cat-e11",
+                "E11.0",
+                "Type 2 diabetes mellitus with hyperosmolarity",
+                "Type 2 diabetes mellitus with hyperosmolarity",
+                ""
+            ),
+            (
+                "code-e11-21",
+                "cat-e11",
+                "E11.21",
+                "Type 2 diabetes mellitus with diabetic nephropathy",
+                "Type 2 diabetes mellitus with diabetic nephropathy",
+                "type 2 diabetes with kidney complications"
+            ),
+            (
+                "code-e11-65",
+                "cat-e11",
+                "E11.65",
+                "Type 2 diabetes mellitus with hyperglycemia",
+                "Type 2 diabetes mellitus with hyperglycemia",
+                ""
             ),
             (
                 "code-g43-909",

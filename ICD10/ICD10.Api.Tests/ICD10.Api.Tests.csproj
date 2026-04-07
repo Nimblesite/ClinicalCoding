@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICD10.Api\ICD10.Api.csproj" />
+    <ProjectReference Include="..\ICD10.TestSupport\ICD10.TestSupport.csproj" />
     <ProjectReference Include="..\..\Shared\Authorization\Authorization.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>ICD10.TestSupport</RootNamespace>
+    <NoWarn>CA1707;CA1062;CA1515;CA2100;CA1812;CA1849</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="9.0.2" />
+    <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="0.2.0-beta" />
+    <PackageReference Include="Nimblesite.DataProvider.Migration.Postgres" Version="0.2.0-beta" />
+  </ItemGroup>
+</Project>
