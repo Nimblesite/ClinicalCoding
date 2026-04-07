@@ -44,7 +44,7 @@ If the TMC server is available:
 
 ## Logging Standards
 
-- **Use a structured logging library.** Never use `Console.WriteLine` or `Debug.WriteLine` for diagnostics. Use `Microsoft.Extensions.Logging` with Serilog.
+- **Use a structured logging library.** Never use `Console.WriteLine` or `Debug.WriteLine` for diagnostics. Use `Microsoft.Extensions.Logging`.
 - **Log at entry/exit of all significant operations.** Use appropriate levels: `error`, `warn`, `info`, `debug`, `trace`.
 - **Logging must be throughout the app.** Every service, handler, and non-trivial operation should log. Silent failures are forbidden.
 - **SaaS / server apps:** Log to the database for persistence and queryability. Log calls that write to the database or file MUST be async or run on a background thread -- never block the request path with I/O logging.
@@ -56,7 +56,7 @@ If the TMC server is available:
 
 | Language | Library | Notes |
 |----------|---------|-------|
-| C# | `Microsoft.Extensions.Logging` | With Serilog for structured output |
+| C# | `Microsoft.Extensions.Logging` |  |
 
 ## Hard Rules -- C#
 
