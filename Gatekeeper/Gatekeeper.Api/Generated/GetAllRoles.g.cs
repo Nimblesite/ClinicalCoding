@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Npgsql;
 using Outcome;
-using Selecta;
+using Nimblesite.Sql.Model;
 
 namespace Generated;
 

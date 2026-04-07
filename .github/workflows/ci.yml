@@ -1,4 +1,4 @@
-# agent-pmo:d58c330
+# agent-pmo:29b9dcf
 name: CI
 
 on:
@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  ci:
+    name: CI
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,21 +28,6 @@ jobs:
 
       - name: Lint
         run: make lint
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - run: dotnet restore
-      - run: dotnet tool restore
 
       - name: Test
         run: make test
@@ -60,20 +45,6 @@ jobs:
           path: |
             TestResults/**/coverage.*
           retention-days: 7
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - run: dotnet restore
 
       - name: Build
         run: make build

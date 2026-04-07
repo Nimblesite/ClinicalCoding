@@ -7,7 +7,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using Npgsql;
 using Outcome;
-using Selecta;
+using Nimblesite.Sql.Model;
 
 namespace Generated
 {

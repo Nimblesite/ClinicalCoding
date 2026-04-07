@@ -9,51 +9,51 @@ global using Generated;
 global using Microsoft.Extensions.Logging;
 global using Npgsql;
 global using Outcome;
-global using Selecta;
+global using Nimblesite.Sql.Model;
 global using CheckResourceGrantOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.CheckResourceGrant>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.CheckResourceGrant>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.CheckResourceGrant>, Nimblesite.Sql.Model.SqlError>;
 // Insert result type alias
 global using GetChallengeByIdOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetChallengeById>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetChallengeById>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetChallengeById>, Nimblesite.Sql.Model.SqlError>;
 // Additional query result type aliases
 global using GetCredentialByIdOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetCredentialById>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetCredentialById>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetCredentialById>, Nimblesite.Sql.Model.SqlError>;
 global using GetSessionRevokedError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>,
-    Selecta.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Error<System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>, Nimblesite.Sql.Model.SqlError>;
 global using GetSessionRevokedOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetSessionRevoked>, Nimblesite.Sql.Model.SqlError>;
 // Query result type aliases
 global using GetUserByEmailOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUserByEmail>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserByEmail>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserByEmail>, Nimblesite.Sql.Model.SqlError>;
 global using GetUserByIdOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUserById>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserById>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserById>, Nimblesite.Sql.Model.SqlError>;
 global using GetUserCredentialsError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUserCredentials>,
-    Selecta.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.GetUserCredentials>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Error<System.Collections.Immutable.ImmutableList<Generated.GetUserCredentials>, Nimblesite.Sql.Model.SqlError>;
 global using GetUserCredentialsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUserCredentials>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserCredentials>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserCredentials>, Nimblesite.Sql.Model.SqlError>;
 global using GetUserPermissionsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUserPermissions>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserPermissions>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserPermissions>, Nimblesite.Sql.Model.SqlError>;
 global using GetUserRolesOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetUserRoles>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserRoles>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<System.Collections.Immutable.ImmutableList<Generated.GetUserRoles>, Nimblesite.Sql.Model.SqlError>;

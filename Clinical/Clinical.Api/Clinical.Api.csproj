@@ -15,7 +15,6 @@
     <PackageReference Include="Nimblesite.DataProvider.Core" Version="0.2.0-beta" />
     <PackageReference Include="Nimblesite.Lql.Postgres" Version="0.2.0-beta" />
     <PackageReference Include="Nimblesite.Sync.Postgres" Version="0.2.0-beta" />
-    <PackageReference Include="Selecta" Version="0.4.0" />
     <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="0.2.0-beta" />
     <PackageReference Include="Nimblesite.DataProvider.Migration.Postgres" Version="0.2.0-beta" />
   </ItemGroup>
@@ -37,7 +36,7 @@
   <!-- Create database from YAML using Migration.Cli (installed as dotnet tool) -->
   <Target Name="CreateDatabaseSchema" BeforeTargets="TranspileLqlAndGenerateDataProvider">
     <Exec
-      Command="dotnet migration-cli -- --schema &quot;$(MSBuildProjectDirectory)/clinical-schema.yaml&quot; --output &quot;$(MSBuildProjectDirectory)/clinical.db&quot; --provider sqlite"
+      Command="dotnet migration-cli --schema &quot;$(MSBuildProjectDirectory)/clinical-schema.yaml&quot; --output &quot;$(MSBuildProjectDirectory)/clinical.db&quot; --provider sqlite"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"
@@ -58,7 +57,7 @@
     </ItemGroup>
     <Message Importance="High" Text="Transpiling LQL files (@(LqlFiles))" />
     <Exec
-      Command="dotnet lqlcli-sqlite -- --input &quot;%(LqlFiles.Identity)&quot; --output &quot;%(LqlFiles.RootDir)%(LqlFiles.Directory)%(LqlFiles.Filename).generated.sql&quot;"
+      Command="dotnet lqlcli-sqlite --input &quot;%(LqlFiles.Identity)&quot; --output &quot;%(LqlFiles.RootDir)%(LqlFiles.Directory)%(LqlFiles.Filename).generated.sql&quot;"
       Condition="'$(EnableLqlTranspile)' == 'true' and @(LqlFiles) != ''"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
@@ -66,7 +65,7 @@
       ContinueOnError="WarnAndContinue"
     />
     <Exec
-      Command="dotnet dataprovider-sqlite-cli -- --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot; --connection-type NpgsqlConnection"
+      Command="dotnet dataprovider-sqlite --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot; --connection-type NpgsqlConnection"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"

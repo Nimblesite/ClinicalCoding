@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Migration;
-using Migration.Postgres;
+using Nimblesite.DataProvider.Migration.Core;
+using Nimblesite.DataProvider.Migration.Postgres;
 using Npgsql;
 
 namespace ICD10.Api.Tests;

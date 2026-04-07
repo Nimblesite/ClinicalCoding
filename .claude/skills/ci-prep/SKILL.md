@@ -3,7 +3,7 @@ name: ci-prep
 description: Prepares the current branch for CI by running the exact same steps locally and fixing issues. If CI is already failing, fetches the GH Actions logs first to diagnose. Use before pushing, when CI is red, or when the user says "fix ci".
 argument-hint: "[--failing] [optional job name to focus on]"
 ---
-<!-- agent-pmo:d58c330 -->
+<!-- agent-pmo:29b9dcf -->
 
 # CI Prep
 
@@ -11,12 +11,12 @@ Prepare the current state for CI. If CI is already failing, fetch and analyze th
 
 ## Arguments
 
-- `--failing` -- Indicates a GitHub Actions run is already failing. When present, you MUST execute **Step 1** before doing anything else.
+- `--failing` — Indicates a GitHub Actions run is already failing. When present, you MUST execute **Step 1** before doing anything else.
 - Any other argument is treated as a job name to focus on (but all failures are still reported).
 
 If `--failing` is NOT passed, skip directly to **Step 2**.
 
-## Step 1 -- Fetch failed CI logs (only when `--failing`)
+## Step 1 — Fetch failed CI logs (only when `--failing`)
 
 You MUST do this before any other work.
 
@@ -40,23 +40,23 @@ gh run view "$RUN_ID" --log-failed
 
 Read **every line** of `--log-failed` output. For each failure note the exact file, line, and error message. If a job name argument was provided, prioritize that job but still report all failures.
 
-## Step 2 -- Analyze the CI workflow
+## Step 2 — Analyze the CI workflow
 
 1. Find the CI workflow file. Look in `.github/workflows/` for `ci.yml`, `build.yml`, `test.yml`, `checks.yml`, `main.yml`, `pull_request.yml`, or any workflow triggered on `pull_request` or `push`.
 2. Read the workflow file completely. Parse every job and every step.
-3. Extract the ordered list of commands the CI actually runs (e.g., `make lint`, `make fmt-check`, `make test`, `make coverage-check`, `make build`, or whatever the workflow specifies -- it may use `npm`, `cargo`, `dotnet`, raw shell commands, or anything else).
+3. Extract the ordered list of commands the CI actually runs (e.g., `make lint`, `make fmt-check`, `make test`, `make coverage-check`, `make build`, or whatever the workflow specifies — it may use `npm`, `cargo`, `dotnet`, raw shell commands, or anything else).
 4. Note any environment variables, matrix strategies, or conditional steps that affect execution.
 
 **Do NOT assume the steps are `make lint`, `make test`, `make coverage-check`, `make build`.** The actual CI may run different commands, in a different order, with different targets. Extract what the CI *actually does*.
 
-## Step 3 -- Run each CI step locally, in order
+## Step 3 — Run each CI step locally, in order
 
 Work through failures in this priority order:
 
-1. **Formatting** -- run auto-formatters first to clear noise
-2. **Compilation errors** -- must compile before lint/test
-3. **Lint violations** -- fix the code pattern
-4. **Runtime / test failures** -- fix source code to satisfy the test
+1. **Formatting** — run auto-formatters first to clear noise
+2. **Compilation errors** — must compile before lint/test
+3. **Lint violations** — fix the code pattern
+4. **Runtime / test failures** — fix source code to satisfy the test
 
 For each command extracted from the CI workflow:
 
@@ -67,20 +67,21 @@ For each command extracted from the CI workflow:
 
 ### Hard constraints
 
-- **NEVER modify test files** -- fix the source code, not the tests
-- **NEVER add suppressions** (`#pragma warning disable`, `// eslint-disable`, `#[allow(...)]`)
+- **NEVER modify test files** — fix the source code, not the tests
+- **NEVER add suppressions** (`#[allow(...)]`, `// eslint-disable`, `#pragma warning disable`)
+- **NEVER use `any` in TypeScript** to silence type errors
 - **NEVER delete or ignore failing tests**
 - **NEVER remove assertions**
 
 If stuck on the same failure after 5 attempts, ask the user for help.
 
-## Step 4 -- Report
+## Step 4 — Report
 
 - List every step that was run and its result (pass/fail/fixed).
 - If any step could not be fixed, report what failed and why.
 - Confirm whether the branch is ready to push.
 
-## Step 5 -- Commit/Push (only when `--failing`)
+## Step 5 — Commit/Push (only when `--failing`)
 
 Once all CI steps pass locally:
 
@@ -96,10 +97,10 @@ Once all CI steps pass locally:
 - Fix issues found in each step before moving to the next
 - Never skip steps or suppress errors
 - If the CI workflow has multiple jobs, run all of them (respecting dependency order)
-- Skip steps that are CI-infrastructure-only (checkout, setup-node/python/rust actions, cache steps, artifact uploads) -- focus on the actual build/test/lint commands
+- Skip steps that are CI-infrastructure-only (checkout, setup-node/python/rust actions, cache steps, artifact uploads) — focus on the actual build/test/lint commands
 
 ## Success criteria
 
 - Every command that CI runs has been executed locally and passed
 - All fixes are applied to the working tree
-- The CI passes successfully (if you are correcting an existing failure)
+- The CI passes successfully (if you are correcting and existing failure)

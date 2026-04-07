@@ -100,8 +100,8 @@ coverage-check:
 ## setup: Post-create dev environment setup
 setup:
 	@echo "==> Setting up development environment..."
-	dotnet restore
 	dotnet tool restore
+	dotnet restore
 	@echo "==> Setup complete. Run 'make ci' to validate."
 
 # =============================================================================

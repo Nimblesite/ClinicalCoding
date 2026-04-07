@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Npgsql;
 using Outcome;
-using Selecta;
+using Nimblesite.Sql.Model;
 
 namespace Generated;
 
@@ -17,13 +17,13 @@ public static partial class CheckResourceGrantExtensions
     /// Executes 'CheckResourceGrant.sql' and maps results.
     /// </summary>
     /// <param name="connection">Open NpgsqlConnection connection.</param>
+    /// <param name="user_id">Query parameter.</param>
     /// <param name="resource_type">Query parameter.</param>
+    /// <param name="permission_code">Query parameter.</param>
     /// <param name="now">Query parameter.</param>
     /// <param name="resource_id">Query parameter.</param>
-    /// <param name="user_id">Query parameter.</param>
-    /// <param name="permission_code">Query parameter.</param>
     /// <returns>Result of records or SQL error.</returns>
-    public static async Task<Result<ImmutableList<CheckResourceGrant>, SqlError>> CheckResourceGrantAsync(this NpgsqlConnection connection, object resource_type, object now, object resource_id, object user_id, object permission_code)
+    public static async Task<Result<ImmutableList<CheckResourceGrant>, SqlError>> CheckResourceGrantAsync(this NpgsqlConnection connection, object user_id, object resource_type, object permission_code, object now, object resource_id)
     {
         const string sql = @"-- name: CheckResourceGrant
 SELECT rg.id, rg.user_id, rg.resource_type, rg.resource_id, rg.permission_id,
@@ -43,10 +43,18 @@ WHERE rg.user_id = @user_id
 
             using (var command = new NpgsqlCommand(sql, connection))
             {
+                if (user_id is not null and not DBNull)
+                    command.Parameters.AddWithValue("@user_id", user_id);
+                else
+                    command.Parameters.Add(new NpgsqlParameter("@user_id", NpgsqlTypes.NpgsqlDbType.Text) { Value = DBNull.Value });
                 if (resource_type is not null and not DBNull)
                     command.Parameters.AddWithValue("@resource_type", resource_type);
                 else
                     command.Parameters.Add(new NpgsqlParameter("@resource_type", NpgsqlTypes.NpgsqlDbType.Text) { Value = DBNull.Value });
+                if (permission_code is not null and not DBNull)
+                    command.Parameters.AddWithValue("@permission_code", permission_code);
+                else
+                    command.Parameters.Add(new NpgsqlParameter("@permission_code", NpgsqlTypes.NpgsqlDbType.Text) { Value = DBNull.Value });
                 if (now is not null and not DBNull)
                     command.Parameters.AddWithValue("@now", now);
                 else
@@ -55,14 +63,6 @@ WHERE rg.user_id = @user_id
                     command.Parameters.AddWithValue("@resource_id", resource_id);
                 else
                     command.Parameters.Add(new NpgsqlParameter("@resource_id", NpgsqlTypes.NpgsqlDbType.Text) { Value = DBNull.Value });
-                if (user_id is not null and not DBNull)
-                    command.Parameters.AddWithValue("@user_id", user_id);
-                else
-                    command.Parameters.Add(new NpgsqlParameter("@user_id", NpgsqlTypes.NpgsqlDbType.Text) { Value = DBNull.Value });
-                if (permission_code is not null and not DBNull)
-                    command.Parameters.AddWithValue("@permission_code", permission_code);
-                else
-                    command.Parameters.Add(new NpgsqlParameter("@permission_code", NpgsqlTypes.NpgsqlDbType.Text) { Value = DBNull.Value });
 
                 using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                 {
