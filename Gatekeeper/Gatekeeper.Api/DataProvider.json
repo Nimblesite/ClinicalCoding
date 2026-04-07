@@ -24,11 +24,9 @@
     { "schema": "public", "name": "gk_credential", "generateInsert": true, "primaryKeyColumns": ["id"] },
     { "schema": "public", "name": "gk_session", "generateInsert": true, "generateUpdate": true, "primaryKeyColumns": ["id"] },
     { "schema": "public", "name": "gk_challenge", "generateInsert": true, "primaryKeyColumns": ["id"] },
-    { "schema": "public", "name": "gk_user_role", "generateInsert": true, "primaryKeyColumns": ["user_id", "role_id"] },
     { "schema": "public", "name": "gk_permission", "generateInsert": true, "primaryKeyColumns": ["id"] },
     { "schema": "public", "name": "gk_resource_grant", "generateInsert": true, "primaryKeyColumns": ["id"] },
-    { "schema": "public", "name": "gk_role", "generateInsert": true, "primaryKeyColumns": ["id"] },
-    { "schema": "public", "name": "gk_role_permission", "generateInsert": true, "primaryKeyColumns": ["role_id", "permission_id"] }
+    { "schema": "public", "name": "gk_role", "generateInsert": true, "primaryKeyColumns": ["id"] }
   ],
   "connectionString": "Host=localhost;Port=5432;Database=gatekeeper;Username=postgres;Password=changeme"
 }

@@ -94,8 +94,11 @@ patientGroup
         ) =>
         {
             using var conn = getConn();
+            // active is mapped to -1 (sentinel "no filter") when not provided -- the
+            // generated SQL is post-processed to read `@active = -1` instead of
+            // `@active IS NULL`, since the generator only produces non-nullable int.
             var result = await conn.GetPatientsAsync(
-                    active.HasValue ? (active.Value ? 1 : 0) : 0,
+                    active.HasValue ? (active.Value ? 1 : 0) : -1,
                     familyName ?? string.Empty,
                     givenName ?? string.Empty,
                     gender ?? string.Empty

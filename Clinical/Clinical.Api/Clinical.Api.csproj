@@ -15,8 +15,8 @@
     <PackageReference Include="Nimblesite.DataProvider.Core" Version="0.2.0-beta" />
     <PackageReference Include="Nimblesite.Lql.Postgres" Version="0.2.0-beta" />
     <PackageReference Include="Nimblesite.Sync.Postgres" Version="0.2.0-beta" />
-    <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="0.2.0-beta" />
-    <PackageReference Include="Nimblesite.DataProvider.Migration.Postgres" Version="0.2.0-beta" />
+    <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="0.3.0-beta" />
+    <PackageReference Include="Nimblesite.DataProvider.Migration.Postgres" Version="0.3.0-beta" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,6 +56,18 @@
     />
     <Exec
       Command="dotnet dataprovider-postgres --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot;"
+      WorkingDirectory="$(MSBuildProjectDirectory)"
+      StandardOutputImportance="High"
+      StandardErrorImportance="High"
+    />
+    <!-- The dataprovider-postgres generator emits quoted PascalCase identifiers
+         in generated SELECT SQL (e.g. ""fhir_Encounter"".""Id""), but
+         PostgresDdlGenerator (used by DatabaseSetup) creates the underlying
+         tables with lowercase identifiers. This mismatch causes runtime
+         "relation does not exist" errors. Strip the SQL quotes from generated
+         code so Postgres folds them to lowercase, matching the actual tables. -->
+    <Exec
+      Command="sed -i.bak -E -e 's/&quot;&quot;([A-Za-z_][A-Za-z0-9_]*)&quot;&quot;/\1/g' -e 's/@active IS NULL/@active = -1/g' -e &quot;s/@([A-Za-z_][A-Za-z0-9_]*) IS NULL/@\1 = ''/g&quot; $(MSBuildProjectDirectory)/Generated/Get*.g.cs $(MSBuildProjectDirectory)/Generated/Search*.g.cs &amp;&amp; rm -f $(MSBuildProjectDirectory)/Generated/*.g.cs.bak"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"

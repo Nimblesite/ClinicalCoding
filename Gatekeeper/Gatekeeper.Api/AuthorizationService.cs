@@ -24,9 +24,9 @@ public static class AuthorizationService
         {
             var grantResult = await conn.CheckResourceGrantAsync(
                     userId,
-                    permissionCode,
                     resourceType,
                     resourceId,
+                    permissionCode,
                     now
                 )
                 .ConfigureAwait(false);
