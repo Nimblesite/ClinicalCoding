@@ -144,7 +144,7 @@ app.MapPost(
                 .Insertfhir_PractitionerAsync(
                     id,
                     request.Identifier,
-                    1L,
+                    1,
                     request.NameFamily,
                     request.NameGiven,
                     request.Qualification ?? string.Empty,

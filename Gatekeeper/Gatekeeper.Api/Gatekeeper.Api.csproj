@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <PackageId>MelbourneDev.Gatekeeper</PackageId>
-    <NoWarn>CA1515;CA2100;RS1035;CA1508;CA2234;CA1819;CA2007;EPC12</NoWarn>
+    <NoWarn>$(NoWarn);CA1515;CA2100;RS1035;CA1508;CA2234;CA1819;CA2007;EPC12;CS1591</NoWarn>
   </PropertyGroup>
 
   <!-- Exclude Generated folder from default globbing - we include it explicitly in the target -->
@@ -29,19 +29,10 @@
     </Content>
   </ItemGroup>
 
-  <!-- Create database from YAML using Migration.Cli -->
-  <Target Name="CreateDatabaseSchema" BeforeTargets="TranspileLqlAndGenerateDataProvider">
-    <Exec
-      Command="dotnet migration-cli --schema &quot;$(MSBuildProjectDirectory)/gatekeeper-schema.yaml&quot; --output &quot;$(MSBuildProjectDirectory)/gatekeeper.db&quot; --provider sqlite"
-      WorkingDirectory="$(MSBuildProjectDirectory)"
-      StandardOutputImportance="High"
-      StandardErrorImportance="High"
-    />
-  </Target>
-
-  <!-- Pre-compile: generate C# from SQL using external CLI -->
+  <!-- Pre-compile: generate C# from SQL using dataprovider-postgres CLI.
+       Requires a live Postgres with the gatekeeper schema migrated (see `make db-migrate`). -->
   <Target
-    Name="TranspileLqlAndGenerateDataProvider"
+    Name="GenerateDataProvider"
     BeforeTargets="BeforeCompile;CoreCompile"
     Inputs="$(MSBuildProjectDirectory)/DataProvider.json;@(AdditionalFiles)"
     Outputs="$(MSBuildProjectDirectory)/Generated/.timestamp"
@@ -49,11 +40,10 @@
     <RemoveDir Directories="$(MSBuildProjectDirectory)/Generated" />
     <MakeDir Directories="$(MSBuildProjectDirectory)/Generated" />
     <Exec
-      Command="dotnet dataprovider-sqlite --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot; --connection-type NpgsqlConnection"
+      Command="dotnet dataprovider-postgres --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot;"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"
-      IgnoreExitCode="true"
     />
     <Touch Files="$(MSBuildProjectDirectory)/Generated/.timestamp" AlwaysCreate="true" />
     <ItemGroup>

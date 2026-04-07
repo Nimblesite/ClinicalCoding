@@ -489,16 +489,16 @@ app.Run();
 static GetCodeByCode EnrichCodeWithDerivedHierarchy(GetCodeByCode code)
 {
     var (chapterNum, chapterTitle) = string.IsNullOrEmpty(code.ChapterNumber)
-        ? Icd10Chapters.GetChapter(code.Code)
+        ? Icd10Chapters.GetChapter(code.Code ?? string.Empty)
         : (code.ChapterNumber, code.ChapterTitle ?? "");
 
     var categoryCode = string.IsNullOrEmpty(code.CategoryCode)
-        ? Icd10Chapters.GetCategory(code.Code)
+        ? Icd10Chapters.GetCategory(code.Code ?? string.Empty)
         : code.CategoryCode;
 
     // Derive block from category when not in DB - use category code as pseudo-block
     var (blockCode, blockTitle) = string.IsNullOrEmpty(code.BlockCode)
-        ? Icd10Chapters.GetBlock(code.Code)
+        ? Icd10Chapters.GetBlock(code.Code ?? string.Empty)
         : (code.BlockCode, code.BlockTitle ?? "");
 
     return code with

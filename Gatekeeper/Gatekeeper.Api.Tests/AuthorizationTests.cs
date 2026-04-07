@@ -559,7 +559,7 @@ public sealed class GatekeeperTestFixture : IDisposable
             )
             .ConfigureAwait(false);
 
-        if (grantResult is Result<int, SqlError>.Error<int, SqlError> grantErr)
+        if (grantResult is Result<Guid?, SqlError>.Error<Guid?, SqlError> grantErr)
         {
             throw new InvalidOperationException(
                 $"Failed to insert grant: {grantErr.Value.Message}"

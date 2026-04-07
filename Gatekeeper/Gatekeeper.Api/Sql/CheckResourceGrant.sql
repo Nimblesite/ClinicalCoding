@@ -7,4 +7,4 @@ WHERE rg.user_id = @user_id
   AND rg.resource_type = @resource_type
   AND rg.resource_id = @resource_id
   AND p.code = @permission_code
-  AND (rg.expires_at IS NULL OR rg.expires_at > @now);
+  AND (rg.expires_at IS NULL OR rg.expires_at > @now)

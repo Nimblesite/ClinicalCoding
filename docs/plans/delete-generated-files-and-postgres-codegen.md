@@ -3,6 +3,18 @@
 DataProvider reference code here:
 /Users/christianfindlay/Documents/Code/ai_cms
 
+## Progress Checklist
+
+- [x] Step 1 — Add `dataprovider-postgres` (0.2.7-beta), `lql-postgres` (0.1.8-beta), bump `migration-cli` (0.2.2-beta) to `.config/dotnet-tools.json`
+- [x] Step 2 — Create `docker/docker-compose.db.yml`
+- [x] Step 3 — Add `db-up`, `db-down`, `db-reset`, `db-wait`, `db-migrate` Makefile targets and wire `build`/`test`/`lint` to depend on `db-migrate`
+- [x] Step 4 — Update each `DataProvider.json` for Postgres (Clinical, Scheduling, Gatekeeper, ICD10) — connection string + `schema` `main` → `public`, drop `excludeColumns`
+- [x] Step 5 — Update each API `.csproj` (Clinical, Scheduling, Gatekeeper, ICD10) — switch to `dataprovider-postgres`, switch LQL to `lql-postgres`, drop `IgnoreExitCode`, delete `CreateDatabaseSchema` target, drop SQLite `icd10.db` `<Content>`
+- [x] Step 6 — Delete tracked `Generated/` files from git, update root `.gitignore`, simplify `ICD10/.gitignore`
+- [x] Step 7 — Update `.github/workflows/ci.yml` to use `make db-up` / `make db-migrate` instead of inline `services.postgres`
+- [x] Step 8 — Patch consumer C# (Gatekeeper/Clinical/Scheduling/ICD10) for new generated record shape (`Result<Guid?>` instead of `Result<int>`, snake_case fields preserved, IDbTransaction overloads)
+- [x] Verify — `make build` succeeds with 0 errors / 0 warnings; full `HealthcareSamples.sln` builds clean; all `Generated/` content regenerated each build through `dataprovider-postgres` against live Postgres
+
 ## Context
 
 Generated `.g.cs` files are currently committed to git in three of four API projects (Clinical, Scheduling, Gatekeeper). The fourth (ICD10) already excludes them via a per-folder `.gitignore`. This causes constant noise:

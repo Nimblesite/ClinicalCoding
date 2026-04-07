@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt fmt-check clean check ci coverage coverage-check setup
+.PHONY: build test lint fmt fmt-check clean check ci coverage coverage-check setup db-up db-down db-reset db-wait db-migrate
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -23,17 +23,24 @@ endif
 # Coverage threshold (override in CI via env var or per-repo)
 COVERAGE_THRESHOLD ?= 80
 
+# Postgres dev database (docker compose). Override in CI via env vars.
+DB_COMPOSE_FILE ?= docker/docker-compose.db.yml
+DB_PASSWORD ?= changeme
+DB_HOST ?= localhost
+DB_PORT ?= 5432
+PG_BASE_URL ?= Host=$(DB_HOST);Port=$(DB_PORT);Username=postgres;Password=$(DB_PASSWORD)
+
 # =============================================================================
 # PRIMARY TARGETS
 # =============================================================================
 
-## build: Compile/assemble all artifacts
-build:
+## build: Compile/assemble all artifacts (requires running Postgres + migrated schemas)
+build: db-migrate
 	@echo "==> Building..."
 	dotnet build HealthcareSamples.sln --configuration Release
 
 ## test: Run full test suite with coverage
-test:
+test: db-migrate
 	@echo "==> Testing..."
 	dotnet test HealthcareSamples.sln --configuration Release \
 	  --settings coverlet.runsettings \
@@ -42,7 +49,7 @@ test:
 	  --verbosity normal
 
 ## lint: Run all linters (fails on any warning)
-lint: fmt-check
+lint: fmt-check db-migrate
 	@echo "==> Linting..."
 	dotnet build HealthcareSamples.sln --configuration Release
 
@@ -103,6 +110,52 @@ setup:
 	dotnet tool restore
 	dotnet restore
 	@echo "==> Setup complete. Run 'make ci' to validate."
+
+# =============================================================================
+# DEV DATABASE (Postgres via docker compose)
+# =============================================================================
+
+## db-up: Start Postgres (pgvector) container in background
+db-up:
+	@echo "==> Starting Postgres..."
+	DB_PASSWORD=$(DB_PASSWORD) docker compose -f $(DB_COMPOSE_FILE) up -d
+	@$(MAKE) db-wait
+
+## db-down: Stop and remove Postgres container (preserves volume)
+db-down:
+	@echo "==> Stopping Postgres..."
+	docker compose -f $(DB_COMPOSE_FILE) down
+
+## db-reset: Destroy DB volume and recreate from init scripts
+db-reset:
+	@echo "==> Resetting Postgres (DESTRUCTIVE)..."
+	docker compose -f $(DB_COMPOSE_FILE) down -v
+	DB_PASSWORD=$(DB_PASSWORD) docker compose -f $(DB_COMPOSE_FILE) up -d
+	@$(MAKE) db-wait
+
+## db-wait: Block until Postgres healthcheck reports healthy
+db-wait:
+	@echo "==> Waiting for Postgres to be ready..."
+	@for i in $$(seq 1 60); do \
+	  STATUS=$$(docker inspect --format '{{.State.Health.Status}}' healthcaresamples-db 2>/dev/null || echo "missing"); \
+	  if [ "$$STATUS" = "healthy" ]; then echo "Postgres ready"; exit 0; fi; \
+	  sleep 1; \
+	done; \
+	echo "FAIL: Postgres did not become healthy"; \
+	docker logs healthcaresamples-db 2>&1 | tail -50; \
+	exit 1
+
+## db-migrate: Ensure DB is up and apply YAML schemas via migration-cli to all four databases
+db-migrate: db-up
+	@echo "==> Migrating Postgres schemas..."
+	dotnet migration-cli --schema Gatekeeper/Gatekeeper.Api/gatekeeper-schema.yaml \
+	  --output "$(PG_BASE_URL);Database=gatekeeper" --provider postgres
+	dotnet migration-cli --schema Clinical/Clinical.Api/clinical-schema.yaml \
+	  --output "$(PG_BASE_URL);Database=clinical" --provider postgres
+	dotnet migration-cli --schema Scheduling/Scheduling.Api/scheduling-schema.yaml \
+	  --output "$(PG_BASE_URL);Database=scheduling" --provider postgres
+	dotnet migration-cli --schema ICD10/ICD10.Api/icd10-schema.yaml \
+	  --output "$(PG_BASE_URL);Database=icd10" --provider postgres
 
 # =============================================================================
 # HELP

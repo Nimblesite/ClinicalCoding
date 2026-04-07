@@ -81,13 +81,13 @@ global using GetPatientsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPatients>,
     Nimblesite.Sql.Model.SqlError
 >;
-global using InsertError = Outcome.Result<int, Nimblesite.Sql.Model.SqlError>.Error<
-    int,
+global using InsertError = Outcome.Result<System.Guid?, Nimblesite.Sql.Model.SqlError>.Error<
+    System.Guid?,
     Nimblesite.Sql.Model.SqlError
 >;
 // Insert result type aliases
-global using InsertOk = Outcome.Result<int, Nimblesite.Sql.Model.SqlError>.Ok<
-    int,
+global using InsertOk = Outcome.Result<System.Guid?, Nimblesite.Sql.Model.SqlError>.Ok<
+    System.Guid?,
     Nimblesite.Sql.Model.SqlError
 >;
 global using SearchPatientsError = Outcome.Result<

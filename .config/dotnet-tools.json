@@ -10,7 +10,7 @@
       "rollForward": false
     },
     "nimblesite.dataprovider.migration.cli": {
-      "version": "0.2.0-beta",
+      "version": "0.2.2-beta",
       "commands": [
         "migration-cli"
       ],
@@ -23,10 +23,24 @@
       ],
       "rollForward": false
     },
+    "nimblesite.lql.cli.postgres": {
+      "version": "0.1.8-beta",
+      "commands": [
+        "lql-postgres"
+      ],
+      "rollForward": false
+    },
     "nimblesite.dataprovider.sqlite.cli": {
       "version": "0.2.0-beta",
       "commands": [
         "dataprovider-sqlite"
+      ],
+      "rollForward": false
+    },
+    "nimblesite.dataprovider.postgres.cli": {
+      "version": "0.2.7-beta",
+      "commands": [
+        "dataprovider-postgres"
       ],
       "rollForward": false
     },

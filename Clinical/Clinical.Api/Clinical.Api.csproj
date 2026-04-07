@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <NoWarn>CA1515;CA2100;RS1035;CA1508;CA2234</NoWarn>
+    <NoWarn>$(NoWarn);CA1515;CA2100;RS1035;CA1508;CA2234;CS1591</NoWarn>
     <EnableLqlTranspile>true</EnableLqlTranspile>
   </PropertyGroup>
 
@@ -33,19 +33,10 @@
     </Content>
   </ItemGroup>
 
-  <!-- Create database from YAML using Migration.Cli (installed as dotnet tool) -->
-  <Target Name="CreateDatabaseSchema" BeforeTargets="TranspileLqlAndGenerateDataProvider">
-    <Exec
-      Command="dotnet migration-cli --schema &quot;$(MSBuildProjectDirectory)/clinical-schema.yaml&quot; --output &quot;$(MSBuildProjectDirectory)/clinical.db&quot; --provider sqlite"
-      WorkingDirectory="$(MSBuildProjectDirectory)"
-      StandardOutputImportance="High"
-      StandardErrorImportance="High"
-    />
-  </Target>
-
-  <!-- Pre-compile: transpile LQL to SQL, then generate C# from SQL using CLI tools -->
+  <!-- Pre-compile: transpile LQL to SQL, then generate C# via dataprovider-postgres CLI.
+       Requires a live Postgres with the clinical schema migrated (see `make db-migrate`). -->
   <Target
-    Name="TranspileLqlAndGenerateDataProvider"
+    Name="GenerateDataProvider"
     BeforeTargets="BeforeCompile;CoreCompile"
     Inputs="$(MSBuildProjectDirectory)/DataProvider.json;@(AdditionalFiles);@(LqlFiles)"
     Outputs="$(MSBuildProjectDirectory)/Generated/.timestamp"
@@ -57,19 +48,17 @@
     </ItemGroup>
     <Message Importance="High" Text="Transpiling LQL files (@(LqlFiles))" />
     <Exec
-      Command="dotnet lqlcli-sqlite --input &quot;%(LqlFiles.Identity)&quot; --output &quot;%(LqlFiles.RootDir)%(LqlFiles.Directory)%(LqlFiles.Filename).generated.sql&quot;"
+      Command="dotnet lql-postgres --input &quot;%(LqlFiles.Identity)&quot; --output &quot;%(LqlFiles.RootDir)%(LqlFiles.Directory)%(LqlFiles.Filename).generated.sql&quot;"
       Condition="'$(EnableLqlTranspile)' == 'true' and @(LqlFiles) != ''"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"
-      ContinueOnError="WarnAndContinue"
     />
     <Exec
-      Command="dotnet dataprovider-sqlite --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot; --connection-type NpgsqlConnection"
+      Command="dotnet dataprovider-postgres --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot;"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"
-      IgnoreExitCode="true"
     />
     <Touch Files="$(MSBuildProjectDirectory)/Generated/.timestamp" AlwaysCreate="true" />
     <ItemGroup>

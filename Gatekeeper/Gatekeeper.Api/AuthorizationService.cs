@@ -23,11 +23,11 @@ public static class AuthorizationService
         if (!string.IsNullOrEmpty(resourceType) && !string.IsNullOrEmpty(resourceId))
         {
             var grantResult = await conn.CheckResourceGrantAsync(
-                    now: now,
-                    resource_id: resourceId,
-                    user_id: userId,
-                    resource_type: resourceType,
-                    permission_code: permissionCode
+                    userId,
+                    permissionCode,
+                    resourceType,
+                    resourceId,
+                    now
                 )
                 .ConfigureAwait(false);
 
@@ -43,6 +43,10 @@ public static class AuthorizationService
 
         foreach (var perm in permissions)
         {
+            if (perm.code is null)
+            {
+                continue;
+            }
             var matches = PermissionMatches(perm.code, permissionCode);
             if (!matches)
             {

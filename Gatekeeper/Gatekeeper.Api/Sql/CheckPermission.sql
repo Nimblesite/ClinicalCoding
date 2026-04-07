@@ -21,4 +21,4 @@ WHERE p.code = @permissionCode
         AND (up.expires_at IS NULL OR up.expires_at > @now)
     )
   )
-LIMIT 1;
+LIMIT 1

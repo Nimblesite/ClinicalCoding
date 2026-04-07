@@ -23,4 +23,4 @@ SELECT p.id, p.code, p.resource_type, p.action, p.description,
 FROM gk_user_permission up
 JOIN gk_permission p ON up.permission_id = p.id
 WHERE up.user_id = @user_id
-  AND (up.expires_at IS NULL OR up.expires_at > @now);
+  AND (up.expires_at IS NULL OR up.expires_at > @now)

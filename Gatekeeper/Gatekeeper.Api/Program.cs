@@ -87,7 +87,7 @@ authGroup.MapPost(
             var isNewUser = existingUser is not GetUserByEmailOk { Value.Count: > 0 };
             var userId = isNewUser
                 ? Guid.NewGuid().ToString()
-                : ((GetUserByEmailOk)existingUser).Value[0].id;
+                : ((GetUserByEmailOk)existingUser).Value[0].id ?? Guid.NewGuid().ToString();
 
             if (isNewUser)
             {
@@ -105,19 +105,20 @@ authGroup.MapPost(
                 await tx.CommitAsync().ConfigureAwait(false);
             }
 
-            var existingCredentials = await conn.GetUserCredentialsAsync(userId)
+            var existingCredentials = await conn.GetUserCredentialsAsync(userId!)
                 .ConfigureAwait(false);
             var excludeCredentials = existingCredentials switch
             {
                 GetUserCredentialsOk ok => ok
-                    .Value.Select(c => new PublicKeyCredentialDescriptor(Base64Url.Decode(c.id)))
+                    .Value.Where(c => c.id is not null)
+                    .Select(c => new PublicKeyCredentialDescriptor(Base64Url.Decode(c.id!)))
                     .ToList(),
                 GetUserCredentialsError _ => [],
             };
 
             var user = new Fido2User
             {
-                Id = Encoding.UTF8.GetBytes(userId),
+                Id = Encoding.UTF8.GetBytes(userId!),
                 Name = request.Email,
                 DisplayName = request.DisplayName,
             };
@@ -270,7 +271,7 @@ authGroup.MapPost(
                     Base64Url.Encode(cred.Id),
                     storedChallenge.user_id,
                     cred.PublicKey,
-                    cred.SignCount,
+                    (int?)cred.SignCount,
                     cred.AaGuid.ToString(),
                     cred.Type.ToString(),
                     cred.Transports != null ? string.Join(",", cred.Transports) : null,
@@ -306,12 +307,12 @@ authGroup.MapPost(
             var rolesResult = await conn.GetUserRolesAsync(storedChallenge.user_id, now)
                 .ConfigureAwait(false);
             var roles = rolesResult is GetUserRolesOk rolesOk
-                ? rolesOk.Value.Select(r => r.name).ToList()
-                : [];
+                ? rolesOk.Value.Select(r => r.name).Where(n => n is not null).Select(n => n!).ToList()
+                : new List<string>();
 
             // Generate JWT
             var token = TokenService.CreateToken(
-                storedChallenge.user_id,
+                storedChallenge.user_id ?? string.Empty,
                 user?.display_name,
                 user?.email,
                 roles,
@@ -384,8 +385,8 @@ authGroup.MapPost(
                     {
                         AssertionResponse = request.AssertionResponse,
                         OriginalOptions = options,
-                        StoredPublicKey = storedCred.public_key,
-                        StoredSignatureCounter = (uint)storedCred.sign_count,
+                        StoredPublicKey = storedCred.public_key ?? Array.Empty<byte>(),
+                        StoredSignatureCounter = (uint)(storedCred.sign_count ?? 0),
                         IsUserHandleOwnerOfCredentialIdCallback = (args, _) =>
                         {
                             var userIdFromHandle = Encoding.UTF8.GetString(args.UserHandle);
@@ -411,25 +412,25 @@ authGroup.MapPost(
             using var userUpdateCmd = conn.CreateCommand();
             userUpdateCmd.CommandText = "UPDATE gk_user SET last_login_at = @now WHERE id = @id";
             userUpdateCmd.Parameters.AddWithValue("@now", now);
-            userUpdateCmd.Parameters.AddWithValue("@id", storedCred.user_id);
+            userUpdateCmd.Parameters.AddWithValue("@id", (object?)storedCred.user_id ?? DBNull.Value);
             await userUpdateCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
             // Get user info for token
-            var userResult = await conn.GetUserByIdAsync(storedCred.user_id).ConfigureAwait(false);
+            var userResult = await conn.GetUserByIdAsync(storedCred.user_id ?? string.Empty).ConfigureAwait(false);
             var user = userResult is GetUserByIdOk { Value.Count: > 0 } userOk
                 ? userOk.Value[0]
                 : null;
 
             // Get user roles
-            var rolesResult = await conn.GetUserRolesAsync(storedCred.user_id, now)
+            var rolesResult = await conn.GetUserRolesAsync(storedCred.user_id ?? string.Empty, now)
                 .ConfigureAwait(false);
             var roles = rolesResult is GetUserRolesOk rolesOk
-                ? rolesOk.Value.Select(r => r.name).ToList()
-                : [];
+                ? rolesOk.Value.Select(r => r.name).Where(n => n is not null).Select(n => n!).ToList()
+                : new List<string>();
 
             // Generate JWT
             var token = TokenService.CreateToken(
-                storedCred.user_id,
+                storedCred.user_id ?? string.Empty,
                 user?.display_name,
                 user?.email,
                 roles,

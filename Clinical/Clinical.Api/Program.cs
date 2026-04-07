@@ -95,14 +95,10 @@ patientGroup
         {
             using var conn = getConn();
             var result = await conn.GetPatientsAsync(
-                    active.HasValue
-                        ? active.Value
-                            ? 1
-                            : 0
-                        : DBNull.Value,
-                    familyName ?? (object)DBNull.Value,
-                    givenName ?? (object)DBNull.Value,
-                    gender ?? (object)DBNull.Value
+                    active.HasValue ? (active.Value ? 1 : 0) : 0,
+                    familyName ?? string.Empty,
+                    givenName ?? string.Empty,
+                    gender ?? string.Empty
                 )
                 .ConfigureAwait(false);
             return result switch
@@ -471,22 +467,22 @@ conditionGroup
 
             var result = await transaction
                 .Insertfhir_ConditionAsync(
-                    id: id,
-                    clinicalstatus: request.ClinicalStatus,
-                    verificationstatus: request.VerificationStatus,
-                    category: request.Category,
-                    severity: request.Severity,
-                    codesystem: request.CodeSystem,
-                    codevalue: request.CodeValue,
-                    codedisplay: request.CodeDisplay,
-                    subjectreference: patientId,
-                    encounterreference: request.EncounterReference,
-                    onsetdatetime: request.OnsetDateTime,
-                    recordeddate: recordedDate,
-                    recorderreference: request.RecorderReference,
-                    notetext: request.NoteText,
-                    lastupdated: now,
-                    versionid: 1
+                    id,
+                    request.ClinicalStatus,
+                    request.VerificationStatus,
+                    request.Category,
+                    request.Severity,
+                    request.CodeSystem,
+                    request.CodeValue,
+                    request.CodeDisplay,
+                    patientId,
+                    request.EncounterReference,
+                    request.OnsetDateTime,
+                    recordedDate,
+                    request.RecorderReference,
+                    request.NoteText,
+                    now,
+                    1
                 )
                 .ConfigureAwait(false);
 
