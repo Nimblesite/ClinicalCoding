@@ -39,14 +39,32 @@ build: db-migrate
 	@echo "==> Building..."
 	dotnet build HealthcareSamples.sln --configuration Release
 
-## test: Run full test suite with coverage
+# Test projects in execution order. Cheapest / most foundational first so a
+# break in a lower layer fails the run immediately, before slower E2E suites.
+TEST_PROJECTS = \
+  Gatekeeper/Gatekeeper.Api.Tests/Gatekeeper.Api.Tests.csproj \
+  Clinical/Clinical.Api.Tests/Clinical.Api.Tests.csproj \
+  Scheduling/Scheduling.Api.Tests/Scheduling.Api.Tests.csproj \
+  ICD10/ICD10.Api.Tests/ICD10.Api.Tests.csproj \
+  ICD10/ICD10.Cli.Tests/ICD10.Cli.Tests.csproj \
+  Dashboard/Dashboard.Integration.Tests/Dashboard.Integration.Tests.csproj
+
+## test: Run full test suite with coverage (FAIL FAST)
+##   - Stops at the first failing test inside an assembly (xunit stopOnFail)
+##   - Stops at the first failing assembly across the suite (set -e)
 test: db-migrate
-	@echo "==> Testing..."
-	dotnet test HealthcareSamples.sln --configuration Release \
-	  --settings coverlet.runsettings \
-	  --collect:"XPlat Code Coverage" \
-	  --results-directory TestResults \
-	  --verbosity normal
+	@echo "==> Testing (fail-fast)..."
+	@set -e; \
+	for proj in $(TEST_PROJECTS); do \
+	  echo ""; \
+	  echo "==> Testing $$proj"; \
+	  dotnet test "$$proj" --configuration Release \
+	    --settings coverlet.runsettings \
+	    --collect:"XPlat Code Coverage" \
+	    --results-directory TestResults \
+	    --verbosity normal \
+	    || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	done
 
 ## lint: Run all linters (fails on any warning)
 lint: fmt-check db-migrate
