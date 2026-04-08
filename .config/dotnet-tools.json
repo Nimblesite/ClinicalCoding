@@ -16,34 +16,6 @@
       ],
       "rollForward": false
     },
-    "nimblesite.lql.cli.sqlite": {
-      "version": "0.2.0-beta",
-      "commands": [
-        "lqlcli-sqlite"
-      ],
-      "rollForward": false
-    },
-    "nimblesite.lql.cli.postgres": {
-      "version": "0.1.8-beta",
-      "commands": [
-        "lql-postgres"
-      ],
-      "rollForward": false
-    },
-    "nimblesite.dataprovider.sqlite.cli": {
-      "version": "0.2.0-beta",
-      "commands": [
-        "dataprovider-sqlite"
-      ],
-      "rollForward": false
-    },
-    "nimblesite.dataprovider.postgres.cli": {
-      "version": "0.2.7-beta",
-      "commands": [
-        "dataprovider-postgres"
-      ],
-      "rollForward": false
-    },
     "h5-compiler": {
       "version": "26.3.64893",
       "commands": [
