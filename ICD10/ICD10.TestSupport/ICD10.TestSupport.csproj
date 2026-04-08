@@ -7,6 +7,9 @@
   <ItemGroup>
     <PackageReference Include="Npgsql" Version="9.0.2" />
     <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="0.3.0-beta" />
-    <PackageReference Include="Nimblesite.DataProvider.Migration.Postgres" Version="0.3.0-beta" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Authorization\Authorization.csproj" />
   </ItemGroup>
 </Project>

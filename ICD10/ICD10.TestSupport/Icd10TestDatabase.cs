@@ -1,6 +1,6 @@
 using Nimblesite.DataProvider.Migration.Core;
-using Nimblesite.DataProvider.Migration.Postgres;
 using Npgsql;
+using Samples.Authorization;
 
 namespace ICD10.TestSupport;
 
@@ -37,7 +37,15 @@ public static class Icd10TestDatabase
         }
 
         var schema = SchemaYamlSerializer.FromYamlFile(schemaYamlPath);
-        PostgresDdlGenerator.MigrateSchema(conn, schema);
+        foreach (var table in schema.Tables)
+        {
+            foreach (var statement in LowercaseDdl.GenerateStatements(table))
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = statement;
+                cmd.ExecuteNonQuery();
+            }
+        }
 
         TestDataSeeder.Seed(conn);
         TestDataSeeder.SeedEmbeddings(conn);

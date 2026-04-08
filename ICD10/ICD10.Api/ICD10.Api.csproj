@@ -15,7 +15,6 @@
     <PackageReference Include="Nimblesite.DataProvider.Core" Version="0.2.0-beta" />
     <PackageReference Include="Nimblesite.Lql.Postgres" Version="0.2.0-beta" />
     <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="0.3.0-beta" />
-    <PackageReference Include="Nimblesite.DataProvider.Migration.Postgres" Version="0.3.0-beta" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,5 @@
 using Nimblesite.DataProvider.Migration.Core;
-using Nimblesite.DataProvider.Migration.Postgres;
+using Samples.Authorization;
 using InitError = Outcome.Result<bool, string>.Error<bool, string>;
 using InitOk = Outcome.Result<bool, string>.Ok<bool, string>;
 using InitResult = Outcome.Result<bool, string>;
@@ -38,10 +38,12 @@ internal static class DatabaseSetup
 
             foreach (var table in schema.Tables)
             {
-                var ddl = PostgresDdlGenerator.Generate(new CreateTableOperation(table));
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = ddl;
-                cmd.ExecuteNonQuery();
+                foreach (var statement in LowercaseDdl.GenerateStatements(table))
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = statement;
+                    cmd.ExecuteNonQuery();
+                }
                 logger.Log(LogLevel.Debug, "Created table {TableName}", table.Name);
             }
 

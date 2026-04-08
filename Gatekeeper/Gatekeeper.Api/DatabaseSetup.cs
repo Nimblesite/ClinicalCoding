@@ -1,5 +1,5 @@
 using Nimblesite.DataProvider.Migration.Core;
-using Nimblesite.DataProvider.Migration.Postgres;
+using Samples.Authorization;
 using InitError = Outcome.Result<bool, string>.Error<bool, string>;
 using InitOk = Outcome.Result<bool, string>.Ok<bool, string>;
 using InitResult = Outcome.Result<bool, string>;
@@ -35,19 +35,8 @@ internal static class DatabaseSetup
 
             foreach (var table in schema.Tables)
             {
-                var ddl = PostgresDdlGenerator.Generate(new CreateTableOperation(table));
-                // DDL may contain multiple statements (CREATE TABLE + CREATE INDEX)
-                foreach (
-                    var statement in ddl.Split(
-                        ';',
-                        StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-                    )
-                )
+                foreach (var statement in LowercaseDdl.GenerateStatements(table))
                 {
-                    if (string.IsNullOrWhiteSpace(statement))
-                    {
-                        continue;
-                    }
                     using var cmd = conn.CreateCommand();
                     cmd.CommandText = statement;
                     cmd.ExecuteNonQuery();
