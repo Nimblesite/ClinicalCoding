@@ -49,13 +49,13 @@ Then serve the static files however you want (nginx, python, etc).
 
 ```bash
 # Start everything
-./scripts/start.sh
+make start-docker
 
 # Fresh start (wipe databases)
-./scripts/start.sh --fresh
+make clean-docker start-docker
 
 # Rebuild containers
-./scripts/start.sh --build
+make start-docker BUILD=1
 ```
 
 ## Ports

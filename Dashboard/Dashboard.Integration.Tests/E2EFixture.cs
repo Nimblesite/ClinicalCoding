@@ -20,7 +20,7 @@ namespace Dashboard.Integration.Tests;
 /// <summary>
 /// Shared fixture that starts all services ONCE for all E2E tests.
 /// Set E2E_USE_LOCAL=true to skip Testcontainers/process startup and run against
-/// an already-running local dev stack (started via scripts/start-local.sh).
+/// an already-running local dev stack (started via `make start-local`).
 /// </summary>
 public sealed class E2EFixture : IAsyncLifetime
 {

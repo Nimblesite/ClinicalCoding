@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt fmt-check clean check ci coverage coverage-check setup db-up db-down db-reset db-wait db-migrate
+.PHONY: build test lint fmt fmt-check clean check ci coverage coverage-check setup db-up db-down db-reset db-wait db-migrate kill-ports-local kill-ports-docker clean-local clean-docker start-local start-docker
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -206,18 +206,203 @@ db-migrate: db-up
 	  --output "$(PG_BASE_URL);Database=icd10" --provider postgres
 
 # =============================================================================
+# LOCAL DEV STACK
+# =============================================================================
+
+# Ports owned by the local dev stack (4 APIs + dashboard + embedding service)
+LOCAL_PORTS  := 5002 5080 5001 5090 5173 8000
+# Same as LOCAL_PORTS plus the Postgres host port (docker stack publishes it)
+DOCKER_PORTS := 5432 5002 5080 5001 5090 5173
+
+## kill-ports-local: Free ports used by the local dev stack
+kill-ports-local:
+	@echo "==> Clearing local dev ports..."
+	@for port in $(LOCAL_PORTS); do \
+	  pids=$$(lsof -ti :$$port 2>/dev/null || true); \
+	  if [ -n "$$pids" ]; then \
+	    echo "  killing port $$port: $$pids"; \
+	    echo "$$pids" | xargs kill -9 2>/dev/null || true; \
+	  fi; \
+	done
+
+## kill-ports-docker: Free ports used by the docker stack (incl. Postgres)
+kill-ports-docker:
+	@echo "==> Clearing docker dev ports..."
+	@for port in $(DOCKER_PORTS); do \
+	  pids=$$(lsof -ti :$$port 2>/dev/null || true); \
+	  if [ -n "$$pids" ]; then \
+	    echo "  killing port $$port: $$pids"; \
+	    echo "$$pids" | xargs kill -9 2>/dev/null || true; \
+	  fi; \
+	done
+
+## clean-local: Kill local dev processes and drop the Postgres dev volume
+clean-local: kill-ports-local
+	@echo "==> Removing Postgres dev volume..."
+	docker compose -f $(DB_COMPOSE_FILE) down -v 2>/dev/null || true
+	@echo "Clean complete."
+
+## clean-docker: Kill docker stack and drop all docker-compose volumes
+clean-docker: kill-ports-docker
+	@echo "==> Removing docker volumes..."
+	cd docker && docker compose down -v
+	@echo "Clean complete."
+
+## start-docker: Build the dashboard locally then start the docker compose stack
+##   Usage: make start-docker [BUILD=1]
+##     BUILD=1   force image rebuild (passes --build to docker compose up)
+start-docker:
+	@echo "==> Building Dashboard locally (H5 requires native build)..."
+	cd Dashboard/Dashboard.Web && \
+	  dotnet publish -c Release -o ../../docker/dashboard-build --nologo -v q
+	@echo "==> Starting docker stack..."
+	cd docker && docker compose up $(if $(BUILD),--build,)
+
+# Embedded runner for the local dev stack. Inlined as a `define` block so the
+# orchestration (background processes, trap-based cleanup, log prefixing) runs
+# in a single shell — Make's default one-shell-per-line model can't express it.
+define START_LOCAL_RUNNER
+set -e
+PIDS=()
+
+cleanup() {
+    echo ""
+    echo "Shutting down..."
+    for pid in "$${PIDS[@]}"; do
+        kill "$$pid" 2>/dev/null || true
+    done
+    wait 2>/dev/null || true
+    echo "All services stopped."
+}
+trap cleanup EXIT INT TERM
+
+DB_PASS="$${DB_PASSWORD:-changeme}"
+VENV_DIR="ICD10/.venv"
+EMBED_DIR="ICD10/embedding-service"
+
+echo "Starting Embedding Service on :8000 (model loading may take a moment)..."
+"$$VENV_DIR/bin/python" -m uvicorn main:app --host 0.0.0.0 --port 8000 \
+    --app-dir "$$EMBED_DIR" 2>&1 | sed 's/^/  [embedding]  /' &
+PIDS+=($$!)
+
+populate_icd10() {
+    local CONN_STR="Host=localhost;Database=icd10;Username=icd10;Password=$$DB_PASS"
+    local SCRIPTS_DIR="ICD10/scripts/CreateDb"
+
+    echo "  [icd10-import] Waiting for ICD10 API..."
+    for i in $$(seq 1 60); do
+        if curl -sf http://localhost:5090/health >/dev/null 2>&1; then
+            echo "  [icd10-import] ICD10 API is up."
+            break
+        fi
+        sleep 2
+    done
+
+    echo "  [icd10-import] Waiting for embedding service..."
+    for i in $$(seq 1 120); do
+        if curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+            echo "  [icd10-import] Embedding service ready."
+            break
+        fi
+        sleep 2
+    done
+
+    local CHAPTERS
+    CHAPTERS=$$(curl -sf http://localhost:5090/api/icd10/chapters 2>/dev/null || echo "[]")
+    if [ "$$CHAPTERS" = "[]" ] || [ "$$CHAPTERS" = "" ]; then
+        echo "  [icd10-import] No ICD10 data found. Running full Postgres import..."
+        EMBEDDING_SERVICE_URL="http://localhost:8000" \
+            "$$VENV_DIR/bin/python" "$$SCRIPTS_DIR/import_postgres.py" \
+            --connection-string "$$CONN_STR" \
+            || echo "  [icd10-import] Import encountered errors (check logs above)"
+    else
+        echo "  [icd10-import] ICD10 codes already populated. Generating missing embeddings..."
+        EMBEDDING_SERVICE_URL="http://localhost:8000" \
+            "$$VENV_DIR/bin/python" "$$SCRIPTS_DIR/import_postgres.py" \
+            --connection-string "$$CONN_STR" --embeddings-only \
+            || echo "  [icd10-import] Embedding generation encountered errors"
+    fi
+}
+
+echo "Starting Gatekeeper.Api on :5002..."
+ConnectionStrings__Postgres="Host=localhost;Database=gatekeeper;Username=gatekeeper;Password=$$DB_PASS" \
+    dotnet run --no-build --project Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj --no-launch-profile \
+    --urls "http://localhost:5002" 2>&1 | sed 's/^/  [gatekeeper] /' &
+PIDS+=($$!)
+
+echo "Starting Clinical.Api on :5080..."
+ConnectionStrings__Postgres="Host=localhost;Database=clinical;Username=clinical;Password=$$DB_PASS" \
+    dotnet run --no-build --project Clinical/Clinical.Api/Clinical.Api.csproj --no-launch-profile \
+    --urls "http://localhost:5080" 2>&1 | sed 's/^/  [clinical]   /' &
+PIDS+=($$!)
+
+echo "Starting Scheduling.Api on :5001..."
+ConnectionStrings__Postgres="Host=localhost;Database=scheduling;Username=scheduling;Password=$$DB_PASS" \
+    dotnet run --no-build --project Scheduling/Scheduling.Api/Scheduling.Api.csproj --no-launch-profile \
+    --urls "http://localhost:5001" 2>&1 | sed 's/^/  [scheduling] /' &
+PIDS+=($$!)
+
+echo "Starting ICD10.Api on :5090..."
+ConnectionStrings__Postgres="Host=localhost;Database=icd10;Username=icd10;Password=$$DB_PASS" \
+    dotnet run --no-build --project ICD10/ICD10.Api/ICD10.Api.csproj --no-launch-profile \
+    --urls "http://localhost:5090" 2>&1 | sed 's/^/  [icd10]      /' &
+PIDS+=($$!)
+
+echo "Starting Dashboard on :5173..."
+python3 -m http.server 5173 --directory Dashboard/Dashboard.Web/wwwroot 2>&1 | sed 's/^/  [dashboard]  /' &
+PIDS+=($$!)
+
+populate_icd10 &
+PIDS+=($$!)
+
+echo ""
+echo "════════════════════════════════════════"
+echo "  Gatekeeper:  http://localhost:5002"
+echo "  Clinical:    http://localhost:5080"
+echo "  Scheduling:  http://localhost:5001"
+echo "  ICD10:       http://localhost:5090"
+echo "  Embedding:   http://localhost:8000"
+echo "  Dashboard:   http://localhost:5173"
+echo "════════════════════════════════════════"
+echo "  Press Ctrl+C to stop all services"
+echo ""
+
+wait
+endef
+export START_LOCAL_RUNNER
+
+## start-local: Run all 4 APIs locally against the docker postgres dev DB
+##   Builds projects in Debug, dashboard in Release, then runs everything in
+##   the foreground with prefixed log output. Ctrl+C cleans up all children.
+start-local: db-up
+	@echo "==> Setting up Python environment..."
+	@if [ ! -d ICD10/.venv ]; then python3 -m venv ICD10/.venv; fi
+	@ICD10/.venv/bin/pip install -q -r ICD10/embedding-service/requirements.txt psycopg2-binary click requests
+	@echo "==> Building all projects..."
+	dotnet build Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj --nologo -v q
+	dotnet build Clinical/Clinical.Api/Clinical.Api.csproj --nologo -v q
+	dotnet build Scheduling/Scheduling.Api/Scheduling.Api.csproj --nologo -v q
+	dotnet build ICD10/ICD10.Api/ICD10.Api.csproj --nologo -v q
+	dotnet build Dashboard/Dashboard.Web/Dashboard.Web.csproj -c Release --nologo -v q
+	@bash -c "$$START_LOCAL_RUNNER"
+
+# =============================================================================
 # HELP
 # =============================================================================
 help:
 	@echo "Available targets:"
-	@echo "  build          - Compile/assemble all artifacts"
-	@echo "  test           - Run full test suite with coverage"
-	@echo "  lint           - Run all linters (errors mode)"
-	@echo "  fmt            - Format all code in-place"
-	@echo "  fmt-check      - Check formatting (no modification)"
-	@echo "  clean          - Remove build artifacts"
-	@echo "  check          - lint + test (pre-commit)"
-	@echo "  ci             - lint + test + build (full CI)"
-	@echo "  coverage       - Generate and open coverage report"
-	@echo "  coverage-check - Assert coverage thresholds"
-	@echo "  setup          - Post-create dev environment setup"
+	@echo "  build             - Compile/assemble all artifacts"
+	@echo "  test              - Run full test suite with coverage"
+	@echo "  lint              - Run all linters (errors mode)"
+	@echo "  fmt               - Format all code in-place"
+	@echo "  fmt-check         - Check formatting (no modification)"
+	@echo "  clean             - Remove build artifacts"
+	@echo "  check             - lint + test (pre-commit)"
+	@echo "  ci                - lint + test + build (full CI)"
+	@echo "  coverage          - Generate and open coverage report"
+	@echo "  coverage-check    - Assert coverage thresholds"
+	@echo "  setup             - Post-create dev environment setup"
+	@echo "  start-local       - Run all 4 APIs locally against docker postgres"
+	@echo "  start-docker      - Build dashboard + docker compose up the full stack"
+	@echo "  clean-local       - Kill local dev processes and drop postgres volume"
+	@echo "  clean-docker      - Kill docker stack and drop all volumes"
