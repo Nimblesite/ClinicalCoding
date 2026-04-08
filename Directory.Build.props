@@ -3,9 +3,8 @@
     <NuGetAudit>false</NuGetAudit>
     <NuGetAuditMode>disabled</NuGetAuditMode>
     <RestoreAuditProperties>false</RestoreAuditProperties>
-    <!-- Single source of truth for every DataProvider / DataProviderMigration package version. -->
+    <!-- Single source of truth for every Nimblesite DataProvider / Lql / Sync / Migration package version. -->
     <DataProviderVersion>0.4.0-beta</DataProviderVersion>
-    <DataProviderMigrationVersion>0.4.0-beta</DataProviderMigrationVersion>
     <Version>0.1.0</Version>
     <Authors>ChristianFindlay</Authors>
     <Company>MelbourneDeveloper</Company>
