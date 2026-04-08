@@ -20,8 +20,10 @@ else
   MKDIR = mkdir -p
 endif
 
-# Coverage threshold (override in CI via env var or per-repo)
-COVERAGE_THRESHOLD ?= 80
+# Per-project coverage thresholds live in this JSON file. Each test
+# project gets its own minimum line-rate; bump them via `make coverage-check`
+# output minus 1 percentage point (rounding margin).
+COVERAGE_THRESHOLDS_FILE ?= coverage-thresholds.json
 
 # Postgres dev database (docker compose). Override in CI via env vars.
 DB_COMPOSE_FILE ?= docker/docker-compose.db.yml
@@ -52,16 +54,20 @@ TEST_PROJECTS = \
 ## test: Run full test suite with coverage (FAIL FAST)
 ##   - Stops at the first failing test inside an assembly (xunit stopOnFail)
 ##   - Stops at the first failing assembly across the suite (set -e)
+##   - Each project's coverage lands under TestResults/<project-dir>/ so
+##     `make coverage-check` can attribute results back to a project.
 test: db-migrate
 	@echo "==> Testing (fail-fast)..."
 	@set -e; \
+	rm -rf TestResults; \
 	for proj in $(TEST_PROJECTS); do \
+	  proj_dir=$$(dirname "$$proj"); \
 	  echo ""; \
 	  echo "==> Testing $$proj"; \
 	  dotnet test "$$proj" --configuration Release \
 	    --settings coverlet.runsettings \
 	    --collect:"XPlat Code Coverage" \
-	    --results-directory TestResults \
+	    --results-directory "TestResults/$$proj_dir" \
 	    --verbosity normal \
 	    || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
 	done
@@ -107,20 +113,44 @@ coverage:
 	  -reporttypes:Html
 	@echo "==> HTML report: coverage/html/index.html"
 
-## coverage-check: Assert thresholds (exits non-zero if below)
+## coverage-check: Assert per-project line-rate >= threshold from $(COVERAGE_THRESHOLDS_FILE)
+##   The JSON file declares { "default_threshold": N, "projects": { "<dir>": { "threshold": N } } }.
+##   A project that is missing from the file inherits "default_threshold".
+##   When coverage actually goes UP, edit the file: floor(measured) - 1 to leave a rounding cushion.
 coverage-check:
-	@echo "==> Checking coverage thresholds..."
-	@COBERTURA=$$(find TestResults -name 'coverage.cobertura.xml' | head -1); \
-	if [ -z "$$COBERTURA" ]; then echo "FAIL: No coverage.cobertura.xml found"; exit 1; fi; \
-	LINE_RATE=$$(awk 'match($$0, /line-rate="[0-9.]+"/) { s=substr($$0, RSTART+11, RLENGTH-12); print s; exit }' "$$COBERTURA"); \
-	PCT=$$(awk "BEGIN{printf \"%.1f\", $${LINE_RATE:-0}*100}"); \
-	PCT_INT=$$(awk "BEGIN{printf \"%d\", $${LINE_RATE:-0}*100}"); \
-	echo "Line coverage: $${PCT}% (threshold: $(COVERAGE_THRESHOLD)%)"; \
-	if [ "$$PCT_INT" -lt "$(COVERAGE_THRESHOLD)" ]; then \
-	  echo "FAIL: $${PCT}% < $(COVERAGE_THRESHOLD)%"; exit 1; \
-	else \
-	  echo "OK: $${PCT}% >= $(COVERAGE_THRESHOLD)%"; \
+	@echo "==> Checking coverage thresholds (file: $(COVERAGE_THRESHOLDS_FILE))..."
+	@command -v jq >/dev/null 2>&1 || { echo "FAIL: jq is required (brew install jq / apt-get install jq)"; exit 1; }
+	@if [ ! -f "$(COVERAGE_THRESHOLDS_FILE)" ]; then \
+	  echo "FAIL: $(COVERAGE_THRESHOLDS_FILE) not found"; exit 1; \
 	fi
+	@set -e; \
+	default=$$(jq -r '.default_threshold' $(COVERAGE_THRESHOLDS_FILE)); \
+	any_failed=0; \
+	for proj in $(TEST_PROJECTS); do \
+	  proj_dir=$$(dirname "$$proj"); \
+	  cobertura=$$(find "TestResults/$$proj_dir" -name 'coverage.cobertura.xml' 2>/dev/null | head -1); \
+	  threshold=$$(jq -r --arg p "$$proj_dir" --arg d "$$default" '.projects[$$p].threshold // ($$d | tonumber)' $(COVERAGE_THRESHOLDS_FILE)); \
+	  if [ -z "$$cobertura" ]; then \
+	    echo "FAIL ($$proj_dir): no coverage.cobertura.xml under TestResults/$$proj_dir"; \
+	    any_failed=1; continue; \
+	  fi; \
+	  line_rate=$$(awk 'match($$0, /line-rate="[0-9.]+"/) { s=substr($$0, RSTART+11, RLENGTH-12); print s; exit }' "$$cobertura"); \
+	  pct=$$(awk "BEGIN{printf \"%.1f\", $${line_rate:-0}*100}"); \
+	  pct_int=$$(awk "BEGIN{printf \"%d\", $${line_rate:-0}*100}"); \
+	  if [ "$$pct_int" -lt "$$threshold" ]; then \
+	    printf "FAIL %-44s %s%% < %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
+	    any_failed=1; \
+	  else \
+	    printf "OK   %-44s %s%% >= %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
+	  fi; \
+	done; \
+	if [ "$$any_failed" -ne 0 ]; then \
+	  echo ""; \
+	  echo "FAIL: one or more projects below threshold (see $(COVERAGE_THRESHOLDS_FILE))"; \
+	  exit 1; \
+	fi; \
+	echo ""; \
+	echo "OK: all projects meet their coverage thresholds"
 
 ## setup: Post-create dev environment setup
 setup:
