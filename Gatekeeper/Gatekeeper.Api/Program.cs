@@ -307,7 +307,11 @@ authGroup.MapPost(
             var rolesResult = await conn.GetUserRolesAsync(storedChallenge.user_id, now)
                 .ConfigureAwait(false);
             var roles = rolesResult is GetUserRolesOk rolesOk
-                ? rolesOk.Value.Select(r => r.name).Where(n => n is not null).Select(n => n!).ToList()
+                ? rolesOk
+                    .Value.Select(r => r.name)
+                    .Where(n => n is not null)
+                    .Select(n => n!)
+                    .ToList()
                 : new List<string>();
 
             // Generate JWT
@@ -412,11 +416,15 @@ authGroup.MapPost(
             using var userUpdateCmd = conn.CreateCommand();
             userUpdateCmd.CommandText = "UPDATE gk_user SET last_login_at = @now WHERE id = @id";
             userUpdateCmd.Parameters.AddWithValue("@now", now);
-            userUpdateCmd.Parameters.AddWithValue("@id", (object?)storedCred.user_id ?? DBNull.Value);
+            userUpdateCmd.Parameters.AddWithValue(
+                "@id",
+                (object?)storedCred.user_id ?? DBNull.Value
+            );
             await userUpdateCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
             // Get user info for token
-            var userResult = await conn.GetUserByIdAsync(storedCred.user_id ?? string.Empty).ConfigureAwait(false);
+            var userResult = await conn.GetUserByIdAsync(storedCred.user_id ?? string.Empty)
+                .ConfigureAwait(false);
             var user = userResult is GetUserByIdOk { Value.Count: > 0 } userOk
                 ? userOk.Value[0]
                 : null;
@@ -425,7 +433,11 @@ authGroup.MapPost(
             var rolesResult = await conn.GetUserRolesAsync(storedCred.user_id ?? string.Empty, now)
                 .ConfigureAwait(false);
             var roles = rolesResult is GetUserRolesOk rolesOk
-                ? rolesOk.Value.Select(r => r.name).Where(n => n is not null).Select(n => n!).ToList()
+                ? rolesOk
+                    .Value.Select(r => r.name)
+                    .Where(n => n is not null)
+                    .Select(n => n!)
+                    .ToList()
                 : new List<string>();
 
             // Generate JWT
