@@ -9,10 +9,10 @@
       ],
       "rollForward": false
     },
-    "nimblesite.dataprovider.migration.cli": {
-      "version": "0.2.2-beta",
+    "dataprovidermigrate": {
+      "version": "0.4.0-beta",
       "commands": [
-        "migration-cli"
+        "DataProviderMigrate"
       ],
       "rollForward": false
     },

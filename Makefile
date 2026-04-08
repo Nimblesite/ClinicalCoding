@@ -193,16 +193,16 @@ db-wait:
 	docker logs healthcaresamples-db 2>&1 | tail -50; \
 	exit 1
 
-## db-migrate: Ensure DB is up and apply YAML schemas via migration-cli to all four databases
+## db-migrate: Ensure DB is up and apply YAML schemas via DataProviderMigrate to all four databases
 db-migrate: db-up
 	@echo "==> Migrating Postgres schemas..."
-	dotnet migration-cli --schema Gatekeeper/Gatekeeper.Api/gatekeeper-schema.yaml \
+	dotnet DataProviderMigrate --schema Gatekeeper/Gatekeeper.Api/gatekeeper-schema.yaml \
 	  --output "$(PG_BASE_URL);Database=gatekeeper" --provider postgres
-	dotnet migration-cli --schema Clinical/Clinical.Api/clinical-schema.yaml \
+	dotnet DataProviderMigrate --schema Clinical/Clinical.Api/clinical-schema.yaml \
 	  --output "$(PG_BASE_URL);Database=clinical" --provider postgres
-	dotnet migration-cli --schema Scheduling/Scheduling.Api/scheduling-schema.yaml \
+	dotnet DataProviderMigrate --schema Scheduling/Scheduling.Api/scheduling-schema.yaml \
 	  --output "$(PG_BASE_URL);Database=scheduling" --provider postgres
-	dotnet migration-cli --schema ICD10/ICD10.Api/icd10-schema.yaml \
+	dotnet DataProviderMigrate --schema ICD10/ICD10.Api/icd10-schema.yaml \
 	  --output "$(PG_BASE_URL);Database=icd10" --provider postgres
 
 # =============================================================================
