@@ -15,7 +15,10 @@
     <PackageReference Include="Fido2.AspNet" Version="4.0.0" />
     <PackageReference Include="Npgsql" Version="9.0.2" />
     <PackageReference Include="Nimblesite.DataProvider.Core" Version="$(DataProviderVersion)" />
-    <PackageReference Include="Nimblesite.DataProvider.Migration.Core" Version="$(DataProviderVersion)" />
+    <PackageReference
+      Include="Nimblesite.DataProvider.Migration.Core"
+      Version="$(DataProviderVersion)"
+    />
     <PackageReference Include="Nimblesite.Sync.Postgres" Version="$(DataProviderVersion)" />
   </ItemGroup>
 
