@@ -141,7 +141,7 @@ app.MapPost(
             var id = Guid.NewGuid().ToString();
 
             var result = await transaction
-                .Insertfhir_PractitionerAsync(
+                .Insertfhir_practitionerAsync(
                     id,
                     request.Identifier,
                     1,
@@ -201,15 +201,15 @@ app.MapPut(
             using var cmd = conn.CreateCommand();
             cmd.Transaction = transaction;
             cmd.CommandText = """
-            UPDATE fhir_Practitioner
-            SET NameFamily = @nameFamily,
-                NameGiven = @nameGiven,
-                Qualification = @qualification,
-                Specialty = @specialty,
-                TelecomEmail = @telecomEmail,
-                TelecomPhone = @telecomPhone,
-                Active = @active
-            WHERE Id = @id
+            UPDATE fhir_practitioner
+            SET "NameFamily" = @nameFamily,
+                "NameGiven" = @nameGiven,
+                "Qualification" = @qualification,
+                "Specialty" = @specialty,
+                "TelecomEmail" = @telecomEmail,
+                "TelecomPhone" = @telecomPhone,
+                "Active" = @active
+            WHERE "Id" = @id
             """;
             cmd.Parameters.AddWithValue("@id", id);
             cmd.Parameters.AddWithValue("@nameFamily", request.NameFamily);
@@ -354,7 +354,7 @@ app.MapPost(
             var durationMinutes = (int)(end - start).TotalMinutes;
 
             var result = await transaction
-                .Insertfhir_AppointmentAsync(
+                .Insertfhir_appointmentAsync(
                     id,
                     "booked",
                     request.ServiceCategory ?? string.Empty,
@@ -428,20 +428,20 @@ app.MapPut(
             using var cmd = conn.CreateCommand();
             cmd.Transaction = transaction;
             cmd.CommandText = """
-            UPDATE fhir_Appointment
-            SET ServiceCategory = @serviceCategory,
-                ServiceType = @serviceType,
-                ReasonCode = @reasonCode,
-                Priority = @priority,
-                Description = @description,
-                StartTime = @start,
-                EndTime = @end,
-                MinutesDuration = @duration,
-                PatientReference = @patientRef,
-                PractitionerReference = @practitionerRef,
-                Comment = @comment,
-                Status = @status
-            WHERE Id = @id
+            UPDATE fhir_appointment
+            SET "ServiceCategory" = @serviceCategory,
+                "ServiceType" = @serviceType,
+                "ReasonCode" = @reasonCode,
+                "Priority" = @priority,
+                "Description" = @description,
+                "StartTime" = @start,
+                "EndTime" = @end,
+                "MinutesDuration" = @duration,
+                "PatientReference" = @patientRef,
+                "PractitionerReference" = @practitionerRef,
+                "Comment" = @comment,
+                "Status" = @status
+            WHERE "Id" = @id
             """;
             cmd.Parameters.AddWithValue("@id", id);
             cmd.Parameters.AddWithValue(
@@ -508,7 +508,7 @@ app.MapPatch(
 
             using var cmd = conn.CreateCommand();
             cmd.Transaction = transaction;
-            cmd.CommandText = "UPDATE fhir_Appointment SET Status = @status WHERE Id = @id";
+            cmd.CommandText = "UPDATE fhir_appointment SET \"Status\" = @status WHERE \"Id\" = @id";
             cmd.Parameters.AddWithValue("@status", status);
             cmd.Parameters.AddWithValue("@id", id);
 
@@ -739,7 +739,7 @@ app.MapGet(
             using var conn = getConn();
             using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                "SELECT PatientId, DisplayName, ContactPhone, ContactEmail, SyncedAt FROM sync_ScheduledPatient";
+                "SELECT \"PatientId\", \"DisplayName\", \"ContactPhone\", \"ContactEmail\", \"SyncedAt\" FROM sync_scheduledpatient";
             using var reader = cmd.ExecuteReader();
             var patients = new List<object>();
             while (reader.Read())

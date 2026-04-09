@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace Clinical.Sync;
 
 /// <summary>
-/// Background service that pulls Practitioner data from Scheduling.Api and maps to sync_Provider.
+/// Background service that pulls Practitioner data from Scheduling.Api and maps to sync_provider.
 /// </summary>
 internal sealed class SyncWorker : BackgroundService
 {
@@ -223,7 +223,7 @@ internal sealed class SyncWorker : BackgroundService
         {
             using var cmd = conn.CreateCommand();
             cmd.Transaction = (NpgsqlTransaction)transaction;
-            cmd.CommandText = "DELETE FROM sync_Provider WHERE ProviderId = @id";
+            cmd.CommandText = "DELETE FROM sync_provider WHERE \"ProviderId\" = @id";
             cmd.Parameters.AddWithValue("@id", rowId);
             cmd.ExecuteNonQuery();
             _logger.Log(LogLevel.Debug, "Deleted provider {ProviderId}", rowId);
@@ -244,13 +244,13 @@ internal sealed class SyncWorker : BackgroundService
         using var upsertCmd = conn.CreateCommand();
         upsertCmd.Transaction = (NpgsqlTransaction)transaction;
         upsertCmd.CommandText = """
-            INSERT INTO sync_Provider (ProviderId, FirstName, LastName, Specialty, SyncedAt)
+            INSERT INTO sync_provider ("ProviderId", "FirstName", "LastName", "Specialty", "SyncedAt")
             VALUES (@providerId, @firstName, @lastName, @specialty, @syncedAt)
-            ON CONFLICT(ProviderId) DO UPDATE SET
-                FirstName = @firstName,
-                LastName = @lastName,
-                Specialty = @specialty,
-                SyncedAt = @syncedAt
+            ON CONFLICT("ProviderId") DO UPDATE SET
+                "FirstName" = @firstName,
+                "LastName" = @lastName,
+                "Specialty" = @specialty,
+                "SyncedAt" = @syncedAt
             """;
 
         upsertCmd.Parameters.AddWithValue(

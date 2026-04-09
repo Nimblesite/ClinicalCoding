@@ -1,8 +1,8 @@
 -- Get appointments by status with patient and practitioner info
 -- Parameters: @status, @dateStart, @dateEnd
-fhir_Appointment
-|> join(sync_ScheduledPatient, on = fhir_Appointment.PatientReference = sync_ScheduledPatient.PatientId)
-|> join(fhir_Practitioner, on = fhir_Appointment.PractitionerReference = fhir_Practitioner.Id)
-|> filter(fn(row) => row.fhir_Appointment.Status = @status and row.fhir_Appointment.StartTime >= @dateStart and row.fhir_Appointment.StartTime < @dateEnd)
-|> select(fhir_Appointment.Id, fhir_Appointment.StartTime, fhir_Appointment.EndTime, fhir_Appointment.Status, sync_ScheduledPatient.DisplayName, fhir_Practitioner.NameFamily, fhir_Practitioner.NameGiven, fhir_Appointment.ServiceType, fhir_Appointment.ReasonCode)
-|> order_by(fhir_Appointment.StartTime)
+fhir_appointment
+|> join(sync_scheduledpatient, on = fhir_appointment.PatientReference = sync_scheduledpatient.PatientId)
+|> join(fhir_practitioner, on = fhir_appointment.PractitionerReference = fhir_practitioner.Id)
+|> filter(fn(row) => row.fhir_appointment.Status = @status and row.fhir_appointment.StartTime >= @dateStart and row.fhir_appointment.StartTime < @dateEnd)
+|> select(fhir_appointment.Id, fhir_appointment.StartTime, fhir_appointment.EndTime, fhir_appointment.Status, sync_scheduledpatient.DisplayName, fhir_practitioner.NameFamily, fhir_practitioner.NameGiven, fhir_appointment.ServiceType, fhir_appointment.ReasonCode)
+|> order_by(fhir_appointment.StartTime)

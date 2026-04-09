@@ -94,19 +94,22 @@ patientGroup
         ) =>
         {
             using var conn = getConn();
-            // active is mapped to -1 (sentinel "no filter") when not provided -- the
-            // generated SQL is post-processed to read `@active = -1` instead of
-            // `@active IS NULL`, since the generator only produces non-nullable int.
+            // Active and gender filters are applied in C# because LQL `is null`
+            // checks produce non-nullable params with no "match-all" sentinel.
+            // String LIKE filters survive empty-string params via LIKE '%%'.
             var result = await conn.GetPatientsAsync(
-                    active.HasValue ? (active.Value ? 1 : 0) : -1,
                     familyName ?? string.Empty,
-                    givenName ?? string.Empty,
-                    gender ?? string.Empty
+                    givenName ?? string.Empty
                 )
                 .ConfigureAwait(false);
             return result switch
             {
-                GetPatientsOk(var patients) => Results.Ok(patients),
+                GetPatientsOk(var patients) => Results.Ok(
+                    patients
+                        .Where(p => !active.HasValue || p.Active == (active.Value ? 1 : 0))
+                        .Where(p => string.IsNullOrEmpty(gender) || p.Gender == gender)
+                        .ToImmutableList()
+                ),
                 GetPatientsError(var err) => Results.Problem(err.Message),
             };
         }
@@ -160,7 +163,7 @@ patientGroup
             );
 
             var result = await transaction
-                .Insertfhir_PatientAsync(
+                .Insertfhir_patientAsync(
                     id,
                     request.Active ? 1 : 0,
                     request.GivenName,
@@ -250,7 +253,7 @@ patientGroup
             );
 
             var result = await transaction
-                .Updatefhir_PatientAsync(
+                .Updatefhir_patientAsync(
                     id,
                     request.Active ? 1 : 0,
                     request.GivenName,
@@ -373,7 +376,7 @@ encounterGroup
             );
 
             var result = await transaction
-                .Insertfhir_EncounterAsync(
+                .Insertfhir_encounterAsync(
                     id,
                     request.Status,
                     request.Class,
@@ -469,7 +472,7 @@ conditionGroup
             var recordedDate = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             var result = await transaction
-                .Insertfhir_ConditionAsync(
+                .Insertfhir_conditionAsync(
                     id,
                     request.ClinicalStatus,
                     request.VerificationStatus,
@@ -578,7 +581,7 @@ medicationGroup
             );
 
             var result = await transaction
-                .Insertfhir_MedicationRequestAsync(
+                .Insertfhir_medicationrequestAsync(
                     id,
                     request.Status,
                     request.Intent,
@@ -787,7 +790,7 @@ app.MapGet(
             using var conn = getConn();
             using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                "SELECT ProviderId, FirstName, LastName, Specialty, SyncedAt FROM sync_Provider";
+                "SELECT \"ProviderId\", \"FirstName\", \"LastName\", \"Specialty\", \"SyncedAt\" FROM sync_provider";
             using var reader = cmd.ExecuteReader();
             var providers = new List<object>();
             while (reader.Read())

@@ -28,7 +28,7 @@
   "tables": [
     {
       "schema": "public",
-      "name": "fhir_Patient",
+      "name": "fhir_patient",
       "generateInsert": true,
       "generateUpdate": true,
       "generateDelete": true,
@@ -38,7 +38,7 @@
     },
     {
       "schema": "public",
-      "name": "fhir_Encounter",
+      "name": "fhir_encounter",
       "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
@@ -48,7 +48,7 @@
     },
     {
       "schema": "public",
-      "name": "fhir_Condition",
+      "name": "fhir_condition",
       "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
@@ -58,7 +58,7 @@
     },
     {
       "schema": "public",
-      "name": "fhir_MedicationRequest",
+      "name": "fhir_medicationrequest",
       "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,

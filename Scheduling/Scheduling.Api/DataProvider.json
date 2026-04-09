@@ -52,7 +52,7 @@
   "tables": [
     {
       "schema": "public",
-      "name": "fhir_Practitioner",
+      "name": "fhir_practitioner",
       "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
@@ -62,7 +62,7 @@
     },
     {
       "schema": "public",
-      "name": "fhir_Appointment",
+      "name": "fhir_appointment",
       "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,

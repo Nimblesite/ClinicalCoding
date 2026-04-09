@@ -1,6 +1,6 @@
 name: scheduling
 tables:
-- name: fhir_Practitioner
+- name: fhir_practitioner
   columns:
   - name: Id
     type: Text
@@ -29,10 +29,10 @@ tables:
     columns:
     - Specialty
   primaryKey:
-    name: PK_fhir_Practitioner
+    name: PK_fhir_practitioner
     columns:
     - Id
-- name: fhir_Schedule
+- name: fhir_schedule
   columns:
   - name: Id
     type: Text
@@ -51,17 +51,17 @@ tables:
     columns:
     - PractitionerReference
   foreignKeys:
-  - name: FK_fhir_Schedule_PractitionerReference
+  - name: FK_fhir_schedule_PractitionerReference
     columns:
     - PractitionerReference
-    referencedTable: fhir_Practitioner
+    referencedTable: fhir_practitioner
     referencedColumns:
     - Id
   primaryKey:
-    name: PK_fhir_Schedule
+    name: PK_fhir_schedule
     columns:
     - Id
-- name: fhir_Slot
+- name: fhir_slot
   columns:
   - name: Id
     type: Text
@@ -87,17 +87,17 @@ tables:
     columns:
     - Status
   foreignKeys:
-  - name: FK_fhir_Slot_ScheduleReference
+  - name: FK_fhir_slot_ScheduleReference
     columns:
     - ScheduleReference
-    referencedTable: fhir_Schedule
+    referencedTable: fhir_schedule
     referencedColumns:
     - Id
   primaryKey:
-    name: PK_fhir_Slot
+    name: PK_fhir_slot
     columns:
     - Id
-- name: fhir_Appointment
+- name: fhir_appointment
   columns:
   - name: Id
     type: Text
@@ -140,10 +140,10 @@ tables:
     columns:
     - PractitionerReference
   primaryKey:
-    name: PK_fhir_Appointment
+    name: PK_fhir_appointment
     columns:
     - Id
-- name: sync_ScheduledPatient
+- name: sync_scheduledpatient
   columns:
   - name: PatientId
     type: Text
@@ -157,6 +157,6 @@ tables:
     type: Text
     defaultValue: CURRENT_TIMESTAMP
   primaryKey:
-    name: PK_sync_ScheduledPatient
+    name: PK_sync_scheduledpatient
     columns:
     - PatientId

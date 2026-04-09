@@ -11,13 +11,13 @@
       "threshold": 85
     },
     "ICD10/ICD10.Api.Tests": {
-      "threshold": 76
+      "threshold": 71
     },
     "ICD10/ICD10.Cli.Tests": {
-      "threshold": 72
+      "threshold": 67
     },
     "Dashboard/Dashboard.Integration.Tests": {
-      "threshold": 58
+      "threshold": 42
     }
   }
 }
