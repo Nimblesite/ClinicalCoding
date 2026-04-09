@@ -1,34 +1,42 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Generated;
+using Nimblesite.Sql.Model;
 using Npgsql;
+using Outcome;
 
 namespace ICD10.TestSupport;
 
 /// <summary>
-/// Seeds ICD-10 reference data into a PostgreSQL test database.
-/// All column names are lowercase to match PostgresDdlGenerator output.
+/// Seeds ICD-10 reference data into a PostgreSQL test database via the
+/// generated DataProvider Insert extension methods.
 /// </summary>
 public static class TestDataSeeder
 {
+    private const string IcdEmbeddingModel = "MedEmbed-Small-v0.1";
+
     /// <summary>
     /// Seeds chapters, blocks, categories, codes, ACHI blocks and ACHI codes
     /// required by both API and Dashboard E2E tests.
     /// </summary>
     public static void Seed(NpgsqlConnection conn)
     {
-        SeedChapters(conn);
-        SeedBlocks(conn);
-        SeedCategories(conn);
-        SeedCodes(conn);
-        SeedAchiBlocks(conn);
-        SeedAchiCodes(conn);
+        SeedChaptersAsync(conn).GetAwaiter().GetResult();
+        SeedBlocksAsync(conn).GetAwaiter().GetResult();
+        SeedCategoriesAsync(conn).GetAwaiter().GetResult();
+        SeedCodesAsync(conn).GetAwaiter().GetResult();
+        SeedAchiBlocksAsync(conn).GetAwaiter().GetResult();
+        SeedAchiCodesAsync(conn).GetAwaiter().GetResult();
     }
 
     /// <summary>
     /// Seeds embeddings by calling the embedding service at localhost:8000.
     /// If the service is unavailable, silently returns (search tests will fail via skip check).
     /// </summary>
-    public static void SeedEmbeddings(NpgsqlConnection conn)
+    public static void SeedEmbeddings(NpgsqlConnection conn) =>
+        SeedEmbeddingsAsync(conn).GetAwaiter().GetResult();
+
+    private static async Task SeedEmbeddingsAsync(NpgsqlConnection conn)
     {
         var icdItems = new (string EmbId, string CodeId, string Text)[]
         {
@@ -116,104 +124,88 @@ public static class TestDataSeeder
             ),
         };
 
+        List<List<float>>? embeddings;
         try
         {
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-
-            var healthCheck = client
-                .GetAsync("http://localhost:8000/health")
-                .GetAwaiter()
-                .GetResult();
-            if (!healthCheck.IsSuccessStatusCode)
-                return;
-
-            var allTexts = icdItems
-                .Select(t => t.Text)
-                .Concat(achiItems.Select(t => t.Text))
-                .ToList();
-
-            var batchResponse = client
-                .PostAsJsonAsync("http://localhost:8000/embed/batch", new { texts = allTexts })
-                .GetAwaiter()
-                .GetResult();
-
-            if (!batchResponse.IsSuccessStatusCode)
-                return;
-
-            var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var batchResult = batchResponse
-                .Content.ReadFromJsonAsync<BatchEmbeddingResponse>(jsonOptions)
-                .GetAwaiter()
-                .GetResult();
-
-            if (batchResult is null || batchResult.Embeddings.Count != allTexts.Count)
-                return;
-
-            InsertEmbeddings(
-                conn: conn,
-                table: "icd10_code_embedding",
-                items: icdItems,
-                embeddings: batchResult.Embeddings,
-                offset: 0
-            );
-
-            InsertEmbeddings(
-                conn: conn,
-                table: "achi_code_embedding",
-                items: achiItems,
-                embeddings: batchResult.Embeddings,
-                offset: icdItems.Length
+            embeddings = await FetchEmbeddingsAsync(
+                icdItems.Select(t => t.Text).Concat(achiItems.Select(t => t.Text)).ToList()
             );
         }
-        catch
+        catch (HttpRequestException)
         {
-            // Embedding service unavailable - search tests will be skipped
+            return;
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (embeddings is null || embeddings.Count != icdItems.Length + achiItems.Length)
+            return;
+
+        for (var i = 0; i < icdItems.Length; i++)
+        {
+            var (embId, codeId, _) = icdItems[i];
+            EnsureInserted(
+                await conn.Inserticd10_code_embeddingAsync(
+                    Id: embId,
+                    CodeId: codeId,
+                    Embedding: SerializeVector(embeddings[i]),
+                    EmbeddingModel: IcdEmbeddingModel,
+                    LastUpdated: null
+                ),
+                "icd10_code_embedding",
+                embId
+            );
+        }
+
+        for (var i = 0; i < achiItems.Length; i++)
+        {
+            var (embId, codeId, _) = achiItems[i];
+            EnsureInserted(
+                await conn.Insertachi_code_embeddingAsync(
+                    Id: embId,
+                    CodeId: codeId,
+                    Embedding: SerializeVector(embeddings[icdItems.Length + i]),
+                    EmbeddingModel: IcdEmbeddingModel,
+                    LastUpdated: null
+                ),
+                "achi_code_embedding",
+                embId
+            );
         }
     }
 
-    private static void InsertEmbeddings(
-        NpgsqlConnection conn,
-        string table,
-        (string EmbId, string CodeId, string Text)[] items,
-        List<List<float>> embeddings,
-        int offset
-    )
+    private static async Task<List<List<float>>?> FetchEmbeddingsAsync(List<string> texts)
     {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"""
-            INSERT INTO "public"."{table}" ("id", "codeid", "embedding", "embeddingmodel")
-            VALUES (@id, @codeid, @embedding, @model)
-            """;
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
 
-        var pId = cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Text));
-        var pCodeId = cmd.Parameters.Add(
-            new NpgsqlParameter("@codeid", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pEmbedding = cmd.Parameters.Add(
-            new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pModel = cmd.Parameters.Add(
-            new NpgsqlParameter("@model", NpgsqlTypes.NpgsqlDbType.Text)
+        var healthCheck = await client.GetAsync(new Uri("http://localhost:8000/health"));
+        if (!healthCheck.IsSuccessStatusCode)
+            return null;
+
+        var batchResponse = await client.PostAsJsonAsync(
+            new Uri("http://localhost:8000/embed/batch"),
+            new { texts }
         );
 
-        cmd.Prepare();
+        if (!batchResponse.IsSuccessStatusCode)
+            return null;
 
-        for (var i = 0; i < items.Length; i++)
-        {
-            pId.Value = items[i].EmbId;
-            pCodeId.Value = items[i].CodeId;
-            pEmbedding.Value =
-                "["
-                + string.Join(
-                    ",",
-                    embeddings[offset + i]
-                        .Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))
-                )
-                + "]";
-            pModel.Value = "MedEmbed-Small-v0.1";
-            cmd.ExecuteNonQuery();
-        }
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var batchResult = await batchResponse.Content.ReadFromJsonAsync<BatchEmbeddingResponse>(
+            jsonOptions
+        );
+        return batchResult?.Embeddings;
     }
+
+    private static string SerializeVector(List<float> values) =>
+        "["
+        + string.Join(
+            ",",
+            values.Select(f => f.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        )
+        + "]";
 
     private sealed record BatchEmbeddingResponse(
         List<List<float>> Embeddings,
@@ -222,9 +214,8 @@ public static class TestDataSeeder
         int Count
     );
 
-    private static void SeedChapters(NpgsqlConnection conn)
+    private static async Task SeedChaptersAsync(NpgsqlConnection conn)
     {
-        // All 21 ICD-10-CM chapters with numeric chapter numbers
         var chapters = new (string Id, string Number, string Title, string Start, string End)[]
         {
             ("ch-01", "1", "Certain infectious and parasitic diseases", "A00", "B99"),
@@ -274,36 +265,25 @@ public static class TestDataSeeder
             ),
         };
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO "public"."icd10_chapter" ("id", "chapternumber", "title", "coderangestart", "coderangeend")
-            VALUES (@id, @num, @title, @start, @end)
-            """;
-
-        var pId = cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Text));
-        var pNum = cmd.Parameters.Add(new NpgsqlParameter("@num", NpgsqlTypes.NpgsqlDbType.Text));
-        var pTitle = cmd.Parameters.Add(
-            new NpgsqlParameter("@title", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pStart = cmd.Parameters.Add(
-            new NpgsqlParameter("@start", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pEnd = cmd.Parameters.Add(new NpgsqlParameter("@end", NpgsqlTypes.NpgsqlDbType.Text));
-
-        cmd.Prepare();
-
         foreach (var (id, number, title, start, end) in chapters)
         {
-            pId.Value = id;
-            pNum.Value = number;
-            pTitle.Value = title;
-            pStart.Value = start;
-            pEnd.Value = end;
-            cmd.ExecuteNonQuery();
+            EnsureInserted(
+                await conn.Inserticd10_chapterAsync(
+                    Id: id,
+                    ChapterNumber: number,
+                    Title: title,
+                    CodeRangeStart: start,
+                    CodeRangeEnd: end,
+                    LastUpdated: null,
+                    VersionId: null
+                ),
+                "icd10_chapter",
+                id
+            );
         }
     }
 
-    private static void SeedBlocks(NpgsqlConnection conn)
+    private static async Task SeedBlocksAsync(NpgsqlConnection conn)
     {
         var blocks = new (
             string Id,
@@ -343,38 +323,26 @@ public static class TestDataSeeder
             ("blk-s70-s79", "ch-19", "S70-S79", "Injuries to the hip and thigh", "S70", "S79"),
         };
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO "public"."icd10_block" ("id", "chapterid", "blockcode", "title", "coderangestart", "coderangeend")
-            VALUES (@id, @chid, @code, @title, @start, @end)
-            """;
-
-        var pId = cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Text));
-        var pChId = cmd.Parameters.Add(new NpgsqlParameter("@chid", NpgsqlTypes.NpgsqlDbType.Text));
-        var pCode = cmd.Parameters.Add(new NpgsqlParameter("@code", NpgsqlTypes.NpgsqlDbType.Text));
-        var pTitle = cmd.Parameters.Add(
-            new NpgsqlParameter("@title", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pStart = cmd.Parameters.Add(
-            new NpgsqlParameter("@start", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pEnd = cmd.Parameters.Add(new NpgsqlParameter("@end", NpgsqlTypes.NpgsqlDbType.Text));
-
-        cmd.Prepare();
-
         foreach (var (id, chapterId, blockCode, title, start, end) in blocks)
         {
-            pId.Value = id;
-            pChId.Value = chapterId;
-            pCode.Value = blockCode;
-            pTitle.Value = title;
-            pStart.Value = start;
-            pEnd.Value = end;
-            cmd.ExecuteNonQuery();
+            EnsureInserted(
+                await conn.Inserticd10_blockAsync(
+                    Id: id,
+                    ChapterId: chapterId,
+                    BlockCode: blockCode,
+                    Title: title,
+                    CodeRangeStart: start,
+                    CodeRangeEnd: end,
+                    LastUpdated: null,
+                    VersionId: null
+                ),
+                "icd10_block",
+                id
+            );
         }
     }
 
-    private static void SeedCategories(NpgsqlConnection conn)
+    private static async Task SeedCategoriesAsync(NpgsqlConnection conn)
     {
         var categories = new (string Id, string BlockId, string CategoryCode, string Title)[]
         {
@@ -400,34 +368,25 @@ public static class TestDataSeeder
             ("cat-s72", "blk-s70-s79", "S72", "Fracture of femur"),
         };
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO "public"."icd10_category" ("id", "blockid", "categorycode", "title")
-            VALUES (@id, @bid, @code, @title)
-            """;
-
-        var pId = cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Text));
-        var pBid = cmd.Parameters.Add(new NpgsqlParameter("@bid", NpgsqlTypes.NpgsqlDbType.Text));
-        var pCode = cmd.Parameters.Add(new NpgsqlParameter("@code", NpgsqlTypes.NpgsqlDbType.Text));
-        var pTitle = cmd.Parameters.Add(
-            new NpgsqlParameter("@title", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-
-        cmd.Prepare();
-
         foreach (var (id, blockId, categoryCode, title) in categories)
         {
-            pId.Value = id;
-            pBid.Value = blockId;
-            pCode.Value = categoryCode;
-            pTitle.Value = title;
-            cmd.ExecuteNonQuery();
+            EnsureInserted(
+                await conn.Inserticd10_categoryAsync(
+                    Id: id,
+                    BlockId: blockId,
+                    CategoryCode: categoryCode,
+                    Title: title,
+                    LastUpdated: null,
+                    VersionId: null
+                ),
+                "icd10_category",
+                id
+            );
         }
     }
 
-    private static void SeedCodes(NpgsqlConnection conn)
+    private static async Task SeedCodesAsync(NpgsqlConnection conn)
     {
-        // All codes required by tests (Id, CategoryId, Code, Short, Long, Synonyms)
         var codes = new (
             string Id,
             string CategoryId,
@@ -567,7 +526,6 @@ public static class TestDataSeeder
                 ""
             ),
             ("code-r07-89", "cat-r07", "R07.89", "Other chest pain", "Other chest pain", ""),
-            // Additional codes for search tests
             (
                 "code-a00-1",
                 "cat-a00",
@@ -603,45 +561,34 @@ public static class TestDataSeeder
             ),
         };
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO "public"."icd10_code"
-                ("id", "categoryid", "code", "shortdescription", "longdescription",
-                 "inclusionterms", "exclusionterms", "codealso", "codefirst", "synonyms",
-                 "billable", "effectivefrom", "effectiveto", "edition")
-            VALUES (@id, @catid, @code, @short, @long,
-                    '', '', '', '', @synonyms,
-                    1, '2025-07-01', '', '2025')
-            """;
-
-        var pId = cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Text));
-        var pCatId = cmd.Parameters.Add(
-            new NpgsqlParameter("@catid", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pCode = cmd.Parameters.Add(new NpgsqlParameter("@code", NpgsqlTypes.NpgsqlDbType.Text));
-        var pShort = cmd.Parameters.Add(
-            new NpgsqlParameter("@short", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pLong = cmd.Parameters.Add(new NpgsqlParameter("@long", NpgsqlTypes.NpgsqlDbType.Text));
-        var pSynonyms = cmd.Parameters.Add(
-            new NpgsqlParameter("@synonyms", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-
-        cmd.Prepare();
-
         foreach (var (id, categoryId, code, shortDesc, longDesc, synonyms) in codes)
         {
-            pId.Value = id;
-            pCatId.Value = categoryId;
-            pCode.Value = code;
-            pShort.Value = shortDesc;
-            pLong.Value = longDesc;
-            pSynonyms.Value = synonyms;
-            cmd.ExecuteNonQuery();
+            EnsureInserted(
+                await conn.Inserticd10_codeAsync(
+                    Id: id,
+                    CategoryId: categoryId,
+                    Code: code,
+                    ShortDescription: shortDesc,
+                    LongDescription: longDesc,
+                    InclusionTerms: "",
+                    ExclusionTerms: "",
+                    CodeAlso: "",
+                    CodeFirst: "",
+                    Synonyms: synonyms,
+                    Billable: 1,
+                    EffectiveFrom: "2025-07-01",
+                    EffectiveTo: "",
+                    Edition: "2025",
+                    LastUpdated: null,
+                    VersionId: null
+                ),
+                "icd10_code",
+                id
+            );
         }
     }
 
-    private static void SeedAchiBlocks(NpgsqlConnection conn)
+    private static async Task SeedAchiBlocksAsync(NpgsqlConnection conn)
     {
         var blocks = new (string Id, string BlockNumber, string Title, string Start, string End)[]
         {
@@ -656,36 +603,25 @@ public static class TestDataSeeder
             ),
         };
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO "public"."achi_block" ("id", "blocknumber", "title", "coderangestart", "coderangeend")
-            VALUES (@id, @num, @title, @start, @end)
-            """;
-
-        var pId = cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Text));
-        var pNum = cmd.Parameters.Add(new NpgsqlParameter("@num", NpgsqlTypes.NpgsqlDbType.Text));
-        var pTitle = cmd.Parameters.Add(
-            new NpgsqlParameter("@title", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pStart = cmd.Parameters.Add(
-            new NpgsqlParameter("@start", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pEnd = cmd.Parameters.Add(new NpgsqlParameter("@end", NpgsqlTypes.NpgsqlDbType.Text));
-
-        cmd.Prepare();
-
         foreach (var (id, number, title, start, end) in blocks)
         {
-            pId.Value = id;
-            pNum.Value = number;
-            pTitle.Value = title;
-            pStart.Value = start;
-            pEnd.Value = end;
-            cmd.ExecuteNonQuery();
+            EnsureInserted(
+                await conn.Insertachi_blockAsync(
+                    Id: id,
+                    BlockNumber: number,
+                    Title: title,
+                    CodeRangeStart: start,
+                    CodeRangeEnd: end,
+                    LastUpdated: null,
+                    VersionId: null
+                ),
+                "achi_block",
+                id
+            );
         }
     }
 
-    private static void SeedAchiCodes(NpgsqlConnection conn)
+    private static async Task SeedAchiCodesAsync(NpgsqlConnection conn)
     {
         var codes = new (string Id, string BlockId, string Code, string Short, string Long)[]
         {
@@ -707,33 +643,35 @@ public static class TestDataSeeder
             ("achi-30571-00", "achi-blk-3", "30571-00", "Cholecystectomy", "Cholecystectomy"),
         };
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO "public"."achi_code"
-                ("id", "blockid", "code", "shortdescription", "longdescription",
-                 "billable", "effectivefrom", "effectiveto", "edition")
-            VALUES (@id, @bid, @code, @short, @long,
-                    1, '2025-07-01', '', '13')
-            """;
-
-        var pId = cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Text));
-        var pBid = cmd.Parameters.Add(new NpgsqlParameter("@bid", NpgsqlTypes.NpgsqlDbType.Text));
-        var pCode = cmd.Parameters.Add(new NpgsqlParameter("@code", NpgsqlTypes.NpgsqlDbType.Text));
-        var pShort = cmd.Parameters.Add(
-            new NpgsqlParameter("@short", NpgsqlTypes.NpgsqlDbType.Text)
-        );
-        var pLong = cmd.Parameters.Add(new NpgsqlParameter("@long", NpgsqlTypes.NpgsqlDbType.Text));
-
-        cmd.Prepare();
-
         foreach (var (id, blockId, code, shortDesc, longDesc) in codes)
         {
-            pId.Value = id;
-            pBid.Value = blockId;
-            pCode.Value = code;
-            pShort.Value = shortDesc;
-            pLong.Value = longDesc;
-            cmd.ExecuteNonQuery();
+            EnsureInserted(
+                await conn.Insertachi_codeAsync(
+                    Id: id,
+                    BlockId: blockId,
+                    Code: code,
+                    ShortDescription: shortDesc,
+                    LongDescription: longDesc,
+                    Billable: 1,
+                    EffectiveFrom: "2025-07-01",
+                    EffectiveTo: "",
+                    Edition: "13",
+                    LastUpdated: null,
+                    VersionId: null
+                ),
+                "achi_code",
+                id
+            );
+        }
+    }
+
+    private static void EnsureInserted(Result<Guid?, SqlError> result, string table, string id)
+    {
+        if (result is Result<Guid?, SqlError>.Error<Guid?, SqlError> err)
+        {
+            throw new InvalidOperationException(
+                $"Insert into {table} for id '{id}' failed: {err.Value.Message}"
+            );
         }
     }
 }

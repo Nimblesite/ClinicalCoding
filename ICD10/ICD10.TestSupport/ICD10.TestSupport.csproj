@@ -14,5 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Authorization\Authorization.csproj" />
+    <ProjectReference Include="..\ICD10.Api\ICD10.Api.csproj" />
   </ItemGroup>
 </Project>

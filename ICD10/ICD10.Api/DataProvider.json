@@ -53,7 +53,7 @@
     {
       "schema": "public",
       "name": "icd10_chapter",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -63,7 +63,7 @@
     {
       "schema": "public",
       "name": "icd10_block",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -73,7 +73,7 @@
     {
       "schema": "public",
       "name": "icd10_category",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -83,7 +83,7 @@
     {
       "schema": "public",
       "name": "icd10_code",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -93,7 +93,7 @@
     {
       "schema": "public",
       "name": "icd10_code_embedding",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": true,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -103,7 +103,7 @@
     {
       "schema": "public",
       "name": "achi_block",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -113,7 +113,7 @@
     {
       "schema": "public",
       "name": "achi_code",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -123,7 +123,7 @@
     {
       "schema": "public",
       "name": "achi_code_embedding",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": true,
       "generateDelete": false,
       "primaryKeyColumns": [
@@ -133,7 +133,7 @@
     {
       "schema": "public",
       "name": "user_search_history",
-      "generateInsert": false,
+      "generateInsert": true,
       "generateUpdate": false,
       "generateDelete": false,
       "primaryKeyColumns": [
