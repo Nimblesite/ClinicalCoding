@@ -72,7 +72,7 @@ out/
 publish/
 artifacts/
 
-# DataProvider codegen output (regenerated each build by `dataprovider-postgres`)
+# DataProvider codegen output (regenerated each build by `dotnet DataProvider postgres`)
 **/Generated/
 **/Generated/**/*.g.cs
 **/Generated/.timestamp

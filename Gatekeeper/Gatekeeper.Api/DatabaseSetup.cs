@@ -1,5 +1,5 @@
 using Nimblesite.DataProvider.Migration.Core;
-using Samples.Authorization;
+using Nimblesite.DataProvider.Migration.Postgres;
 using InitError = Outcome.Result<bool, string>.Error<bool, string>;
 using InitOk = Outcome.Result<bool, string>.Ok<bool, string>;
 using InitResult = Outcome.Result<bool, string>;
@@ -32,18 +32,7 @@ internal static class DatabaseSetup
             // Load schema from YAML (source of truth)
             var yamlPath = Path.Combine(AppContext.BaseDirectory, "gatekeeper-schema.yaml");
             var schema = SchemaYamlSerializer.FromYamlFile(yamlPath);
-
-            foreach (var table in schema.Tables)
-            {
-                foreach (var statement in LowercaseDdl.GenerateStatements(table))
-                {
-                    using var cmd = conn.CreateCommand();
-                    cmd.CommandText = statement;
-                    cmd.ExecuteNonQuery();
-                }
-                logger.LogDebug("Created table {TableName}", table.Name);
-            }
-
+            PostgresDdlGenerator.MigrateSchema(conn, schema);
             logger.LogInformation("Created Gatekeeper database schema from YAML");
             return new InitOk(true);
         }

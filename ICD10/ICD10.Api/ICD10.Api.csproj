@@ -18,6 +18,10 @@
       Include="Nimblesite.DataProvider.Migration.Core"
       Version="$(DataProviderVersion)"
     />
+    <PackageReference
+      Include="Nimblesite.DataProvider.Migration.Postgres"
+      Version="$(DataProviderVersion)"
+    />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,7 +37,7 @@
     </Content>
   </ItemGroup>
 
-  <!-- Pre-compile: transpile LQL to SQL, then generate C# via dataprovider-postgres CLI.
+  <!-- Pre-compile: transpile LQL to SQL, then generate C# via `dotnet DataProvider postgres`.
        Requires a live Postgres with the icd10 schema migrated (see `make db-migrate`). -->
   <Target
     Name="GenerateDataProvider"
@@ -48,22 +52,14 @@
     </ItemGroup>
     <Message Importance="High" Text="Transpiling LQL files (@(LqlFiles))" />
     <Exec
-      Command="dotnet lql-postgres --input &quot;%(LqlFiles.Identity)&quot; --output &quot;%(LqlFiles.RootDir)%(LqlFiles.Directory)%(LqlFiles.Filename).generated.sql&quot;"
+      Command="dotnet Lql postgres --input &quot;%(LqlFiles.Identity)&quot; --output &quot;%(LqlFiles.RootDir)%(LqlFiles.Directory)%(LqlFiles.Filename).generated.sql&quot;"
       Condition="'$(EnableLqlTranspile)' == 'true' and @(LqlFiles) != ''"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"
     />
     <Exec
-      Command="dotnet dataprovider-postgres --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot;"
-      WorkingDirectory="$(MSBuildProjectDirectory)"
-      StandardOutputImportance="High"
-      StandardErrorImportance="High"
-    />
-    <!-- Strip generator's quoted PascalCase identifiers and rewrite IS NULL
-         parameter checks. See Clinical.Api.csproj for explanation. -->
-    <Exec
-      Command="sed -i.bak -E -e 's/&quot;&quot;([A-Za-z_][A-Za-z0-9_]*)&quot;&quot;/\1/g' -e 's/@active IS NULL/@active = -1/g' -e &quot;s/@([A-Za-z_][A-Za-z0-9_]*) IS NULL/@\1 = ''/g&quot; $(MSBuildProjectDirectory)/Generated/Get*.g.cs $(MSBuildProjectDirectory)/Generated/Search*.g.cs &amp;&amp; rm -f $(MSBuildProjectDirectory)/Generated/*.g.cs.bak"
+      Command="dotnet DataProvider postgres --project-dir &quot;$(MSBuildProjectDirectory)&quot; --config &quot;$(MSBuildProjectDirectory)/DataProvider.json&quot; --out &quot;$(MSBuildProjectDirectory)/Generated&quot;"
       WorkingDirectory="$(MSBuildProjectDirectory)"
       StandardOutputImportance="High"
       StandardErrorImportance="High"

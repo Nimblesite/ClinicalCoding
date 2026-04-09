@@ -42,9 +42,9 @@ jobs:
         run: make db-migrate
 
       # `make lint` runs the full Release build, which triggers
-      # dataprovider-postgres codegen against the live database, so it
-      # has to come after db-up + db-migrate. Still kept ahead of the
-      # embedding service / Playwright steps to fail fast on warnings.
+      # `dotnet DataProvider postgres` codegen against the live database,
+      # so it has to come after db-up + db-migrate. Still kept ahead of
+      # the embedding service / Playwright steps to fail fast on warnings.
       - name: Lint
         run: make lint
 

@@ -1,5 +1,5 @@
 using Nimblesite.DataProvider.Migration.Core;
-using Samples.Authorization;
+using Nimblesite.DataProvider.Migration.Postgres;
 using InitError = Outcome.Result<bool, string>.Error<bool, string>;
 using InitOk = Outcome.Result<bool, string>.Ok<bool, string>;
 using InitResult = Outcome.Result<bool, string>;
@@ -38,18 +38,7 @@ internal static class DatabaseSetup
         {
             var yamlPath = Path.Combine(AppContext.BaseDirectory, "clinical-schema.yaml");
             var schema = SchemaYamlSerializer.FromYamlFile(yamlPath);
-
-            foreach (var table in schema.Tables)
-            {
-                foreach (var statement in LowercaseDdl.GenerateStatements(table))
-                {
-                    using var cmd = connection.CreateCommand();
-                    cmd.CommandText = statement;
-                    cmd.ExecuteNonQuery();
-                }
-                logger.Log(LogLevel.Debug, "Created table {TableName}", table.Name);
-            }
-
+            PostgresDdlGenerator.MigrateSchema(connection, schema);
             logger.Log(LogLevel.Information, "Created Clinical database schema from YAML");
         }
         catch (Exception ex)
