@@ -67,6 +67,8 @@ For each command extracted from the CI workflow:
 
 ### Hard constraints
 
+- **NEVER skip tests.** Run every single test. If tests need infrastructure, set it up first.
+- **NEVER skip any CI step.** If CI runs it, you run it locally.
 - **NEVER modify test files** — fix the source code, not the tests
 - **NEVER add suppressions** (`#[allow(...)]`, `// eslint-disable`, `#pragma warning disable`)
 - **NEVER use `any` in TypeScript** to silence type errors
@@ -93,11 +95,15 @@ Once all CI steps pass locally:
 ## Rules
 
 - **Always read the CI workflow first.** Never assume what commands CI runs.
+- **NEVER skip tests.** Run ALL tests. If a test requires infrastructure (database, embedding service, browser), set up that infrastructure locally first. No exceptions.
+- **NEVER skip any CI command** (`make test`, `make lint`, `make build`, etc.). Every command that CI runs, you run.
+- The ONLY steps you may skip are GitHub Actions plumbing that has no local equivalent: `actions/checkout`, `actions/setup-dotnet`, `actions/upload-artifact`, and similar CI-runner setup actions. Everything else runs.
+- If a CI step requires Docker services (databases, embedding services, etc.), start them locally before running the step.
+- If a CI step requires browser installation (Playwright, Cypress, etc.), install the browsers locally before running the step.
 - Do not push if any step fails (unless `--failing` and all steps now pass)
 - Fix issues found in each step before moving to the next
-- Never skip steps or suppress errors
+- Never suppress errors
 - If the CI workflow has multiple jobs, run all of them (respecting dependency order)
-- Skip steps that are CI-infrastructure-only (checkout, setup-node/python/rust actions, cache steps, artifact uploads) — focus on the actual build/test/lint commands
 
 ## Success criteria
 
