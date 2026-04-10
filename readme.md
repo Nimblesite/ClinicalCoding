@@ -1,43 +1,122 @@
-# HealthcareSamples
+<div align="center">
 
-FHIR R5-compliant healthcare microservices built with the [DataProvider](https://github.com/MelbourneDeveloper/DataProvider) .NET toolkit.
+# Nimblesite Clinical Coding Platform
 
-Four APIs (Clinical, Scheduling, ICD-10, Gatekeeper), bidirectional sync workers, semantic search via pgvector embeddings, and a React dashboard.
+**Agentic ICD coding powered by patient encounters, clinical notes, and semantic search**
+
+[![CI](https://github.com/MelbourneDeveloper/HealthcareSamples/actions/workflows/ci.yml/badge.svg)](https://github.com/MelbourneDeveloper/HealthcareSamples/actions/workflows/ci.yml)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-512bd4)](https://dotnet.microsoft.com/)
+[![FHIR R5](https://img.shields.io/badge/FHIR-R5-e34f26)](https://build.fhir.org/resourcelist.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+<br />
+
+Built on [**Nimblesite**](https://www.nimblesite.co) [**DataProvider**](https://github.com/MelbourneDeveloper/DataProvider) &mdash; compile-time safe database access, migrations, sync, and query for .NET
+
+</div>
+
+---
+
+> [!CAUTION]
+> **Not for production clinical use.** This is a reference implementation and technology demonstration. [Nimblesite](https://www.nimblesite.co) is not responsible for any healthcare decisions, clinical outcomes, or regulatory compliance arising from use of this software. Always validate ICD coding through qualified clinical coders and established healthcare governance processes.
+
+---
+
+## What Is This?
+
+A full-stack healthcare platform where **patient encounters, observations, and clinical notes flow through FHIR-compliant APIs** into an agentic pipeline that determines ICD-10 codes via semantic search and RAG.
+
+The system captures the clinical context needed to support automated coding: structured encounter data, conditions, medications, and free-text notes. The ICD-10 service uses **pgvector embeddings** to semantically match clinical descriptions to the correct codes &mdash; the foundation for an AI-assisted clinical coding workflow.
+
+<table>
+<tr>
+<td width="50%">
+
+### Clinical Data Pipeline
+- FHIR R5 Patient, Encounter, Condition, MedicationRequest
+- Bidirectional sync between Clinical and Scheduling
+- Structured data for coding context
+
+</td>
+<td width="50%">
+
+### Agentic ICD Coding
+- Semantic search over 16,000+ ICD-10-AM codes
+- pgvector embeddings for clinical text matching
+- RAG pipeline for code determination from notes
+- ACHI procedure code support
+
+</td>
+</tr>
+</table>
 
 ## Quick Start
 
-Prerequisites: [Docker](https://docs.docker.com/get-docker/), [.NET 10 SDK](https://dotnet.microsoft.com/download), [GNU Make](https://www.gnu.org/software/make/)
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/), [.NET 10 SDK](https://dotnet.microsoft.com/download), [GNU Make](https://www.gnu.org/software/make/)
 
 ```bash
 make start-docker
 ```
 
-That's it. Builds the dashboard, starts Postgres, migrates schemas, boots all APIs, serves the dashboard. Open http://localhost:5173.
+That's it. Starts Postgres, migrates schemas, boots all APIs, and serves the dashboard.
 
-Force-rebuild containers:
+Open **http://localhost:5173**
+
+<details>
+<summary><b>Other ways to run</b></summary>
 
 ```bash
+# Force-rebuild containers
 make start-docker BUILD=1
-```
 
-Run APIs locally (faster rebuild cycle, Postgres still in Docker):
-
-```bash
+# Run APIs locally (faster rebuild cycle, Postgres still in Docker)
 make start-local
+
+# Ctrl+C stops everything
 ```
 
-Ctrl+C stops everything.
+</details>
 
 ## Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Dashboard | http://localhost:5173 | React UI (H5 transpiler C# to JS) |
-| Clinical API | http://localhost:5080 | Patient, Encounter, Condition, MedicationRequest |
-| Scheduling API | http://localhost:5001 | Practitioner, Appointment, Schedule, Slot |
-| ICD-10 API | http://localhost:5090 | ICD-10/ACHI codes, semantic search via pgvector |
-| Gatekeeper API | http://localhost:5002 | Passkey authentication, RBAC authorization |
-| Postgres | localhost:5432 | pgvector-enabled, 4 databases |
+| Service | Port | Role |
+|:--------|:-----|:-----|
+| **Dashboard** | [localhost:5173](http://localhost:5173) | React UI &mdash; patient management, sync monitoring, code search |
+| **Clinical API** | [localhost:5080](http://localhost:5080) | Patient, Encounter, Condition, MedicationRequest |
+| **Scheduling API** | [localhost:5001](http://localhost:5001) | Practitioner, Appointment, Schedule, Slot |
+| **ICD-10 API** | [localhost:5090](http://localhost:5090) | ICD-10/ACHI codes, semantic search, RAG coding |
+| **Gatekeeper API** | [localhost:5002](http://localhost:5002) | Passkey authentication, RBAC authorization |
+| **Postgres** | localhost:5432 | pgvector-enabled, 4 databases |
+
+## Architecture
+
+```
+                        Dashboard (React/H5)
+                              |
+           +------------------+------------------+
+           |                  |                  |
+     Gatekeeper.Api    Clinical.Api        Scheduling.Api
+     (Auth / RBAC)     (PostgreSQL)        (PostgreSQL)
+                            |                    |
+                      Clinical.Sync <----> Scheduling.Sync
+                       (bidirectional data sync)
+                              |
+                         ICD10.Api
+                     (PostgreSQL + pgvector)
+                              |
+                     Embedding Service
+                   (semantic code matching)
+```
+
+**Clinical** and **Scheduling** sync data bidirectionally &mdash; practitioners flow into Clinical, patients flow into Scheduling. The **ICD-10 API** provides semantic search over medical codes, forming the backbone of the coding pipeline.
+
+## Data Ownership
+
+| Domain | Owns | Receives via Sync |
+|:-------|:-----|:------------------|
+| Clinical | fhir_Patient, fhir_Encounter, fhir_Condition, fhir_MedicationRequest | sync_Provider |
+| Scheduling | fhir_Practitioner, fhir_Appointment, fhir_Schedule, fhir_Slot | sync_ScheduledPatient |
+| ICD-10 | icd10_chapter, icd10_block, icd10_category, icd10_code, achi_block, achi_code | &mdash; (read-only reference) |
 
 ## Development
 
@@ -51,7 +130,8 @@ make clean          # remove build artifacts
 make setup          # restore tools + packages (run once after clone)
 ```
 
-### Database
+<details>
+<summary><b>Database targets</b></summary>
 
 ```bash
 make db-up          # start Postgres container
@@ -60,80 +140,79 @@ make db-migrate     # apply schemas to all databases
 make db-reset       # wipe and recreate databases from scratch
 ```
 
-## Architecture
+</details>
 
-```
-Dashboard.Web (React/H5)
-       |
-       +--> Gatekeeper.Api     (Passkey auth, RBAC)
-       |
-       +--> Clinical.Api <---- Clinical.Sync <-+
-       |    (PostgreSQL)                       |
-       |    fhir_Patient, fhir_Encounter       | Practitioner -> Provider
-       |                                       |
-       +--> Scheduling.Api <-- Scheduling.Sync <+
-       |    (PostgreSQL)       Patient -> ScheduledPatient
-       |    fhir_Practitioner, fhir_Appointment
-       |
-       +--> ICD10.Api
-            (PostgreSQL + pgvector)
-            icd10_code, achi_code, embeddings
-```
+## API Reference
 
-Clinical and Scheduling sync data bidirectionally. ICD-10 is a read-only reference database with semantic search powered by pgvector embeddings.
+<details>
+<summary><b>Clinical API</b> &mdash; <code>:5080</code></summary>
 
-## Data Ownership
+| Method | Endpoint | Description |
+|:-------|:---------|:------------|
+| GET/POST | `/fhir/Patient` | Patients |
+| GET | `/fhir/Patient/_search?q=smith` | Search patients |
+| GET/POST | `/fhir/Patient/{id}/Encounter` | Encounters |
+| GET/POST | `/fhir/Patient/{id}/Condition` | Conditions |
+| GET/POST | `/fhir/Patient/{id}/MedicationRequest` | Medications |
+| GET | `/sync/changes?fromVersion=0` | Sync feed |
 
-| Domain | Owns | Receives via Sync |
-|--------|------|-------------------|
-| Clinical | fhir_Patient, fhir_Encounter, fhir_Condition, fhir_MedicationRequest | sync_Provider |
-| Scheduling | fhir_Practitioner, fhir_Appointment, fhir_Schedule, fhir_Slot | sync_ScheduledPatient |
-| ICD10 | icd10_chapter, icd10_block, icd10_category, icd10_code, achi_block, achi_code | N/A (read-only) |
+</details>
 
-## API Endpoints
+<details>
+<summary><b>Scheduling API</b> &mdash; <code>:5001</code></summary>
 
-### Clinical (`:5080`)
-- `GET/POST /fhir/Patient` - Patients
-- `GET /fhir/Patient/_search?q=smith` - Search
-- `GET/POST /fhir/Patient/{id}/Encounter` - Encounters
-- `GET/POST /fhir/Patient/{id}/Condition` - Conditions
-- `GET/POST /fhir/Patient/{id}/MedicationRequest` - Medications
-- `GET /sync/changes?fromVersion=0` - Sync feed
+| Method | Endpoint | Description |
+|:-------|:---------|:------------|
+| GET/POST | `/Practitioner` | Practitioners |
+| GET | `/Practitioner/_search?specialty=cardiology` | Search |
+| GET/POST | `/Appointment` | Appointments |
+| PATCH | `/Appointment/{id}/status` | Update status |
+| GET | `/sync/changes?fromVersion=0` | Sync feed |
 
-### Scheduling (`:5001`)
-- `GET/POST /Practitioner` - Practitioners
-- `GET /Practitioner/_search?specialty=cardiology` - Search
-- `GET/POST /Appointment` - Appointments
-- `PATCH /Appointment/{id}/status` - Update status
-- `GET /sync/changes?fromVersion=0` - Sync feed
+</details>
 
-### ICD10 (`:5090`)
-- `GET /api/icd10/chapters` - ICD-10 chapters
-- `GET /api/icd10/chapters/{id}/blocks` - Blocks within chapter
-- `GET /api/icd10/codes/{code}` - Direct code lookup (`?format=fhir`)
-- `GET /api/icd10/codes?q={query}&limit=20` - Text search
-- `GET /api/achi/blocks` - ACHI procedure blocks
-- `GET /api/achi/codes?q={query}&limit=20` - ACHI text search
-- `POST /api/search` - RAG semantic search (requires embedding service)
+<details>
+<summary><b>ICD-10 API</b> &mdash; <code>:5090</code></summary>
 
-### Gatekeeper (`:5002`)
-- `POST /auth/register/begin` - Start passkey registration
-- `POST /auth/register/complete` - Complete passkey registration
-- `POST /auth/login/begin` - Start passkey login
-- `POST /auth/login/complete` - Complete passkey login
-- `GET /auth/session` - Current session info
-- `GET /authz/check` - Permission check
-- `POST /authz/evaluate` - Bulk permission evaluation
+| Method | Endpoint | Description |
+|:-------|:---------|:------------|
+| GET | `/api/icd10/chapters` | ICD-10 chapters |
+| GET | `/api/icd10/chapters/{id}/blocks` | Blocks within chapter |
+| GET | `/api/icd10/codes/{code}` | Code lookup (`?format=fhir`) |
+| GET | `/api/icd10/codes?q={query}&limit=20` | Text search |
+| GET | `/api/achi/blocks` | ACHI procedure blocks |
+| GET | `/api/achi/codes?q={query}&limit=20` | ACHI text search |
+| POST | `/api/search` | RAG semantic search |
+
+</details>
+
+<details>
+<summary><b>Gatekeeper API</b> &mdash; <code>:5002</code></summary>
+
+| Method | Endpoint | Description |
+|:-------|:---------|:------------|
+| POST | `/auth/register/begin` | Start passkey registration |
+| POST | `/auth/register/complete` | Complete passkey registration |
+| POST | `/auth/login/begin` | Start passkey login |
+| POST | `/auth/login/complete` | Complete passkey login |
+| GET | `/auth/session` | Current session info |
+| GET | `/authz/check` | Permission check |
+| POST | `/authz/evaluate` | Bulk permission evaluation |
+
+</details>
 
 ## Tech Stack
 
-- .NET 10, ASP.NET Core Minimal API
-- PostgreSQL with pgvector (semantic search)
-- DataProvider (compile-time safe SQL)
-- Sync Framework (bidirectional sync)
-- LQL (Lambda Query Language)
-- H5 transpiler + React 18
-- Docker Compose
+| Layer | Technology |
+|:------|:-----------|
+| Runtime | .NET 10, ASP.NET Core Minimal API |
+| Database | PostgreSQL + pgvector |
+| Data Access | [Nimblesite](https://www.nimblesite.co) [DataProvider](https://github.com/MelbourneDeveloper/DataProvider) (compile-time safe SQL) |
+| Sync | [Nimblesite](https://www.nimblesite.co) Sync Framework (bidirectional) |
+| Query | [Nimblesite](https://www.nimblesite.co) LQL (Lambda Query Language) |
+| Embeddings | MedEmbed via FastAPI |
+| Frontend | H5 transpiler (C# to JS) + React 18 |
+| Infrastructure | Docker Compose |
 
 ## License
 
