@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt fmt-check clean ci coverage-check setup db-up db-down db-reset db-wait db-migrate start-local start-docker
+.PHONY: build test lint fmt fmt-check clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -21,8 +21,8 @@ else
 endif
 
 # Per-project coverage thresholds live in this JSON file. Each test
-# project gets its own minimum line-rate; bump them via `make coverage-check`
-# output minus 1 percentage point (rounding margin).
+# project gets its own minimum line-rate. `make test` enforces these after
+# each project. Bump thresholds to floor(measured) - 1 when coverage increases.
 COVERAGE_THRESHOLDS_FILE ?= coverage-thresholds.json
 
 # Postgres dev database (docker compose). Override in CI via env vars.
@@ -54,12 +54,17 @@ TEST_PROJECTS = \
 ## test: Run full test suite with coverage (FAIL FAST)
 ##   - Stops at the first failing test inside an assembly (xunit stopOnFail)
 ##   - Stops at the first failing assembly across the suite (set -e)
-##   - Each project's coverage lands under TestResults/<project-dir>/ so
-##     `make coverage-check` can attribute results back to a project.
+##   - After each project, checks coverage against threshold from $(COVERAGE_THRESHOLDS_FILE)
+##     and fails immediately if below.
 test: db-migrate
 	@echo "==> Testing (fail-fast)..."
+	@command -v jq >/dev/null 2>&1 || { echo "FAIL: jq is required (brew install jq / apt-get install jq)"; exit 1; }
+	@if [ ! -f "$(COVERAGE_THRESHOLDS_FILE)" ]; then \
+	  echo "FAIL: $(COVERAGE_THRESHOLDS_FILE) not found"; exit 1; \
+	fi
 	@set -e; \
 	rm -rf TestResults; \
+	default=$$(jq -r '.default_threshold' $(COVERAGE_THRESHOLDS_FILE)); \
 	for proj in $(TEST_PROJECTS); do \
 	  proj_dir=$$(dirname "$$proj"); \
 	  echo ""; \
@@ -70,6 +75,20 @@ test: db-migrate
 	    --results-directory "TestResults/$$proj_dir" \
 	    --verbosity normal \
 	    || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	  cobertura=$$(find "TestResults/$$proj_dir" -name 'coverage.cobertura.xml' 2>/dev/null | head -1); \
+	  threshold=$$(jq -r --arg p "$$proj_dir" --arg d "$$default" '.projects[$$p].threshold // ($$d | tonumber)' $(COVERAGE_THRESHOLDS_FILE)); \
+	  if [ -z "$$cobertura" ]; then \
+	    echo "FAIL ($$proj_dir): no coverage.cobertura.xml"; exit 1; \
+	  fi; \
+	  line_rate=$$(awk 'match($$0, /line-rate="[0-9.]+"/) { s=substr($$0, RSTART+11, RLENGTH-12); print s; exit }' "$$cobertura"); \
+	  pct=$$(awk "BEGIN{printf \"%.1f\", $${line_rate:-0}*100}"); \
+	  pct_int=$$(awk "BEGIN{printf \"%d\", $${line_rate:-0}*100}"); \
+	  if [ "$$pct_int" -lt "$$threshold" ]; then \
+	    printf "FAIL %-44s %s%% < %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
+	    exit 1; \
+	  else \
+	    printf "OK   %-44s %s%% >= %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
+	  fi; \
 	done
 
 ## lint: Run all linters (fails on any warning)
@@ -98,47 +117,8 @@ else
 	$(RM) TestResults
 endif
 
-## ci: lint + test + coverage-check + build (full CI simulation)
-ci: lint test coverage-check build
-
-## coverage-check: Assert per-project line-rate >= threshold from $(COVERAGE_THRESHOLDS_FILE)
-##   The JSON file declares { "default_threshold": N, "projects": { "<dir>": { "threshold": N } } }.
-##   A project that is missing from the file inherits "default_threshold".
-##   When coverage actually goes UP, edit the file: floor(measured) - 1 to leave a rounding cushion.
-coverage-check:
-	@echo "==> Checking coverage thresholds (file: $(COVERAGE_THRESHOLDS_FILE))..."
-	@command -v jq >/dev/null 2>&1 || { echo "FAIL: jq is required (brew install jq / apt-get install jq)"; exit 1; }
-	@if [ ! -f "$(COVERAGE_THRESHOLDS_FILE)" ]; then \
-	  echo "FAIL: $(COVERAGE_THRESHOLDS_FILE) not found"; exit 1; \
-	fi
-	@set -e; \
-	default=$$(jq -r '.default_threshold' $(COVERAGE_THRESHOLDS_FILE)); \
-	any_failed=0; \
-	for proj in $(TEST_PROJECTS); do \
-	  proj_dir=$$(dirname "$$proj"); \
-	  cobertura=$$(find "TestResults/$$proj_dir" -name 'coverage.cobertura.xml' 2>/dev/null | head -1); \
-	  threshold=$$(jq -r --arg p "$$proj_dir" --arg d "$$default" '.projects[$$p].threshold // ($$d | tonumber)' $(COVERAGE_THRESHOLDS_FILE)); \
-	  if [ -z "$$cobertura" ]; then \
-	    echo "FAIL ($$proj_dir): no coverage.cobertura.xml under TestResults/$$proj_dir"; \
-	    any_failed=1; continue; \
-	  fi; \
-	  line_rate=$$(awk 'match($$0, /line-rate="[0-9.]+"/) { s=substr($$0, RSTART+11, RLENGTH-12); print s; exit }' "$$cobertura"); \
-	  pct=$$(awk "BEGIN{printf \"%.1f\", $${line_rate:-0}*100}"); \
-	  pct_int=$$(awk "BEGIN{printf \"%d\", $${line_rate:-0}*100}"); \
-	  if [ "$$pct_int" -lt "$$threshold" ]; then \
-	    printf "FAIL %-44s %s%% < %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
-	    any_failed=1; \
-	  else \
-	    printf "OK   %-44s %s%% >= %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
-	  fi; \
-	done; \
-	if [ "$$any_failed" -ne 0 ]; then \
-	  echo ""; \
-	  echo "FAIL: one or more projects below threshold (see $(COVERAGE_THRESHOLDS_FILE))"; \
-	  exit 1; \
-	fi; \
-	echo ""; \
-	echo "OK: all projects meet their coverage thresholds"
+## ci: lint + test + build (full CI simulation -- test includes coverage checks)
+ci: lint test build
 
 ## setup: Post-create dev environment setup
 setup:

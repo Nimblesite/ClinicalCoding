@@ -74,11 +74,6 @@ jobs:
       - name: Test
         run: make test
 
-      # Per-project thresholds live in coverage-thresholds.json (default 80%).
-      # Bump entries by floor(measured) - 1 whenever real coverage improves.
-      - name: Coverage check
-        run: make coverage-check
-
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         if: always()

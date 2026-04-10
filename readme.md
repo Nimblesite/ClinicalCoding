@@ -90,22 +90,23 @@ make start-local
 
 ## Architecture
 
-```
-                        Dashboard (React/H5)
-                              |
-           +------------------+------------------+
-           |                  |                  |
-     Gatekeeper.Api    Clinical.Api        Scheduling.Api
-     (Auth / RBAC)     (PostgreSQL)        (PostgreSQL)
-                            |                    |
-                      Clinical.Sync <----> Scheduling.Sync
-                       (bidirectional data sync)
-                              |
-                         ICD10.Api
-                     (PostgreSQL + pgvector)
-                              |
-                     Embedding Service
-                   (semantic code matching)
+```mermaid
+graph TD
+    Dashboard["Dashboard<br/><sub>React / H5</sub>"]
+
+    Dashboard --> Gatekeeper["Gatekeeper API<br/><sub>Passkey Auth · RBAC</sub>"]
+    Dashboard --> Clinical["Clinical API<br/><sub>Patient · Encounter · Condition</sub>"]
+    Dashboard --> Scheduling["Scheduling API<br/><sub>Practitioner · Appointment · Slot</sub>"]
+    Dashboard --> ICD10["ICD-10 API<br/><sub>Code Lookup · RAG Search</sub>"]
+
+    Clinical <-->|"bidirectional sync"| Scheduling
+
+    ICD10 --> Embedding["Embedding Service<br/><sub>Semantic Code Matching</sub>"]
+
+    Clinical --> PG[("PostgreSQL<br/><sub>pgvector</sub>")]
+    Scheduling --> PG
+    ICD10 --> PG
+    Gatekeeper --> PG
 ```
 
 **Clinical** and **Scheduling** sync data bidirectionally &mdash; practitioners flow into Clinical, patients flow into Scheduling. The **ICD-10 API** provides semantic search over medical codes, forming the backbone of the coding pipeline.
@@ -121,8 +122,8 @@ make start-local
 ## Development
 
 ```bash
-make ci             # full CI: lint + test + coverage-check + build
-make test           # run all tests with coverage
+make ci             # full CI: lint + test + build
+make test           # run all tests (fails on coverage threshold violations)
 make lint           # run all linters
 make fmt            # format all code
 make build          # compile everything (Release)
