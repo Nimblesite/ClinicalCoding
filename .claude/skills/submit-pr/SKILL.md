@@ -3,13 +3,15 @@ name: submit-pr
 description: Creates a pull request with a well-structured description after verifying CI passes. Use when the user asks to submit, create, or open a pull request.
 disable-model-invocation: true
 ---
-<!-- agent-pmo:80947ac -->
+<!-- agent-pmo:6647c8e -->
 
 # Submit PR
 
 Create a pull request for the current branch with a well-structured description.
 
 ## Steps
+
+*NOTE: if you already ran make ci in this session and it passed, you can skip step 1.*
 
 1. Run `make ci` — must pass completely before creating PR
 2. **Generate the diff against main.** Run `git diff main...HEAD > /tmp/pr-diff.txt` to capture the full diff between the current branch and the head of main. This is the ONLY source of truth for what the PR contains. **Warning:** the diff can be very large. If the diff file exceeds context limits, process it in chunks (e.g., read sections with `head`/`tail` or split by file) rather than trying to load it all at once.

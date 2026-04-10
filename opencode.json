@@ -1,5 +1,5 @@
 {
-  "_agent_pmo": "80947ac",
+  "_agent_pmo": "6647c8e",
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["CLAUDE.md"]
 }

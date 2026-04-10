@@ -5,7 +5,7 @@
 > Read this entire file before writing any code.
 > These rules are NON-NEGOTIABLE. Violations will be rejected in review.
 
-<!-- agent-pmo:80947ac -->
+<!-- agent-pmo:6647c8e -->
 
 ## Project Overview
 
