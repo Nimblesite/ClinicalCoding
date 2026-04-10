@@ -1,136 +1,145 @@
 {
-    "queries": [
-        {
-            "name": "GetChapters",
-            "sqlFile": "Queries/GetChapters.generated.sql"
-        },
-        {
-            "name": "GetBlocksByChapter",
-            "sqlFile": "Queries/GetBlocksByChapter.generated.sql"
-        },
-        {
-            "name": "GetCategoriesByBlock",
-            "sqlFile": "Queries/GetCategoriesByBlock.generated.sql"
-        },
-        {
-            "name": "GetCodesByCategory",
-            "sqlFile": "Queries/GetCodesByCategory.generated.sql"
-        },
-        {
-            "name": "GetCodeByCode",
-            "sqlFile": "Queries/GetCodeByCode.generated.sql"
-        },
-        {
-            "name": "GetAchiBlocks",
-            "sqlFile": "Queries/GetAchiBlocks.generated.sql"
-        },
-        {
-            "name": "GetAchiCodesByBlock",
-            "sqlFile": "Queries/GetAchiCodesByBlock.generated.sql"
-        },
-        {
-            "name": "GetAchiCodeByCode",
-            "sqlFile": "Queries/GetAchiCodeByCode.generated.sql"
-        },
-        {
-            "name": "GetCodeEmbedding",
-            "sqlFile": "Queries/GetCodeEmbedding.generated.sql"
-        },
-        {
-            "name": "GetAllCodeEmbeddings",
-            "sqlFile": "Queries/GetAllCodeEmbeddings.generated.sql"
-        },
-        {
-            "name": "SearchAchiCodes",
-            "sqlFile": "Queries/SearchAchiCodes.sql"
-        },
-        {
-            "name": "SearchIcd10Codes",
-            "sqlFile": "Queries/SearchIcd10Codes.sql"
-        }
-    ],
-    "tables": [
-        {
-            "schema": "main",
-            "name": "icd10_chapter",
-            "generateInsert": false,
-            "generateUpdate": false,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "icd10_block",
-            "generateInsert": false,
-            "generateUpdate": false,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "icd10_category",
-            "generateInsert": false,
-            "generateUpdate": false,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "icd10_code",
-            "generateInsert": false,
-            "generateUpdate": false,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "icd10_code_embedding",
-            "generateInsert": false,
-            "generateUpdate": true,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "achi_block",
-            "generateInsert": false,
-            "generateUpdate": false,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "achi_code",
-            "generateInsert": false,
-            "generateUpdate": false,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "achi_code_embedding",
-            "generateInsert": false,
-            "generateUpdate": true,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        },
-        {
-            "schema": "main",
-            "name": "user_search_history",
-            "generateInsert": false,
-            "generateUpdate": false,
-            "generateDelete": false,
-            "excludeColumns": ["Id"],
-            "primaryKeyColumns": ["Id"]
-        }
-    ],
-    "connectionString": "Data Source=icd10.db"
+  "queries": [
+    {
+      "name": "GetChapters",
+      "sqlFile": "Queries/GetChapters.generated.sql"
+    },
+    {
+      "name": "GetBlocksByChapter",
+      "sqlFile": "Queries/GetBlocksByChapter.generated.sql"
+    },
+    {
+      "name": "GetCategoriesByBlock",
+      "sqlFile": "Queries/GetCategoriesByBlock.generated.sql"
+    },
+    {
+      "name": "GetCodesByCategory",
+      "sqlFile": "Queries/GetCodesByCategory.generated.sql"
+    },
+    {
+      "name": "GetCodeByCode",
+      "sqlFile": "Queries/GetCodeByCode.generated.sql"
+    },
+    {
+      "name": "GetAchiBlocks",
+      "sqlFile": "Queries/GetAchiBlocks.generated.sql"
+    },
+    {
+      "name": "GetAchiCodesByBlock",
+      "sqlFile": "Queries/GetAchiCodesByBlock.generated.sql"
+    },
+    {
+      "name": "GetAchiCodeByCode",
+      "sqlFile": "Queries/GetAchiCodeByCode.generated.sql"
+    },
+    {
+      "name": "GetCodeEmbedding",
+      "sqlFile": "Queries/GetCodeEmbedding.generated.sql"
+    },
+    {
+      "name": "GetAllCodeEmbeddings",
+      "sqlFile": "Queries/GetAllCodeEmbeddings.generated.sql"
+    },
+    {
+      "name": "SearchAchiCodes",
+      "sqlFile": "Queries/SearchAchiCodes.sql"
+    },
+    {
+      "name": "SearchIcd10Codes",
+      "sqlFile": "Queries/SearchIcd10Codes.sql"
+    }
+  ],
+  "tables": [
+    {
+      "schema": "public",
+      "name": "icd10_chapter",
+      "generateInsert": true,
+      "generateUpdate": false,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "icd10_block",
+      "generateInsert": true,
+      "generateUpdate": false,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "icd10_category",
+      "generateInsert": true,
+      "generateUpdate": false,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "icd10_code",
+      "generateInsert": true,
+      "generateUpdate": false,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "icd10_code_embedding",
+      "generateInsert": true,
+      "generateUpdate": true,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "achi_block",
+      "generateInsert": true,
+      "generateUpdate": false,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "achi_code",
+      "generateInsert": true,
+      "generateUpdate": false,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "achi_code_embedding",
+      "generateInsert": true,
+      "generateUpdate": true,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "user_search_history",
+      "generateInsert": true,
+      "generateUpdate": false,
+      "generateDelete": false,
+      "primaryKeyColumns": [
+        "Id"
+      ]
+    }
+  ],
+  "connectionString": "Host=localhost;Port=5432;Database=icd10;Username=postgres;Password=changeme"
 }

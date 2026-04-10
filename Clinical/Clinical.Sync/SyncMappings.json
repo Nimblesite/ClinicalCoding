@@ -2,7 +2,7 @@
   "mappings": [
     {
       "source_table": "fhir_Practitioner",
-      "target_table": "sync_Provider",
+      "target_table": "sync_provider",
       "column_mappings": [
         {
           "source": "Id",

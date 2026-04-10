@@ -1,1 +1,0 @@
-SELECT fhir_Appointment.Id, fhir_Appointment.StartTime, fhir_Appointment.EndTime, fhir_Appointment.Status FROM fhir_Appointment WHERE fhir_Appointment.PractitionerReference = @practitionerRef AND fhir_Appointment.Status != 'cancelled' AND fhir_Appointment.StartTime < @proposedEnd AND fhir_Appointment.EndTime > @proposedStart

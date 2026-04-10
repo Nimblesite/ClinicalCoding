@@ -1,0 +1,32 @@
+{
+  "queries": [
+    { "name": "GetUserByEmail", "sqlFile": "Sql/GetUserByEmail.sql" },
+    { "name": "GetUserById", "sqlFile": "Sql/GetUserById.sql" },
+    { "name": "GetUserCredentials", "sqlFile": "Sql/GetUserCredentials.sql" },
+    { "name": "GetCredentialById", "sqlFile": "Sql/GetCredentialById.sql" },
+    { "name": "GetSessionById", "sqlFile": "Sql/GetSessionById.sql" },
+    { "name": "GetChallengeById", "sqlFile": "Sql/GetChallengeById.sql" },
+    { "name": "GetUserRoles", "sqlFile": "Sql/GetUserRoles.sql" },
+    { "name": "GetUserPermissions", "sqlFile": "Sql/GetUserPermissions.sql" },
+    { "name": "CheckResourceGrant", "sqlFile": "Sql/CheckResourceGrant.sql" },
+    { "name": "GetActivePolicies", "sqlFile": "Sql/GetActivePolicies.sql" },
+    { "name": "GetAllRoles", "sqlFile": "Sql/GetAllRoles.sql" },
+    { "name": "GetAllPermissions", "sqlFile": "Sql/GetAllPermissions.sql" },
+    { "name": "GetCredentialsByUserId", "sqlFile": "Sql/GetCredentialsByUserId.sql" },
+    { "name": "GetRolePermissions", "sqlFile": "Sql/GetRolePermissions.sql" },
+    { "name": "GetAllUsers", "sqlFile": "Sql/GetAllUsers.sql" },
+    { "name": "CheckPermission", "sqlFile": "Sql/CheckPermission.sql" },
+    { "name": "GetSessionRevoked", "sqlFile": "Sql/GetSessionRevoked.sql" },
+    { "name": "GetSessionForRevoke", "sqlFile": "Sql/GetSessionForRevoke.sql" }
+  ],
+  "tables": [
+    { "schema": "public", "name": "gk_user", "generateInsert": true, "primaryKeyColumns": ["id"] },
+    { "schema": "public", "name": "gk_credential", "generateInsert": true, "primaryKeyColumns": ["id"] },
+    { "schema": "public", "name": "gk_session", "generateInsert": true, "generateUpdate": true, "primaryKeyColumns": ["id"] },
+    { "schema": "public", "name": "gk_challenge", "generateInsert": true, "primaryKeyColumns": ["id"] },
+    { "schema": "public", "name": "gk_permission", "generateInsert": true, "primaryKeyColumns": ["id"] },
+    { "schema": "public", "name": "gk_resource_grant", "generateInsert": true, "primaryKeyColumns": ["id"] },
+    { "schema": "public", "name": "gk_role", "generateInsert": true, "primaryKeyColumns": ["id"] }
+  ],
+  "connectionString": "Host=localhost;Port=5432;Database=gatekeeper;Username=postgres;Password=changeme"
+}

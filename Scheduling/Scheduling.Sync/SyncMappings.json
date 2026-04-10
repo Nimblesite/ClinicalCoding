@@ -2,7 +2,7 @@
   "mappings": [
     {
       "source_table": "fhir_Patient",
-      "target_table": "sync_ScheduledPatient",
+      "target_table": "sync_scheduledpatient",
       "column_mappings": [
         {
           "source": "Id",

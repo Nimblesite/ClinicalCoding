@@ -1,1 +1,0 @@
-SELECT fhir_Schedule.Id, fhir_Schedule.PractitionerReference, fhir_Practitioner.NameFamily, fhir_Practitioner.NameGiven, fhir_Schedule.PlanningHorizon, fhir_Schedule.Active FROM fhir_Schedule INNER JOIN fhir_Practitioner ON fhir_Schedule.PractitionerReference = fhir_Practitioner.Id WHERE fhir_Schedule.PractitionerReference = @practitionerRef AND fhir_Schedule.Active = 1

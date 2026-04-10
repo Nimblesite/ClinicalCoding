@@ -1,4 +1,4 @@
 -- Get all practitioners
-fhir_Practitioner
-|> select(fhir_Practitioner.Id, fhir_Practitioner.Identifier, fhir_Practitioner.Active, fhir_Practitioner.NameFamily, fhir_Practitioner.NameGiven, fhir_Practitioner.Qualification, fhir_Practitioner.Specialty, fhir_Practitioner.TelecomEmail, fhir_Practitioner.TelecomPhone)
-|> order_by(fhir_Practitioner.NameFamily, fhir_Practitioner.NameGiven)
+fhir_practitioner
+|> select(fhir_practitioner.Id, fhir_practitioner.Identifier, fhir_practitioner.Active, fhir_practitioner.NameFamily, fhir_practitioner.NameGiven, fhir_practitioner.Qualification, fhir_practitioner.Specialty, fhir_practitioner.TelecomEmail, fhir_practitioner.TelecomPhone)
+|> order_by(fhir_practitioner.NameFamily, fhir_practitioner.NameGiven)

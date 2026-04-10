@@ -315,12 +315,12 @@ app.MapPost(
             await using (icdCmd.ConfigureAwait(false))
             {
                 icdCmd.CommandText = """
-                SELECT c."code", c."shortdescription", c."longdescription",
-                       c."inclusionterms", c."exclusionterms", c."codealso", c."codefirst",
-                       1 - (e."embedding"::vector <=> @queryVector::vector) as similarity
+                SELECT c."Code", c."ShortDescription", c."LongDescription",
+                       c."InclusionTerms", c."ExclusionTerms", c."CodeAlso", c."CodeFirst",
+                       1 - (e."Embedding"::vector <=> @queryVector::vector) as similarity
                 FROM icd10_code c
-                JOIN icd10_code_embedding e ON c."id" = e."codeid"
-                ORDER BY e."embedding"::vector <=> @queryVector::vector
+                JOIN icd10_code_embedding e ON c."Id" = e."CodeId"
+                ORDER BY e."Embedding"::vector <=> @queryVector::vector
                 LIMIT @limit
                 """;
                 icdCmd.Parameters.AddWithValue("@queryVector", vectorString);
@@ -370,11 +370,11 @@ app.MapPost(
             await using (achiCmd.ConfigureAwait(false))
             {
                 achiCmd.CommandText = """
-                SELECT c."code", c."shortdescription", c."longdescription",
-                       1 - (e."embedding"::vector <=> @queryVector::vector) as similarity
+                SELECT c."Code", c."ShortDescription", c."LongDescription",
+                       1 - (e."Embedding"::vector <=> @queryVector::vector) as similarity
                 FROM achi_code c
-                JOIN achi_code_embedding e ON c."id" = e."codeid"
-                ORDER BY e."embedding"::vector <=> @queryVector::vector
+                JOIN achi_code_embedding e ON c."Id" = e."CodeId"
+                ORDER BY e."Embedding"::vector <=> @queryVector::vector
                 LIMIT @limit
                 """;
                 achiCmd.Parameters.AddWithValue("@queryVector", vectorString);
@@ -484,23 +484,21 @@ app.Run();
 // HELPER METHODS
 // ============================================================================
 
-/// <summary>
-/// Enriches a code record with derived hierarchy info when DB values are null.
-/// Uses Icd10Chapters to derive chapter/category from code prefix.
-/// </summary>
+// Enriches a code record with derived hierarchy info when DB values are null.
+// Uses Icd10Chapters to derive chapter/category from code prefix.
 static GetCodeByCode EnrichCodeWithDerivedHierarchy(GetCodeByCode code)
 {
     var (chapterNum, chapterTitle) = string.IsNullOrEmpty(code.ChapterNumber)
-        ? Icd10Chapters.GetChapter(code.Code)
+        ? Icd10Chapters.GetChapter(code.Code ?? string.Empty)
         : (code.ChapterNumber, code.ChapterTitle ?? "");
 
     var categoryCode = string.IsNullOrEmpty(code.CategoryCode)
-        ? Icd10Chapters.GetCategory(code.Code)
+        ? Icd10Chapters.GetCategory(code.Code ?? string.Empty)
         : code.CategoryCode;
 
     // Derive block from category when not in DB - use category code as pseudo-block
     var (blockCode, blockTitle) = string.IsNullOrEmpty(code.BlockCode)
-        ? Icd10Chapters.GetBlock(code.Code)
+        ? Icd10Chapters.GetBlock(code.Code ?? string.Empty)
         : (code.BlockCode, code.BlockTitle ?? "");
 
     return code with
@@ -548,9 +546,7 @@ static object ToFhirProcedure(GetAchiCodeByCode code) =>
         Property = new[] { new { Code = "block", ValueString = code.BlockNumber } },
     };
 
-/// <summary>
-/// Enriches search result with derived hierarchy when DB values are null.
-/// </summary>
+// Enriches search result with derived hierarchy when DB values are null.
 static object EnrichSearchResult(SearchIcd10Codes code)
 {
     var codeValue = code.Code ?? "";

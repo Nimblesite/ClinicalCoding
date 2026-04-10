@@ -1,7 +1,7 @@
 -- Get available slots for a practitioner
 -- Parameters: @practitionerRef, @fromDate, @toDate
-fhir_Slot
-|> join(fhir_Schedule, on = fhir_Slot.ScheduleReference = fhir_Schedule.Id)
-|> filter(fn(row) => row.fhir_Schedule.PractitionerReference = @practitionerRef and row.fhir_Slot.Status = 'free' and row.fhir_Slot.StartTime >= @fromDate and row.fhir_Slot.StartTime < @toDate)
-|> select(fhir_Slot.Id, fhir_Slot.Status, fhir_Slot.StartTime, fhir_Slot.EndTime, fhir_Schedule.PractitionerReference)
-|> order_by(fhir_Slot.StartTime)
+fhir_slot
+|> join(fhir_schedule, on = fhir_slot.ScheduleReference = fhir_schedule.Id)
+|> filter(fn(row) => row.fhir_schedule.PractitionerReference = @practitionerRef and row.fhir_slot.Status = 'free' and row.fhir_slot.StartTime >= @fromDate and row.fhir_slot.StartTime < @toDate)
+|> select(fhir_slot.Id, fhir_slot.Status, fhir_slot.StartTime, fhir_slot.EndTime, fhir_schedule.PractitionerReference)
+|> order_by(fhir_slot.StartTime)

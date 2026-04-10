@@ -159,7 +159,7 @@ public static class AuthHelpers
         }
         catch (Exception ex)
         {
-            return new PermissionResult(false, $"Permission check failed: {ex.Message}");
+            return new PermissionResult(false, $"Permission check failed: {ex}");
         }
     }
 

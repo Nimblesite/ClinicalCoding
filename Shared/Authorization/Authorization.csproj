@@ -8,5 +8,9 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference
+      Include="Nimblesite.DataProvider.Migration.Core"
+      Version="$(DataProviderVersion)"
+    />
   </ItemGroup>
 </Project>

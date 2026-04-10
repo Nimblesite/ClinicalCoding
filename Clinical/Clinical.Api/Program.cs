@@ -94,20 +94,22 @@ patientGroup
         ) =>
         {
             using var conn = getConn();
+            // Active and gender filters are applied in C# because LQL `is null`
+            // checks produce non-nullable params with no "match-all" sentinel.
+            // String LIKE filters survive empty-string params via LIKE '%%'.
             var result = await conn.GetPatientsAsync(
-                    active.HasValue
-                        ? active.Value
-                            ? 1
-                            : 0
-                        : DBNull.Value,
-                    familyName ?? (object)DBNull.Value,
-                    givenName ?? (object)DBNull.Value,
-                    gender ?? (object)DBNull.Value
+                    familyName ?? string.Empty,
+                    givenName ?? string.Empty
                 )
                 .ConfigureAwait(false);
             return result switch
             {
-                GetPatientsOk(var patients) => Results.Ok(patients),
+                GetPatientsOk(var patients) => Results.Ok(
+                    patients
+                        .Where(p => !active.HasValue || p.Active == (active.Value ? 1 : 0))
+                        .Where(p => string.IsNullOrEmpty(gender) || p.Gender == gender)
+                        .ToImmutableList()
+                ),
                 GetPatientsError(var err) => Results.Problem(err.Message),
             };
         }
@@ -161,7 +163,7 @@ patientGroup
             );
 
             var result = await transaction
-                .Insertfhir_PatientAsync(
+                .Insertfhir_patientAsync(
                     id,
                     request.Active ? 1 : 0,
                     request.GivenName,
@@ -251,7 +253,7 @@ patientGroup
             );
 
             var result = await transaction
-                .Updatefhir_PatientAsync(
+                .Updatefhir_patientAsync(
                     id,
                     request.Active ? 1 : 0,
                     request.GivenName,
@@ -374,7 +376,7 @@ encounterGroup
             );
 
             var result = await transaction
-                .Insertfhir_EncounterAsync(
+                .Insertfhir_encounterAsync(
                     id,
                     request.Status,
                     request.Class,
@@ -470,23 +472,23 @@ conditionGroup
             var recordedDate = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             var result = await transaction
-                .Insertfhir_ConditionAsync(
-                    id: id,
-                    clinicalstatus: request.ClinicalStatus,
-                    verificationstatus: request.VerificationStatus,
-                    category: request.Category,
-                    severity: request.Severity,
-                    codesystem: request.CodeSystem,
-                    codevalue: request.CodeValue,
-                    codedisplay: request.CodeDisplay,
-                    subjectreference: patientId,
-                    encounterreference: request.EncounterReference,
-                    onsetdatetime: request.OnsetDateTime,
-                    recordeddate: recordedDate,
-                    recorderreference: request.RecorderReference,
-                    notetext: request.NoteText,
-                    lastupdated: now,
-                    versionid: 1
+                .Insertfhir_conditionAsync(
+                    id,
+                    request.ClinicalStatus,
+                    request.VerificationStatus,
+                    request.Category,
+                    request.Severity,
+                    request.CodeSystem,
+                    request.CodeValue,
+                    request.CodeDisplay,
+                    patientId,
+                    request.EncounterReference,
+                    request.OnsetDateTime,
+                    recordedDate,
+                    request.RecorderReference,
+                    request.NoteText,
+                    now,
+                    1
                 )
                 .ConfigureAwait(false);
 
@@ -579,7 +581,7 @@ medicationGroup
             );
 
             var result = await transaction
-                .Insertfhir_MedicationRequestAsync(
+                .Insertfhir_medicationrequestAsync(
                     id,
                     request.Status,
                     request.Intent,
@@ -788,7 +790,7 @@ app.MapGet(
             using var conn = getConn();
             using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                "SELECT ProviderId, FirstName, LastName, Specialty, SyncedAt FROM sync_Provider";
+                "SELECT \"ProviderId\", \"FirstName\", \"LastName\", \"Specialty\", \"SyncedAt\" FROM sync_provider";
             using var reader = cmd.ExecuteReader();
             var providers = new List<object>();
             while (reader.Read())

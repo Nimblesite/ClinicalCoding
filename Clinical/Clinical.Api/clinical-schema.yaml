@@ -1,6 +1,6 @@
 name: clinical
 tables:
-- name: fhir_Patient
+- name: fhir_patient
   columns:
   - name: Id
     type: Text
@@ -44,10 +44,10 @@ tables:
     columns:
     - GivenName
   primaryKey:
-    name: PK_fhir_Patient
+    name: PK_fhir_patient
     columns:
     - Id
-- name: fhir_Encounter
+- name: fhir_encounter
   columns:
   - name: Id
     type: Text
@@ -82,17 +82,17 @@ tables:
     columns:
     - PatientId
   foreignKeys:
-  - name: FK_fhir_Encounter_PatientId
+  - name: FK_fhir_encounter_PatientId
     columns:
     - PatientId
-    referencedTable: fhir_Patient
+    referencedTable: fhir_patient
     referencedColumns:
     - Id
   primaryKey:
-    name: PK_fhir_Encounter
+    name: PK_fhir_encounter
     columns:
     - Id
-- name: fhir_Condition
+- name: fhir_condition
   columns:
   - name: Id
     type: Text
@@ -139,17 +139,17 @@ tables:
     columns:
     - SubjectReference
   foreignKeys:
-  - name: FK_fhir_Condition_SubjectReference
+  - name: FK_fhir_condition_SubjectReference
     columns:
     - SubjectReference
-    referencedTable: fhir_Patient
+    referencedTable: fhir_patient
     referencedColumns:
     - Id
   primaryKey:
-    name: PK_fhir_Condition
+    name: PK_fhir_condition
     columns:
     - Id
-- name: fhir_MedicationRequest
+- name: fhir_medicationrequest
   columns:
   - name: Id
     type: Text
@@ -192,23 +192,23 @@ tables:
     columns:
     - PatientId
   foreignKeys:
-  - name: FK_fhir_MedicationRequest_PatientId
+  - name: FK_fhir_medicationrequest_PatientId
     columns:
     - PatientId
-    referencedTable: fhir_Patient
+    referencedTable: fhir_patient
     referencedColumns:
     - Id
-  - name: FK_fhir_MedicationRequest_EncounterId
+  - name: FK_fhir_medicationrequest_EncounterId
     columns:
     - EncounterId
-    referencedTable: fhir_Encounter
+    referencedTable: fhir_encounter
     referencedColumns:
     - Id
   primaryKey:
-    name: PK_fhir_MedicationRequest
+    name: PK_fhir_medicationrequest
     columns:
     - Id
-- name: sync_Provider
+- name: sync_provider
   columns:
   - name: ProviderId
     type: Text
@@ -222,6 +222,6 @@ tables:
     type: Text
     defaultValue: CURRENT_TIMESTAMP
   primaryKey:
-    name: PK_sync_Provider
+    name: PK_sync_provider
     columns:
     - ProviderId

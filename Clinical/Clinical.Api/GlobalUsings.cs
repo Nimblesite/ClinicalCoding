@@ -1,95 +1,135 @@
 global using System;
 global using Generated;
 global using Microsoft.Extensions.Logging;
+global using Nimblesite.Sql.Model;
+global using Nimblesite.Sync.Core;
+global using Nimblesite.Sync.Postgres;
 global using Npgsql;
 global using Outcome;
-global using Sync;
-global using Sync.Postgres;
 global using GetConditionsError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetConditionsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >.Error<
     System.Collections.Immutable.ImmutableList<Generated.GetConditionsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >;
 // GetConditionsByPatient query result type aliases
 global using GetConditionsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetConditionsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >.Ok<
     System.Collections.Immutable.ImmutableList<Generated.GetConditionsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >;
 global using GetEncountersError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetEncountersByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >.Error<
     System.Collections.Immutable.ImmutableList<Generated.GetEncountersByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >;
 // GetEncountersByPatient query result type aliases
 global using GetEncountersOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetEncountersByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >.Ok<
     System.Collections.Immutable.ImmutableList<Generated.GetEncountersByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >;
 global using GetMedicationsError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetMedicationsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >.Error<
     System.Collections.Immutable.ImmutableList<Generated.GetMedicationsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >;
 // GetMedicationsByPatient query result type aliases
 global using GetMedicationsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetMedicationsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >.Ok<
     System.Collections.Immutable.ImmutableList<Generated.GetMedicationsByPatient>,
-    Selecta.SqlError
+    Nimblesite.Sql.Model.SqlError
 >;
 global using GetPatientByIdError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPatientById>,
-    Selecta.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.GetPatientById>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Error<
+    System.Collections.Immutable.ImmutableList<Generated.GetPatientById>,
+    Nimblesite.Sql.Model.SqlError
+>;
 // GetPatientById query result type aliases
 global using GetPatientByIdOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPatientById>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetPatientById>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetPatientById>,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using GetPatientsError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPatients>,
-    Selecta.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.GetPatients>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Error<
+    System.Collections.Immutable.ImmutableList<Generated.GetPatients>,
+    Nimblesite.Sql.Model.SqlError
+>;
 // GetPatients query result type aliases
 global using GetPatientsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPatients>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.GetPatients>, Selecta.SqlError>;
-global using InsertError = Outcome.Result<int, Selecta.SqlError>.Error<int, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.GetPatients>,
+    Nimblesite.Sql.Model.SqlError
+>;
+global using InsertError = Outcome.Result<System.Guid?, Nimblesite.Sql.Model.SqlError>.Error<
+    System.Guid?,
+    Nimblesite.Sql.Model.SqlError
+>;
 // Insert result type aliases
-global using InsertOk = Outcome.Result<int, Selecta.SqlError>.Ok<int, Selecta.SqlError>;
+global using InsertOk = Outcome.Result<System.Guid?, Nimblesite.Sql.Model.SqlError>.Ok<
+    System.Guid?,
+    Nimblesite.Sql.Model.SqlError
+>;
 global using SearchPatientsError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.SearchPatients>,
-    Selecta.SqlError
->.Error<System.Collections.Immutable.ImmutableList<Generated.SearchPatients>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Error<
+    System.Collections.Immutable.ImmutableList<Generated.SearchPatients>,
+    Nimblesite.Sql.Model.SqlError
+>;
 // SearchPatients query result type aliases
 global using SearchPatientsOk = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.SearchPatients>,
-    Selecta.SqlError
->.Ok<System.Collections.Immutable.ImmutableList<Generated.SearchPatients>, Selecta.SqlError>;
+    Nimblesite.Sql.Model.SqlError
+>.Ok<
+    System.Collections.Immutable.ImmutableList<Generated.SearchPatients>,
+    Nimblesite.Sql.Model.SqlError
+>;
 // Sync result type aliases
-global using StringSyncError = Outcome.Result<string, Sync.SyncError>.Error<string, Sync.SyncError>;
-global using StringSyncOk = Outcome.Result<string, Sync.SyncError>.Ok<string, Sync.SyncError>;
+global using StringSyncError = Outcome.Result<string, Nimblesite.Sync.Core.SyncError>.Error<
+    string,
+    Nimblesite.Sync.Core.SyncError
+>;
+global using StringSyncOk = Outcome.Result<string, Nimblesite.Sync.Core.SyncError>.Ok<
+    string,
+    Nimblesite.Sync.Core.SyncError
+>;
 global using SyncLogListError = Outcome.Result<
-    System.Collections.Generic.IReadOnlyList<Sync.SyncLogEntry>,
-    Sync.SyncError
->.Error<System.Collections.Generic.IReadOnlyList<Sync.SyncLogEntry>, Sync.SyncError>;
+    System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
+    Nimblesite.Sync.Core.SyncError
+>.Error<
+    System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
+    Nimblesite.Sync.Core.SyncError
+>;
 global using SyncLogListOk = Outcome.Result<
-    System.Collections.Generic.IReadOnlyList<Sync.SyncLogEntry>,
-    Sync.SyncError
->.Ok<System.Collections.Generic.IReadOnlyList<Sync.SyncLogEntry>, Sync.SyncError>;
+    System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
+    Nimblesite.Sync.Core.SyncError
+>.Ok<
+    System.Collections.Generic.IReadOnlyList<Nimblesite.Sync.Core.SyncLogEntry>,
+    Nimblesite.Sync.Core.SyncError
+>;
 // Update result type aliases
-global using UpdateOk = Outcome.Result<int, Selecta.SqlError>.Ok<int, Selecta.SqlError>;
+global using UpdateOk = Outcome.Result<int, Nimblesite.Sql.Model.SqlError>.Ok<
+    int,
+    Nimblesite.Sql.Model.SqlError
+>;

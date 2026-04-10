@@ -1,5 +1,5 @@
-using Migration;
-using Migration.Postgres;
+using Nimblesite.DataProvider.Migration.Core;
+using Nimblesite.DataProvider.Migration.Postgres;
 using InitError = Outcome.Result<bool, string>.Error<bool, string>;
 using InitOk = Outcome.Result<bool, string>.Ok<bool, string>;
 using InitResult = Outcome.Result<bool, string>;
@@ -50,15 +50,7 @@ internal static class DatabaseSetup
 
             var yamlPath = Path.Combine(AppContext.BaseDirectory, "icd10-schema.yaml");
             var schema = SchemaYamlSerializer.FromYamlFile(yamlPath);
-
-            foreach (var table in schema.Tables)
-            {
-                var ddl = PostgresDdlGenerator.Generate(new CreateTableOperation(table));
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = ddl;
-                cmd.ExecuteNonQuery();
-                logger.Log(LogLevel.Debug, "Created table {TableName}", table.Name);
-            }
+            PostgresDdlGenerator.MigrateSchema(connection, schema);
 
             // Create vector indexes for fast similarity search
             EnsureVectorIndexes(connection, logger);
@@ -100,7 +92,7 @@ internal static class DatabaseSetup
                     cmd.CommandText = $"""
                         CREATE INDEX IF NOT EXISTS idx_icd10_embedding_vector
                         ON icd10_code_embedding
-                        USING ivfflat (("embedding"::vector(384)) vector_cosine_ops)
+                        USING ivfflat (("Embedding"::vector(384)) vector_cosine_ops)
                         WITH (lists = {lists})
                         """;
                     cmd.ExecuteNonQuery();
@@ -127,7 +119,7 @@ internal static class DatabaseSetup
                     cmd.CommandText = $"""
                         CREATE INDEX IF NOT EXISTS idx_achi_embedding_vector
                         ON achi_code_embedding
-                        USING ivfflat (("embedding"::vector(384)) vector_cosine_ops)
+                        USING ivfflat (("Embedding"::vector(384)) vector_cosine_ops)
                         WITH (lists = {lists})
                         """;
                     cmd.ExecuteNonQuery();

@@ -15,13 +15,13 @@ This sample showcases:
 
 ```bash
 # Run all APIs locally against Docker Postgres
-./scripts/start-local.sh
+make start-local
 
 # Run everything in Docker containers
-./scripts/start.sh
+make start-docker
 
-# Run APIs + sync workers
-./scripts/start.sh --sync
+# Force rebuild of the docker images
+make start-docker BUILD=1
 ```
 
 | Service | URL |
@@ -102,11 +102,7 @@ Built with H5 transpiler (C#->JavaScript) + React 18.
 
 ```
 Samples/
-+-- scripts/
-|   +-- start.sh                # Docker startup script
-|   +-- start-local.sh          # Local dev startup script
-|   +-- clean.sh                # Clean Docker environment
-|   +-- clean-local.sh          # Clean local environment
++-- Makefile                    # All build/test/dev-stack targets (make help)
 +-- Clinical/
 |   +-- Clinical.Api/           # REST API (PostgreSQL)
 |   +-- Clinical.Api.Tests/     # E2E tests

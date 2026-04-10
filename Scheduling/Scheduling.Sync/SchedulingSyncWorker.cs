@@ -133,7 +133,7 @@ internal sealed class SchedulingSyncWorker : BackgroundService
     }
 
     /// <summary>
-    /// Fetches changes from Clinical domain and applies column mappings to sync_ScheduledPatient.
+    /// Fetches changes from Clinical domain and applies column mappings to sync_scheduledpatient.
     /// </summary>
     private async Task SyncPatientDataAsync(CancellationToken cancellationToken)
     {
@@ -191,8 +191,8 @@ internal sealed class SchedulingSyncWorker : BackgroundService
     }
 
     /// <summary>
-    /// Applies a change from Clinical domain to sync_ScheduledPatient with column mapping.
-    /// Maps: fhir_Patient -> sync_ScheduledPatient
+    /// Applies a change from Clinical domain to sync_scheduledpatient with column mapping.
+    /// Maps: fhir_patient -> sync_scheduledpatient
     /// Transforms: DisplayName = concat(GivenName, ' ', FamilyName)
     /// </summary>
     private void ApplyMappedChange(NpgsqlConnection connection, SyncChange change)
@@ -230,11 +230,11 @@ internal sealed class SchedulingSyncWorker : BackgroundService
             // Transform: DisplayName = concat(GivenName, ' ', FamilyName)
             var displayName = $"{givenName} {familyName}".Trim();
 
-            // Upsert to sync_ScheduledPatient
+            // Upsert to sync_scheduledpatient
             if (change.Operation == SyncChange.Delete)
             {
                 using var cmd = connection.CreateCommand();
-                cmd.CommandText = "DELETE FROM sync_ScheduledPatient WHERE PatientId = @id";
+                cmd.CommandText = "DELETE FROM sync_scheduledpatient WHERE \"PatientId\" = @id";
                 cmd.Parameters.AddWithValue("@id", patientId);
                 cmd.ExecuteNonQuery();
 
@@ -244,13 +244,13 @@ internal sealed class SchedulingSyncWorker : BackgroundService
             {
                 using var cmd = connection.CreateCommand();
                 cmd.CommandText = """
-                    INSERT INTO sync_ScheduledPatient (PatientId, DisplayName, ContactPhone, ContactEmail, SyncedAt)
+                    INSERT INTO sync_scheduledpatient ("PatientId", "DisplayName", "ContactPhone", "ContactEmail", "SyncedAt")
                     VALUES (@id, @name, @phone, @email, NOW())
-                    ON CONFLICT (PatientId) DO UPDATE SET
-                        DisplayName = excluded.DisplayName,
-                        ContactPhone = excluded.ContactPhone,
-                        ContactEmail = excluded.ContactEmail,
-                        SyncedAt = NOW()
+                    ON CONFLICT ("PatientId") DO UPDATE SET
+                        "DisplayName" = excluded."DisplayName",
+                        "ContactPhone" = excluded."ContactPhone",
+                        "ContactEmail" = excluded."ContactEmail",
+                        "SyncedAt" = NOW()
                     """;
 
                 cmd.Parameters.AddWithValue("@id", patientId);

@@ -1,4 +1,4 @@
-# agent-pmo:d58c330
+# agent-pmo:29b9dcf
 name: CI
 
 on:
@@ -12,10 +12,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  ci:
+    name: CI
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
+    env:
+      DB_PASSWORD: changeme
+      TEST_POSTGRES_CONNECTION: Host=localhost;Database=postgres;Username=postgres;Password=changeme
+      ICD10_TEST_CONNECTION_STRING: Host=localhost;Database=icd10;Username=postgres;Password=changeme
     steps:
       - uses: actions/checkout@v4
 
@@ -26,30 +30,53 @@ jobs:
       - run: dotnet restore
       - run: dotnet tool restore
 
+      # csharpier needs no DB -- run it first so format issues fail
+      # before paying the cost of docker, codegen, or Playwright.
+      - name: Format check
+        run: make fmt-check
+
+      - name: Start Postgres (pgvector) via docker compose
+        run: make db-up
+
+      - name: Migrate Postgres schemas
+        run: make db-migrate
+
+      # `make lint` runs the full Release build, which triggers
+      # `dotnet DataProvider postgres` codegen against the live database,
+      # so it has to come after db-up + db-migrate. Still kept ahead of
+      # the embedding service / Playwright steps to fail fast on warnings.
       - name: Lint
         run: make lint
 
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
+      - name: Start embedding service
+        run: |
+          cd ICD10/embedding-service
+          docker compose up -d --build
+          # Wait until /health responds 200 (model load can take ~60s)
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              echo "Embedding service ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Embedding service failed to become healthy"
+          docker compose logs
+          exit 1
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - run: dotnet restore
-      - run: dotnet tool restore
+      - name: Install Playwright browsers
+        run: |
+          dotnet build Dashboard/Dashboard.Integration.Tests/Dashboard.Integration.Tests.csproj --configuration Release
+          dotnet tool install --global Microsoft.Playwright.CLI || true
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          playwright install --with-deps chromium
 
       - name: Test
         run: make test
 
+      # Per-project thresholds live in coverage-thresholds.json (default 80%).
+      # Bump entries by floor(measured) - 1 whenever real coverage improves.
       - name: Coverage check
-        env:
-          COVERAGE_THRESHOLD: ${{ vars.COVERAGE_THRESHOLD_DOTNET || '80' }}
         run: make coverage-check
 
       - name: Upload coverage
@@ -60,20 +87,6 @@ jobs:
           path: |
             TestResults/**/coverage.*
           retention-days: 7
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - run: dotnet restore
 
       - name: Build
         run: make build

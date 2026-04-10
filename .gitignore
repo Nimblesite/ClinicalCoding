@@ -1,4 +1,4 @@
-# agent-pmo:d58c330
+# agent-pmo:29b9dcf
 
 # =============================================================================
 # UNIVERSAL
@@ -71,6 +71,16 @@ obj/
 out/
 publish/
 artifacts/
+
+# DataProvider codegen output (regenerated each build by `dotnet DataProvider postgres`)
+**/Generated/
+**/Generated/**/*.g.cs
+**/Generated/.timestamp
+**/*.generated.sql
+# Local SQLite databases (no longer used; project is on Postgres)
+*.db
+*.db-shm
+*.db-wal
 *.user
 *.userosscache
 *.suo
@@ -79,8 +89,13 @@ artifacts/
 project.lock.json
 *.nupkg
 *.snupkg
+!nupkgs/*.nupkg
 **/packages/*
 !**/packages/build/
 !**/packages/repositories.config
 *.TargetFrameworkMonikers
 *.dotCover
+
+
+*.nupkg
+*.generated.sql
