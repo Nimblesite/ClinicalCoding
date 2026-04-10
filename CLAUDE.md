@@ -2,8 +2,6 @@
 
 ⚠️ CRITICAL: **Reduce token usage.** Check file size before loading. Write less. Delete fluff and dead code. ⚠️
 
-⚠️ MIGRATING ANY DB WITH ANYTHING OTHER THAN DataProvider Migrations is COMPLETELY ILLEGAL ⚠️
-
 > Read this entire file before writing any code.
 > These rules are NON-NEGOTIABLE. Violations will be rejected in review.
 
@@ -18,18 +16,10 @@ Agentic clinical coding platform built on Nimblesite DataProvider. Four FHIR R5-
 
 NuGet packages use the `Nimblesite.` prefix (e.g., Nimblesite.DataProvider.Core, Nimblesite.Sync.Postgres, Nimblesite.Lql.Postgres).
 
-## Multi-Agent Coordination (TMC)
-
-If the TMC server is available:
-1. Register immediately with descriptive name, intent, and files you will touch
-2. Lock files via TMC before editing
-3. Broadcast your plan before starting work
-4. Release locks immediately when done
-5. Never edit a locked file
-
 ## Hard Rules
 
 - **DO NOT use git commands.** CI and GitHub Actions handle git.
+- **MIGRATING ANY DB WITH ANYTHING OTHER THAN DataProvider Migrations is COMPLETELY ILLEGAL**
 - **ZERO DUPLICATION.** Search the codebase before writing. Move code, don't copy it.
 - **NO THROWING EXCEPTIONS.** Return `Result<T,E>` or `Option<T>`. Exceptions are only for unrecoverable bugs.
 - **NO REGEX on structured data.** Use proper parsers.
@@ -54,6 +44,15 @@ If the TMC server is available:
 - One type per file (except small records). No commented-out code.
 - Medical data must follow [FHIR R5 spec](https://build.fhir.org/resourcelist.html)
 - Common packages go in Directory.Build.props
+
+## Multi-Agent Coordination (TMC)
+
+If the TMC server is available:
+1. Register immediately with descriptive name, intent, and files you will touch
+2. Lock files via TMC before editing
+3. Broadcast your plan before starting work
+4. Release locks immediately when done
+5. Never edit a locked file
 
 ## Logging
 
@@ -80,7 +79,6 @@ make build          # compile everything
 make test           # run tests with coverage (fails if below threshold)
 make lint           # run all linters
 make fmt            # format all code
-make fmt-check      # check formatting (CI uses this)
 make clean          # remove build artifacts
 make setup          # restore tools + packages (first time)
 make db-up          # start Postgres container
