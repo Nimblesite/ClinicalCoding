@@ -1,4 +1,4 @@
-# agent-pmo:29b9dcf
+# agent-pmo:80947ac
 name: CI
 
 on:
@@ -15,6 +15,7 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
+    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load, Playwright install, and 6 test projects with coverage require ~20 min
     timeout-minutes: 30
     env:
       DB_PASSWORD: changeme
@@ -29,11 +30,6 @@ jobs:
 
       - run: dotnet restore
       - run: dotnet tool restore
-
-      # csharpier needs no DB -- run it first so format issues fail
-      # before paying the cost of docker, codegen, or Playwright.
-      - name: Format check
-        run: make fmt-check
 
       - name: Start Postgres (pgvector) via docker compose
         run: make db-up

@@ -1,10 +1,10 @@
-# agent-pmo:29b9dcf
+# agent-pmo:80947ac
 # =============================================================================
 # Makefile — HealthcareSamples
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt fmt-check clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -91,8 +91,10 @@ test: db-migrate
 	  fi; \
 	done
 
-## lint: Run all linters (fails on any warning)
-lint: fmt-check db-migrate
+## lint: Run all linters (fails on any warning). Format check runs FIRST.
+lint: db-migrate
+	@echo "==> Checking format..."
+	dotnet csharpier check .
 	@echo "==> Linting..."
 	dotnet build HealthcareSamples.sln --configuration Release
 
@@ -100,11 +102,6 @@ lint: fmt-check db-migrate
 fmt:
 	@echo "==> Formatting..."
 	dotnet csharpier format .
-
-## fmt-check: Check formatting without modifying
-fmt-check:
-	@echo "==> Checking format..."
-	dotnet csharpier check .
 
 ## clean: Remove all build artifacts
 clean:

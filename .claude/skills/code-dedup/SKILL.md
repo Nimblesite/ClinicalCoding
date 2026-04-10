@@ -2,7 +2,7 @@
 name: code-dedup
 description: Searches for duplicate code, duplicate tests, and dead code, then safely merges or removes them. Use when the user says "deduplicate", "find duplicates", "remove dead code", "DRY up", or "code dedup". Requires test coverage — refuses to touch untested code.
 ---
-<!-- agent-pmo:29b9dcf -->
+<!-- agent-pmo:80947ac -->
 
 # Code Dedup
 
@@ -98,7 +98,7 @@ For each change, follow this cycle: **change → test → verify coverage → co
 
 1. Run `make test` — all tests must still pass
 2. Run `make coverage-check` — coverage must be >= the baseline from Step 1
-3. Run `make lint` and `make fmt-check` — code must be clean
+3. Run `make lint` — code must be clean (includes format check)
 4. Report: what was removed, what was merged, final coverage vs baseline
 
 ## Rules

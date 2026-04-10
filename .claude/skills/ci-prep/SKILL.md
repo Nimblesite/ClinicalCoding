@@ -3,7 +3,7 @@ name: ci-prep
 description: Prepares the current branch for CI by running the exact same steps locally and fixing issues. If CI is already failing, fetches the GH Actions logs first to diagnose. Use before pushing, when CI is red, or when the user says "fix ci".
 argument-hint: "[--failing] [optional job name to focus on]"
 ---
-<!-- agent-pmo:29b9dcf -->
+<!-- agent-pmo:80947ac -->
 
 # CI Prep
 
@@ -44,7 +44,7 @@ Read **every line** of `--log-failed` output. For each failure note the exact fi
 
 1. Find the CI workflow file. Look in `.github/workflows/` for `ci.yml`, `build.yml`, `test.yml`, `checks.yml`, `main.yml`, `pull_request.yml`, or any workflow triggered on `pull_request` or `push`.
 2. Read the workflow file completely. Parse every job and every step.
-3. Extract the ordered list of commands the CI actually runs (e.g., `make lint`, `make fmt-check`, `make test`, `make coverage-check`, `make build`, or whatever the workflow specifies — it may use `npm`, `cargo`, `dotnet`, raw shell commands, or anything else).
+3. Extract the ordered list of commands the CI actually runs (e.g., `make lint`, `make test`, `make build`, or whatever the workflow specifies — it may use `npm`, `cargo`, `dotnet`, raw shell commands, or anything else).
 4. Note any environment variables, matrix strategies, or conditional steps that affect execution.
 
 **Do NOT assume the steps are `make lint`, `make test`, `make coverage-check`, `make build`.** The actual CI may run different commands, in a different order, with different targets. Extract what the CI *actually does*.

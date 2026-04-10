@@ -1,4 +1,5 @@
 {
+  "_agent_pmo": "80947ac",
   "default_threshold": 80,
   "projects": {
     "Gatekeeper/Gatekeeper.Api.Tests": {

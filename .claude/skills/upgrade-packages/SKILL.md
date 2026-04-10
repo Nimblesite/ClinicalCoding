@@ -3,7 +3,7 @@ name: upgrade-packages
 description: Upgrade all dependencies/packages to their latest versions for C#/.NET and Python. Use when the user says "upgrade packages", "update dependencies", "bump versions", "update packages", or "upgrade deps".
 argument-hint: "[--check-only] [--major] [package-name]"
 ---
-<!-- agent-pmo:29b9dcf -->
+<!-- agent-pmo:80947ac -->
 
 # Upgrade Packages
 
