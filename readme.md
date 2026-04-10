@@ -1,47 +1,78 @@
-# Healthcare Samples
+# HealthcareSamples
 
-A complete demonstration of the DataProvider suite: three FHIR-compliant microservices with bidirectional sync, semantic search, and a React dashboard.
+FHIR R5-compliant healthcare microservices built with the [DataProvider](https://github.com/MelbourneDeveloper/DataProvider) .NET toolkit.
 
-This sample showcases:
-- **DataProvider** - Compile-time safe SQL queries for all database operations
-- **Sync Framework** - Bidirectional data synchronization between Clinical and Scheduling domains
-- **LQL** - Lambda Query Language for complex queries
-- **RAG Search** - Semantic medical code search with pgvector embeddings
-- **FHIR Compliance**
-   - All medical data follows [FHIR R5 spec](https://build.fhir.org/resourcelist.html)
-   - Follows the FHIR [access control rules](https://build.fhir.org/security.html).
+Four APIs (Clinical, Scheduling, ICD-10, Gatekeeper), bidirectional sync workers, semantic search via pgvector embeddings, and a React dashboard.
 
 ## Quick Start
 
+Prerequisites: [Docker](https://docs.docker.com/get-docker/), [.NET 10 SDK](https://dotnet.microsoft.com/download), [GNU Make](https://www.gnu.org/software/make/)
+
 ```bash
-# Run all APIs locally against Docker Postgres
-make start-local
-
-# Run everything in Docker containers
 make start-docker
+```
 
-# Force rebuild of the docker images
+That's it. Builds the dashboard, starts Postgres, migrates schemas, boots all APIs, serves the dashboard. Open http://localhost:5173.
+
+Force-rebuild containers:
+
+```bash
 make start-docker BUILD=1
 ```
 
-| Service | URL |
-|---------|-----|
-| Clinical API | http://localhost:5080 |
-| Scheduling API | http://localhost:5001 |
-| ICD10 API | http://localhost:5090 |
-| Dashboard | http://localhost:8080 |
+Run APIs locally (faster rebuild cycle, Postgres still in Docker):
+
+```bash
+make start-local
+```
+
+Ctrl+C stops everything.
+
+## Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Dashboard | http://localhost:5173 | React UI (H5 transpiler C# to JS) |
+| Clinical API | http://localhost:5080 | Patient, Encounter, Condition, MedicationRequest |
+| Scheduling API | http://localhost:5001 | Practitioner, Appointment, Schedule, Slot |
+| ICD-10 API | http://localhost:5090 | ICD-10/ACHI codes, semantic search via pgvector |
+| Gatekeeper API | http://localhost:5002 | Passkey authentication, RBAC authorization |
+| Postgres | localhost:5432 | pgvector-enabled, 4 databases |
+
+## Development
+
+```bash
+make ci             # full CI: lint + test + coverage-check + build
+make test           # run all tests with coverage
+make lint           # run all linters
+make fmt            # format all code
+make build          # compile everything (Release)
+make clean          # remove build artifacts
+make setup          # restore tools + packages (run once after clone)
+```
+
+### Database
+
+```bash
+make db-up          # start Postgres container
+make db-down        # stop Postgres container
+make db-migrate     # apply schemas to all databases
+make db-reset       # wipe and recreate databases from scratch
+```
 
 ## Architecture
 
 ```
 Dashboard.Web (React/H5)
        |
+       +--> Gatekeeper.Api     (Passkey auth, RBAC)
+       |
        +--> Clinical.Api <---- Clinical.Sync <-+
        |    (PostgreSQL)                       |
-       |    fhir_Patient, fhir_Encounter       | Practitioner->Provider
+       |    fhir_Patient, fhir_Encounter       | Practitioner -> Provider
        |                                       |
        +--> Scheduling.Api <-- Scheduling.Sync <+
-       |    (PostgreSQL)       Patient->ScheduledPatient
+       |    (PostgreSQL)       Patient -> ScheduledPatient
        |    fhir_Practitioner, fhir_Appointment
        |
        +--> ICD10.Api
@@ -49,13 +80,15 @@ Dashboard.Web (React/H5)
             icd10_code, achi_code, embeddings
 ```
 
+Clinical and Scheduling sync data bidirectionally. ICD-10 is a read-only reference database with semantic search powered by pgvector embeddings.
+
 ## Data Ownership
 
 | Domain | Owns | Receives via Sync |
 |--------|------|-------------------|
 | Clinical | fhir_Patient, fhir_Encounter, fhir_Condition, fhir_MedicationRequest | sync_Provider |
 | Scheduling | fhir_Practitioner, fhir_Appointment, fhir_Schedule, fhir_Slot | sync_ScheduledPatient |
-| ICD10 | icd10_chapter, icd10_block, icd10_category, icd10_code, achi_block, achi_code | N/A (read-only reference) |
+| ICD10 | icd10_chapter, icd10_block, icd10_category, icd10_code, achi_block, achi_code | N/A (read-only) |
 
 ## API Endpoints
 
@@ -77,77 +110,31 @@ Dashboard.Web (React/H5)
 ### ICD10 (`:5090`)
 - `GET /api/icd10/chapters` - ICD-10 chapters
 - `GET /api/icd10/chapters/{id}/blocks` - Blocks within chapter
-- `GET /api/icd10/blocks/{id}/categories` - Categories within block
-- `GET /api/icd10/categories/{id}/codes` - Codes within category
-- `GET /api/icd10/codes/{code}` - Direct code lookup (supports `?format=fhir`)
+- `GET /api/icd10/codes/{code}` - Direct code lookup (`?format=fhir`)
 - `GET /api/icd10/codes?q={query}&limit=20` - Text search
 - `GET /api/achi/blocks` - ACHI procedure blocks
-- `GET /api/achi/codes/{code}` - ACHI code lookup
 - `GET /api/achi/codes?q={query}&limit=20` - ACHI text search
 - `POST /api/search` - RAG semantic search (requires embedding service)
-- `GET /health` - Health check
 
-## Dashboard
-
-Serve static files and open http://localhost:8080:
-
-```bash
-cd Dashboard/Dashboard.Web/wwwroot
-python3 -m http.server 8080
-```
-
-Built with H5 transpiler (C#->JavaScript) + React 18.
-
-## Project Structure
-
-```
-Samples/
-+-- Makefile                    # All build/test/dev-stack targets (make help)
-+-- Clinical/
-|   +-- Clinical.Api/           # REST API (PostgreSQL)
-|   +-- Clinical.Api.Tests/     # E2E tests
-|   +-- Clinical.Sync/          # Pulls from Scheduling
-+-- Scheduling/
-|   +-- Scheduling.Api/         # REST API (PostgreSQL)
-|   +-- Scheduling.Api.Tests/   # E2E tests
-|   +-- Scheduling.Sync/        # Pulls from Clinical
-+-- ICD10/
-|   +-- ICD10.Api/              # REST API (PostgreSQL + pgvector)
-|   +-- ICD10.Api.Tests/        # E2E tests
-|   +-- ICD10.Cli/              # Interactive TUI client
-|   +-- ICD10.Cli.Tests/        # CLI E2E tests
-|   +-- embedding-service/      # Python FastAPI embedding service
-|   +-- scripts/                # DB import + embedding generation
-+-- Dashboard/
-    +-- Dashboard.Web/          # React UI (H5)
-```
+### Gatekeeper (`:5002`)
+- `POST /auth/register/begin` - Start passkey registration
+- `POST /auth/register/complete` - Complete passkey registration
+- `POST /auth/login/begin` - Start passkey login
+- `POST /auth/login/complete` - Complete passkey login
+- `GET /auth/session` - Current session info
+- `GET /authz/check` - Permission check
+- `POST /authz/evaluate` - Bulk permission evaluation
 
 ## Tech Stack
 
-- .NET 9, ASP.NET Core Minimal API
+- .NET 10, ASP.NET Core Minimal API
 - PostgreSQL with pgvector (semantic search)
-- DataProvider (SQL->extension methods)
+- DataProvider (compile-time safe SQL)
 - Sync Framework (bidirectional sync)
 - LQL (Lambda Query Language)
-- MedEmbed (medical text embeddings)
 - H5 transpiler + React 18
+- Docker Compose
 
-## Testing
+## License
 
-```bash
-# Run all sample tests
-dotnet test --filter "FullyQualifiedName~Samples"
-
-# ICD10 RAG search tests (requires embedding service)
-cd ICD10/scripts/Dependencies && ./start.sh
-dotnet test --filter "FullyQualifiedName~ICD10.Api.Tests"
-
-# Integration tests (requires APIs running)
-dotnet test --filter "FullyQualifiedName~Dashboard.Integration.Tests"
-```
-
-## Learn More
-
-- [DataProvider Documentation](../DataProvider/README.md)
-- [Sync Framework Documentation](../Sync/README.md)
-- [LQL Documentation](../Lql/README.md)
+MIT

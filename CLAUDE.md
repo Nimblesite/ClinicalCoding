@@ -120,17 +120,21 @@ Always include these 3 in the Directory.Build.props:
 All `make` targets work on Linux, macOS, and Windows. The Makefile uses OS detection to select portable commands. On Windows, install GNU Make via `choco install make` or use the one bundled with Git for Windows.
 
 ```bash
+make start-docker   # build dashboard + spin up the full stack via docker compose
+make start-local    # run all APIs locally against docker Postgres
+make ci             # lint + test + coverage-check + build (full CI simulation)
 make build          # compile everything
 make test           # run tests with coverage
 make lint           # run all linters
 make fmt            # format all code
 make fmt-check      # check formatting (CI uses this)
-make clean          # remove build artifacts
-make check          # lint + test (pre-commit)
-make ci             # lint + test + build (full CI simulation)
-make coverage       # generate and open coverage report
 make coverage-check # assert coverage thresholds
+make clean          # remove build artifacts
 make setup          # post-create dev environment setup
+make db-up          # start Postgres (pgvector) container
+make db-down        # stop Postgres container
+make db-migrate     # apply YAML schemas to all databases
+make db-reset       # destroy DB volume and recreate
 ```
 
 ## Repo Structure

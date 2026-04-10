@@ -51,11 +51,12 @@ Then serve the static files however you want (nginx, python, etc).
 # Start everything
 make start-docker
 
-# Fresh start (wipe databases)
-make clean-docker start-docker
-
 # Rebuild containers
 make start-docker BUILD=1
+
+# Fresh start (wipe databases)
+cd docker && docker compose down -v
+make start-docker
 ```
 
 ## Ports

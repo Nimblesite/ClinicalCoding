@@ -1,10 +1,10 @@
 # agent-pmo:29b9dcf
 # =============================================================================
-# Standard Makefile — HealthcareSamples
+# Makefile — HealthcareSamples
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt fmt-check clean check ci coverage coverage-check setup db-up db-down db-reset db-wait db-migrate kill-ports-local kill-ports-docker clean-local clean-docker start-local start-docker
+.PHONY: build test lint fmt fmt-check clean ci coverage-check setup db-up db-down db-reset db-wait db-migrate start-local start-docker
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -98,20 +98,8 @@ else
 	$(RM) TestResults
 endif
 
-## check: lint + test (pre-commit)
-check: lint test
-
-## ci: lint + test + build (full CI simulation)
-ci: lint test build
-
-## coverage: Generate coverage report
-coverage:
-	@echo "==> Coverage report..."
-	reportgenerator \
-	  -reports:"TestResults/**/coverage.cobertura.xml" \
-	  -targetdir:coverage/html \
-	  -reporttypes:Html
-	@echo "==> HTML report: coverage/html/index.html"
+## ci: lint + test + coverage-check + build (full CI simulation)
+ci: lint test coverage-check build
 
 ## coverage-check: Assert per-project line-rate >= threshold from $(COVERAGE_THRESHOLDS_FILE)
 ##   The JSON file declares { "default_threshold": N, "projects": { "<dir>": { "threshold": N } } }.
@@ -206,49 +194,10 @@ db-migrate: db-up
 	  --output "$(PG_BASE_URL);Database=icd10" --provider postgres
 
 # =============================================================================
-# LOCAL DEV STACK
+# RUN THE STACK
 # =============================================================================
 
-# Ports owned by the local dev stack (4 APIs + dashboard + embedding service)
-LOCAL_PORTS  := 5002 5080 5001 5090 5173 8000
-# Same as LOCAL_PORTS plus the Postgres host port (docker stack publishes it)
-DOCKER_PORTS := 5432 5002 5080 5001 5090 5173
-
-## kill-ports-local: Free ports used by the local dev stack
-kill-ports-local:
-	@echo "==> Clearing local dev ports..."
-	@for port in $(LOCAL_PORTS); do \
-	  pids=$$(lsof -ti :$$port 2>/dev/null || true); \
-	  if [ -n "$$pids" ]; then \
-	    echo "  killing port $$port: $$pids"; \
-	    echo "$$pids" | xargs kill -9 2>/dev/null || true; \
-	  fi; \
-	done
-
-## kill-ports-docker: Free ports used by the docker stack (incl. Postgres)
-kill-ports-docker:
-	@echo "==> Clearing docker dev ports..."
-	@for port in $(DOCKER_PORTS); do \
-	  pids=$$(lsof -ti :$$port 2>/dev/null || true); \
-	  if [ -n "$$pids" ]; then \
-	    echo "  killing port $$port: $$pids"; \
-	    echo "$$pids" | xargs kill -9 2>/dev/null || true; \
-	  fi; \
-	done
-
-## clean-local: Kill local dev processes and drop the Postgres dev volume
-clean-local: kill-ports-local
-	@echo "==> Removing Postgres dev volume..."
-	docker compose -f $(DB_COMPOSE_FILE) down -v 2>/dev/null || true
-	@echo "Clean complete."
-
-## clean-docker: Kill docker stack and drop all docker-compose volumes
-clean-docker: kill-ports-docker
-	@echo "==> Removing docker volumes..."
-	cd docker && docker compose down -v
-	@echo "Clean complete."
-
-## start-docker: Build the dashboard locally then start the docker compose stack
+## start-docker: Build the dashboard locally then start the full docker compose stack
 ##   Usage: make start-docker [BUILD=1]
 ##     BUILD=1   force image rebuild (passes --build to docker compose up)
 start-docker:
@@ -371,7 +320,7 @@ wait
 endef
 export START_LOCAL_RUNNER
 
-## start-local: Run all 4 APIs locally against the docker postgres dev DB
+## start-local: Run all APIs locally against the docker Postgres dev DB
 ##   Builds projects in Debug, dashboard in Release, then runs everything in
 ##   the foreground with prefixed log output. Ctrl+C cleans up all children.
 start-local: db-up
@@ -385,24 +334,3 @@ start-local: db-up
 	dotnet build ICD10/ICD10.Api/ICD10.Api.csproj --nologo -v q
 	dotnet build Dashboard/Dashboard.Web/Dashboard.Web.csproj -c Release --nologo -v q
 	@bash -c "$$START_LOCAL_RUNNER"
-
-# =============================================================================
-# HELP
-# =============================================================================
-help:
-	@echo "Available targets:"
-	@echo "  build             - Compile/assemble all artifacts"
-	@echo "  test              - Run full test suite with coverage"
-	@echo "  lint              - Run all linters (errors mode)"
-	@echo "  fmt               - Format all code in-place"
-	@echo "  fmt-check         - Check formatting (no modification)"
-	@echo "  clean             - Remove build artifacts"
-	@echo "  check             - lint + test (pre-commit)"
-	@echo "  ci                - lint + test + build (full CI)"
-	@echo "  coverage          - Generate and open coverage report"
-	@echo "  coverage-check    - Assert coverage thresholds"
-	@echo "  setup             - Post-create dev environment setup"
-	@echo "  start-local       - Run all 4 APIs locally against docker postgres"
-	@echo "  start-docker      - Build dashboard + docker compose up the full stack"
-	@echo "  clean-local       - Kill local dev processes and drop postgres volume"
-	@echo "  clean-docker      - Kill docker stack and drop all volumes"
