@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/auth-context';
+import { useAuth } from '../auth/use-auth';
 import { Header } from './header';
 import { Sidebar } from './sidebar';
 

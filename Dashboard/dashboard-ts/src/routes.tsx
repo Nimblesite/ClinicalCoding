@@ -1,6 +1,5 @@
-import type { ReactElement } from 'react';
-import { createHashRouter, Navigate, type RouteObject } from 'react-router-dom';
-import { useAuth } from './auth/auth-context';
+import { createHashRouter, type RouteObject } from 'react-router-dom';
+import { AuthGate } from './components/auth-gate';
 import { AppShell } from './components/app-shell';
 import { AppointmentsPage } from './pages/appointments-page';
 import { CalendarPage } from './pages/calendar-page';
@@ -12,18 +11,6 @@ import { LoginPage } from './pages/login-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { PatientsPage } from './pages/patients-page';
 import { PractitionersPage } from './pages/practitioners-page';
-
-interface AuthGateProps {
-  readonly children: ReactElement;
-}
-
-const AuthGate = ({ children }: AuthGateProps): ReactElement => {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
 
 const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },

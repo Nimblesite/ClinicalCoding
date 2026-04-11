@@ -1,6 +1,6 @@
 type LogPayload = Record<string, unknown> | undefined;
 
-const isDev = (): boolean => import.meta.env.DEV === true;
+const isDev = (): boolean => import.meta.env.DEV;
 
 export const logger = {
   info: (message: string, payload?: LogPayload): void => {

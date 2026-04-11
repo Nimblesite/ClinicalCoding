@@ -45,7 +45,7 @@ export const ClinicalCodingPage = (): ReactElement => {
   const lookup = useIcd10Lookup(mode === 'lookup' ? query : '');
   const semantic = useSemanticSearch();
 
-  const rows: ResultRow[] = (() => {
+  const rows: ResultRow[] = ((): ResultRow[] => {
     if (mode === 'semantic') {
       return semantic.data !== undefined ? toRowsFromSemantic(semantic.data) : [];
     }

@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../auth/auth-context';
+import { useAuth } from '../auth/use-auth';
 
 interface SidebarProps {
   readonly onLogout: () => void;

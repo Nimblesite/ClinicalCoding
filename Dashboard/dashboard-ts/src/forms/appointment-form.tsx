@@ -43,8 +43,13 @@ export const AppointmentForm = ({
     await onSubmit(values);
   };
 
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    void handleSubmit(submit)();
+  };
+
   return (
-    <form onSubmit={handleSubmit(submit)} className="form">
+    <form onSubmit={onFormSubmit} className="form">
       <label className="input-label" htmlFor="svc-type">
         Service Type
       </label>

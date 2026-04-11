@@ -14,5 +14,5 @@ export const createPatient = async (patient: Patient): Promise<Patient> =>
 export const updatePatient = async (id: string, patient: Patient): Promise<Patient> =>
   apiFetch<Patient>(`${CLINICAL_API}/fhir/Patient/${id}`, { method: 'PUT', body: patient });
 
-export const deletePatient = async (id: string): Promise<void> =>
-  apiFetch<void>(`${CLINICAL_API}/fhir/Patient/${id}`, { method: 'DELETE' });
+export const deletePatient = async (id: string): Promise<unknown> =>
+  apiFetch<unknown>(`${CLINICAL_API}/fhir/Patient/${id}`, { method: 'DELETE' });

@@ -8,7 +8,7 @@ interface BeginLoginResponse {
   readonly OptionsJson: string;
 }
 
-interface BeginRegisterResponse extends BeginLoginResponse {}
+type BeginRegisterResponse = BeginLoginResponse;
 
 interface CompleteResponse {
   readonly Token: string;
@@ -124,7 +124,7 @@ export const registerWithPasskey = async (
 
 export const logout = async (): Promise<void> => {
   try {
-    await apiFetch<void>(`${GATEKEEPER_API}/auth/logout`, { method: 'POST' });
+    await apiFetch<unknown>(`${GATEKEEPER_API}/auth/logout`, { method: 'POST' });
   } catch {
     // best effort
   }

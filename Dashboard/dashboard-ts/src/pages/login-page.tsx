@@ -1,6 +1,7 @@
-import { useState, type FormEvent, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
+import type { SubmitEvent } from '../types/auth';
 import { loginWithPasskey, registerWithPasskey } from '../api/gatekeeper';
-import { useAuth } from '../auth/auth-context';
+import { useAuth } from '../auth/use-auth';
 import { logger } from '../lib/logger';
 
 export const LoginPage = (): ReactElement => {
@@ -25,7 +26,7 @@ export const LoginPage = (): ReactElement => {
     }
   };
 
-  const handleRegister = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleRegister = async (e: SubmitEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setBusy(true);
     setError(null);
@@ -41,9 +42,17 @@ export const LoginPage = (): ReactElement => {
   };
 
   return (
-    <main className="login-shell">
+    <main className="login-shell" data-testid="login-page">
       <section className="login-card">
-        <h1>Nimblesite Clinical Coding</h1>
+        <div className="login-brand">
+          <div className="login-brand-mark">
+            <span className="material-symbols-outlined">health_metrics</span>
+          </div>
+          <div>
+            <h1>Nimblesite</h1>
+            <p>Clinical Coding Platform</p>
+          </div>
+        </div>
         <div className="login-tabs">
           <button
             type="button"

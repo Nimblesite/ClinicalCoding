@@ -11,11 +11,11 @@ export const CalendarPage = (): ReactElement => {
     list.push(a);
     byDay.set(day, list);
   }
-  const days = Array.from(byDay.keys()).sort();
+  const days = [...byDay.keys()].sort();
   return (
     <section className="page">
       <h2>Calendar</h2>
-      {days.map((day) => (
+      {days.map((day: string) => (
         <div key={day} className="calendar-day-group">
           <h3>{day}</h3>
           <ul>

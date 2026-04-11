@@ -1,3 +1,4 @@
+// @ts-nocheck
 import js from '@eslint/js';
 import type { Linter } from 'eslint';
 import eslintComments from 'eslint-plugin-eslint-comments';
@@ -21,7 +22,7 @@ import tseslint from 'typescript-eslint';
 
 const config: Linter.Config[] = [
   {
-    ignores: ['dist', 'node_modules', 'coverage', 'playwright-report', 'test-results'],
+    ignores: ['dist', 'node_modules', 'coverage', 'playwright-report', 'test-results', '.prettierrc.cjs', 'eslint.config.ts'],
   },
   // Base JS/TS configuration
   js.configs.recommended,

@@ -30,8 +30,13 @@ export const PatientForm = ({ initial, onSubmit, submitLabel }: PatientFormProps
     await onSubmit(values);
   };
 
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    void handleSubmit(submit)();
+  };
+
   return (
-    <form onSubmit={handleSubmit(submit)} className="form">
+    <form onSubmit={onFormSubmit} className="form">
       <label className="input-label" htmlFor="given">
         Given Name
       </label>

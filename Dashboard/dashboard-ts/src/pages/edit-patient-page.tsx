@@ -32,7 +32,9 @@ export const EditPatientPage = (): ReactElement => {
   return (
     <section className="page">
       <h2>{id === undefined ? 'Add patient' : 'Edit patient'}</h2>
-      {save.isError && <div className="alert alert-error">{save.error.message}</div>}
+      {save.isError && save.error !== null && (
+        <div className="alert alert-error">{save.error.message}</div>
+      )}
       <PatientForm
         {...(data !== undefined ? { initial: data } : {})}
         onSubmit={handleSubmit}
