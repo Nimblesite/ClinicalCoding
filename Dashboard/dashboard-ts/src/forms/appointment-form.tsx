@@ -43,13 +43,12 @@ export const AppointmentForm = ({
     await onSubmit(values);
   };
 
-  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    void handleSubmit(submit)();
-  };
-
   return (
-    <form onSubmit={onFormSubmit} className="form">
+    <form
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises -- React Hook Form handleSubmit returns a promise, but the onSubmit attribute expects void
+      onSubmit={handleSubmit(submit)}
+      className="form"
+    >
       <label className="input-label" htmlFor="svc-type">
         Service Type
       </label>

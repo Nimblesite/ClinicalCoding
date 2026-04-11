@@ -1,5 +1,4 @@
 import { useState, type ReactElement } from 'react';
-import type { SubmitEvent } from '../types/auth';
 import { loginWithPasskey, registerWithPasskey } from '../api/gatekeeper';
 import { useAuth } from '../auth/use-auth';
 import { logger } from '../lib/logger';
@@ -26,7 +25,7 @@ export const LoginPage = (): ReactElement => {
     }
   };
 
-  const handleRegister = async (e: SubmitEvent<HTMLFormElement>): Promise<void> => {
+  const handleRegister = async (e: React.SyntheticEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setBusy(true);
     setError(null);

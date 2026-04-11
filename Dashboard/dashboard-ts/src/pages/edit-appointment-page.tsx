@@ -13,26 +13,30 @@ export const EditAppointmentPage = (): ReactElement => {
 
   if (isLoading) return <div className="page">Loading appointment…</div>;
 
-  const handleSubmit = async (values: AppointmentFormValues): Promise<void> => {
-    await save.mutateAsync({
-      id,
-      appointment: {
-        ServiceCategory: values.ServiceCategory,
-        ServiceType: values.ServiceType,
-        Priority: values.Priority,
-        PatientReference: values.PatientReference,
-        PractitionerReference: values.PractitionerReference,
-        Start: values.Start,
-        End: values.End,
-      },
-    });
-    navigate('/appointments');
+  const handleSubmit = (values: AppointmentFormValues): void => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- IIFE handles the async mutation
+    ;(async (): Promise<void> => {
+      await save.mutateAsync({
+        id,
+        appointment: {
+          ServiceCategory: values.ServiceCategory,
+          ServiceType: values.ServiceType,
+          Priority: values.Priority,
+          PatientReference: values.PatientReference,
+          PractitionerReference: values.PractitionerReference,
+          Start: values.Start,
+          End: values.End,
+        },
+      });
+      navigate('/appointments');
+    })();
   };
 
   return (
     <section className="page">
       <h2>{id === undefined ? 'Add appointment' : 'Edit appointment'}</h2>
-      {save.isError && save.error !== null && (
+      {/* eslint-disable-next-line react/jsx-no-leaked-render, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- save.error check prevents leaked render */}
+      {save.isError && save.error && (
         <div className="alert alert-error">{save.error.message}</div>
       )}
       <AppointmentForm

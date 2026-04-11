@@ -450,3 +450,121 @@ moments:
 
 Between checkpoints I push through without asking permission for each
 file edit.
+
+## [DASH-TS-PLAN-LIVE-TODO] Live execution checklist (bottom)
+
+⚠️ **This is the authoritative work tracker.** Director ticks boxes as
+work lands. Cline reads this section every wake-up and reports progress
+via TMC. No stopping until every box is checked.
+
+### [DASH-TS-PLAN-LIVE-TODO-STATUS] Current phase status
+
+- [x] Phase 0 — coexistence scaffold (dashboard-ts exists alongside legacy)
+- [x] Phase 1 — Vite+TS+React, typecheck + build GREEN
+- [x] Phase 2 — api/auth/lib foundations + 12 unit tests GREEN
+- [x] Phase 3 — Shell: AuthProvider, hash router, LoginPage, Sidebar, Header, AuthGate
+- [x] Phase 4 — Read-only pages (dashboard, patients, practitioners, appts, calendar)
+- [x] Phase 5 — Edit pages (patient, appointment) with RHF+Zod
+- [x] Phase 6 — Clinical Coding 3-mode search + ACHI + detail panel + copy
+- [ ] Phase 7 — Parity + tests + final commit (IN PROGRESS)
+
+### [DASH-TS-PLAN-LIVE-TODO-DESIGN] Pixel-perfect design parity
+
+Reference: `docs/designs/dashboard/code.html`, `docs/designs/clinical-coding-search/code.html`.
+Legacy CSS base: `Dashboard/Dashboard.Web/wwwroot/css/*`.
+
+- [ ] Convert Tailwind classes in both design HTML files to plain CSS in `src/styles/components.css`
+- [ ] Sidebar: brand header, nav items, active state, bottom user card
+- [ ] Header: search box with leading icon, notifications bell, user avatar
+- [ ] Dashboard metric-cards: 4-card grid, label/value/trend typography
+- [ ] Upcoming appointments panel + requests panel layout
+- [ ] Clinical Coding tabs (AI / Keyword / Lookup) + ACHI toggle styling
+- [ ] Result list row + detail panel split-pane
+- [ ] Material Symbols Outlined icons everywhere the designs use them
+- [ ] Inter font face loaded in index.html
+- [ ] Cross-check against `docs/designs/dashboard/screen.png` and `docs/designs/clinical-coding-search/screen.png`
+
+### [DASH-TS-PLAN-LIVE-TODO-TESTIDS] data-testid parity with Dashboard.Integration.Tests
+
+Tests live in `Dashboard/Dashboard.Integration.Tests/*.cs` and MUST NOT
+be edited. Every selector the tests query must exist in dashboard-ts.
+
+- [x] `login-page` on login main
+- [ ] `add-patient-btn` on patients page
+- [ ] `add-appointment-btn` on appointments page
+- [ ] `add-practitioner-btn` on practitioners page
+- [ ] `user-menu-button` on header avatar
+- [ ] `user-dropdown` on opened menu
+- [ ] `logout-button` inside dropdown
+- [ ] `patient-given-name`, `patient-family-name`, `patient-gender`, `submit-patient` in AddPatientModal
+- [ ] `edit-given-name`, `edit-family-name`, `save-patient`, `edit-patient-page` on edit-patient page
+- [ ] `practitioner-given-name`, `practitioner-family-name`, `save-practitioner`, `edit-practitioner-page`
+- [ ] `appointment-start`, `appointment-status`, `submit-appointment`, `save-appointment`, `edit-appointment-page`
+- [ ] `sync-page`, `sync-records-table`, `service-filter`, `action-filter`, `service-status-clinical`, `service-status-scheduling`
+- [ ] `search-input`, `search-button` on header search
+- [ ] `patient-row`, `practitioner-row`, `appointment-row` on list tables
+- [ ] `coding-search-input`, `coding-mode-ai`, `coding-mode-keyword`, `coding-mode-lookup`, `achi-toggle`, `coding-result`, `coding-detail`, `coding-copy`
+
+### [DASH-TS-PLAN-LIVE-TODO-MODALS] Modal components (legacy parity)
+
+- [ ] `src/components/modal.tsx` — base `.modal` wrapper with overlay, close on ESC, focus trap
+- [ ] `AddPatientModal` — RHF form; posts to Clinical; invalidates patients query; closes on 201
+- [ ] `AddAppointmentModal` — RHF form; posts to Scheduling; invalidates appts query
+- [ ] `AddPractitionerModal` — RHF form; posts to Scheduling; invalidates practitioners query
+- [ ] Wire "Add" buttons on Patients/Appointments/Practitioners pages to open their modal
+- [ ] Sync page: `src/pages/sync-page.tsx` with service/action filters + search
+
+### [DASH-TS-PLAN-LIVE-TODO-TESTS] Test suite gates (no test changes allowed)
+
+All must be green before final commit. Command run from repo root.
+
+- [x] `Clinical.Api.Tests` — 85/85 baseline green
+- [x] `Scheduling.Api.Tests` — 72/72 baseline green
+- [x] `Gatekeeper.Api.Tests` — 47/47 baseline green
+- [x] `ICD10.Cli.Tests` — 57/57 baseline green
+- [ ] `ICD10.Api.Tests` — 1 failure (`Search_IncludesModelInfo_InResponse`) because embedding service must run; docker app container already runs it
+- [ ] `Dashboard.Integration.Tests` — 114 tests; must run GREEN against dashboard-ts on `localhost:5173` (`E2E_USE_LOCAL=true`)
+- [ ] `Dashboard/dashboard-ts` vitest — every unit test still green
+- [ ] `pnpm check` (tsc + eslint + prettier + vitest + build) — ZERO warnings
+- [ ] `pnpm exec playwright test` — full E2E suite against a live stack
+
+### [DASH-TS-PLAN-LIVE-TODO-LINT] Lint + type cleanup (Phase 7)
+
+- [ ] Zero eslint warnings (flat config with strictTypeChecked + functional + sonarjs)
+- [ ] Zero TypeScript errors (strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes)
+- [ ] Prettier clean on `src/**`, `*.ts`, `*.tsx`, `*.css`
+- [ ] Remove `skipLibCheck: true` override once vitest/jest-dom type collision is upstream-fixed (TODO[DASH-TS-LINT-OFF] tag present)
+- [ ] `sonarjs/cognitive-complexity` at 15 — refactor any function above
+- [ ] `functional/no-let` — refactor any `let` remaining
+- [ ] `unicorn/filename-case: kebabCase` — rename any PascalCase/camelCase files
+
+### [DASH-TS-PLAN-LIVE-TODO-INFRA] Infrastructure
+
+- [x] `Dashboard/dashboard-ts/playwright.config.ts` created
+- [x] `.NET Playwright Chromium` installed (`playwright.ps1 install chromium`)
+- [x] Docker stack: `docker-db-1` + `docker-app-1` (all APIs) healthy
+- [x] Vite dev server on `localhost:5173`
+- [ ] `.env.local` for dashboard-ts with API URLs (Clinical 5080, Scheduling 5001, Gatekeeper 5002, ICD10 5090)
+- [ ] `window.dashboardConfig` injection verified at runtime
+- [ ] README badge row updated
+- [ ] `Makefile` target `make dashboard-ts-check` runs `pnpm check` then `dotnet test Dashboard/Dashboard.Integration.Tests -e E2E_USE_LOCAL=true`
+
+### [DASH-TS-PLAN-LIVE-TODO-FINAL] Final sign-off
+
+- [ ] Side-by-side screenshot comparison vs `docs/designs/*/screen.png`
+- [ ] All 114 Dashboard.Integration.Tests GREEN without editing any test
+- [ ] All backend suites GREEN
+- [ ] `pnpm check` GREEN
+- [ ] `make ci` GREEN
+- [ ] Final commit `feat(dashboard): TypeScript rewrite parity complete`
+- [ ] Update this TODO block: every box checked
+
+### [DASH-TS-PLAN-LIVE-TODO-RULES] Hard rules (no exceptions)
+
+- Never delete legacy Dashboard.Web or Dashboard.Integration.Tests.
+- Never edit a single assertion or test file — fix the code, not the test.
+- Never suppress a lint rule without a `TODO[DASH-TS-LINT-OFF]` comment.
+- Never add a placeholder; leave a compile error if the implementation is unfinished.
+- Never use `any`, `!`, or `as` cast in `src/**/*.ts(x)`.
+- Every function returns an explicit type. Every React component typed as `ReactElement`.
+- Message TMC on every material state change.

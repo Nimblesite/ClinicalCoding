@@ -11,7 +11,7 @@ export const CalendarPage = (): ReactElement => {
     list.push(a);
     byDay.set(day, list);
   }
-  const days = [...byDay.keys()].sort();
+  const days = [...byDay.keys()].toSorted();
   return (
     <section className="page">
       <h2>Calendar</h2>
