@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from 'react';
 import { useAuth } from '../auth/use-auth';
-import { useRoute } from '../router/hash-router';
+import { useRoute } from '../router/router-hooks';
 
 interface SidebarProps {
   readonly onLogout: () => void;
@@ -17,7 +17,7 @@ const NAV_ITEMS: ReadonlyArray<{
   { to: 'appointments', label: 'Appointments', icon: 'calendar_today' },
   { to: 'calendar', label: 'Schedule', icon: 'event' },
   { to: 'clinical-coding', label: 'Clinical Coding', icon: 'terminal' },
-  { to: 'sync', label: 'Sync', icon: 'sync' },
+  { to: 'sync', label: 'Sync Dashboard', icon: 'sync' },
 ];
 
 export const Sidebar = ({ onLogout }: SidebarProps): ReactElement => {
@@ -68,7 +68,7 @@ export const Sidebar = ({ onLogout }: SidebarProps): ReactElement => {
             <p className="sidebar-user-email">{currentUser?.email ?? ''}</p>
           </div>
         </button>
-        {menuOpen && (
+        {menuOpen ? (
           <div className="user-dropdown" data-testid="user-dropdown">
             <p className="user-dropdown-name">{currentUser?.displayName ?? ''}</p>
             <p className="user-dropdown-email">{currentUser?.email ?? ''}</p>
@@ -82,7 +82,7 @@ export const Sidebar = ({ onLogout }: SidebarProps): ReactElement => {
               Sign out
             </button>
           </div>
-        )}
+        ) : null}
       </div>
     </aside>
   );

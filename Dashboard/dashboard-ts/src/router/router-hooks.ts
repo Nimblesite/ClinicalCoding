@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { RouteContext, type ParsedRoute } from './hash-router';
+import { RouteContext, type ParsedRoute } from './route-context';
 
 export const useRoute = (): ParsedRoute => useContext(RouteContext);
 

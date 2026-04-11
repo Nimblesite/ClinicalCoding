@@ -1,18 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
-
-export interface ParsedRoute {
-  readonly name: string;
-  readonly params: readonly string[];
-  readonly raw: string;
-}
+import { useEffect, useMemo, useState, type ReactElement, type ReactNode } from 'react';
+import { RouteContext, type ParsedRoute } from './route-context';
 
 const readHash = (): string => {
   const hash = globalThis.location.hash;
@@ -28,27 +15,21 @@ const parse = (raw: string): ParsedRoute => {
   return { name, params, raw: clean };
 };
 
-export const RouteContext = createContext<ParsedRoute>({
-  name: 'dashboard',
-  params: [],
-  raw: 'dashboard',
-});
-
 interface HashRouterProviderProps {
   readonly children: ReactNode;
 }
 
 export const HashRouterProvider = ({ children }: HashRouterProviderProps): ReactElement => {
-  const [raw, setRaw] = useState<string>(() => readHash());
-  useEffect(() => {
+  const [raw, setRaw] = useState<string>(readHash());
+  useEffect((): (() => void) => {
     const onHashChange = (): void => {
       setRaw(readHash());
     };
     globalThis.addEventListener('hashchange', onHashChange);
-    return () => {
+    return (): void => {
       globalThis.removeEventListener('hashchange', onHashChange);
     };
   }, []);
-  const value = useMemo(() => parse(raw), [raw]);
+  const value = useMemo<ParsedRoute>(() => parse(raw), [raw]);
   return <RouteContext.Provider value={value}>{children}</RouteContext.Provider>;
 };

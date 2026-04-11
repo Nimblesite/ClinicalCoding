@@ -11,10 +11,7 @@ export const PatientsPage = (): ReactElement => {
   const rows = (data ?? []).filter((p) => {
     if (search === '') return true;
     const q = search.toLowerCase();
-    return (
-      p.GivenName.toLowerCase().includes(q) ||
-      p.FamilyName.toLowerCase().includes(q)
-    );
+    return p.GivenName.toLowerCase().includes(q) || p.FamilyName.toLowerCase().includes(q);
   });
   return (
     <section className="page">

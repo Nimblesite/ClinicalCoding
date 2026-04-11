@@ -1,7 +1,6 @@
-import { type ReactElement } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import { useAuth } from './auth/use-auth';
 import { AppShell } from './components/app-shell';
-import { useRoute } from './router/hash-router';
 import { AppointmentsPage } from './pages/appointments-page';
 import { CalendarPage } from './pages/calendar-page';
 import { ClinicalCodingPage } from './pages/clinical-coding-page';
@@ -14,8 +13,9 @@ import { NotFoundPage } from './pages/not-found-page';
 import { PatientsPage } from './pages/patients-page';
 import { PractitionersPage } from './pages/practitioners-page';
 import { SyncPage } from './pages/sync-page';
+import { useRoute } from './router/router-hooks';
 
-const renderPage = (name: string, params: ReadonlyArray<string>): ReactElement => {
+const renderPage = (name: string, params: readonly string[]): ReactElement => {
   switch (name) {
     case '':
     case 'dashboard': {
@@ -64,11 +64,16 @@ const renderPage = (name: string, params: ReadonlyArray<string>): ReactElement =
 export const Routes = (): ReactElement => {
   const { isAuthenticated } = useAuth();
   const route = useRoute();
-  if (!isAuthenticated || route.name === 'login') {
+
+  useEffect(() => {
     if (isAuthenticated && route.name === 'login') {
-      globalThis.location.hash = 'dashboard';
+      globalThis.location.replace('#dashboard');
     }
+  }, [isAuthenticated, route.name]);
+
+  if (!isAuthenticated || route.name === 'login') {
     return <LoginPage />;
   }
+
   return <AppShell>{renderPage(route.name, route.params)}</AppShell>;
 };

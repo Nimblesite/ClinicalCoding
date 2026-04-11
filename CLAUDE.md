@@ -2,6 +2,8 @@
 
 ⚠️ CRITICAL: **Reduce token usage.** Check file size before loading. Write less. Delete fluff and dead code. ⚠️
 
+⚠️ DO NOT ASK THE USER QUESTIONS. USE YOUR JUDGMENT ⚠️
+
 > Read this entire file before writing any code.
 > These rules are NON-NEGOTIABLE. Violations will be rejected in review.
 

@@ -2,10 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { installErrorHandlers } from './lib/install-error-handlers';
-import './styles/variables.css';
 import './styles/base.css';
 import './styles/components.css';
 import './styles/login.css';
+import './styles/variables.css';
 
 installErrorHandlers();
 

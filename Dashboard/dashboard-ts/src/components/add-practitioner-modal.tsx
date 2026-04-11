@@ -1,5 +1,5 @@
-import { useState, type ReactElement, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { createPractitioner } from '../api/scheduling';
 import type { Practitioner } from '../types/fhir';
 import { Modal } from './modal';
@@ -33,7 +33,7 @@ export const AddPractitionerModal = ({
     },
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>): void => {
     e.preventDefault();
     mutation.mutate({
       Identifier: identifier,
@@ -115,9 +115,9 @@ export const AddPractitionerModal = ({
             setSpecialty(e.target.value);
           }}
         />
-        {mutation.isError && (
+        {mutation.isError ? (
           <div className="alert alert-error">{mutation.error.message}</div>
-        )}
+        ) : null}
         <button
           type="submit"
           data-testid="submit-practitioner"

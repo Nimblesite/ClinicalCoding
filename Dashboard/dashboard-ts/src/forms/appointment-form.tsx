@@ -49,10 +49,15 @@ export const AppointmentForm = ({
       onSubmit={handleSubmit(submit)}
       className="form"
     >
-      <label className="input-label" htmlFor="svc-type">
+      <label className="input-label" htmlFor="appointment-service-type">
         Service Type
       </label>
-      <input id="svc-type" className="input" {...register('ServiceType')} />
+      <input
+        id="appointment-service-type"
+        data-testid="appointment-service-type"
+        className="input"
+        {...register('ServiceType')}
+      />
       {errors.ServiceType !== undefined && (
         <p className="form-error">{errors.ServiceType.message}</p>
       )}

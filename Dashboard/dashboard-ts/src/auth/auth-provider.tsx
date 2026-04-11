@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useMemo,
-  useState,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
+import { useCallback, useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import { logout as gatekeeperLogout } from '../api/gatekeeper';
 import type { AuthSession } from '../types/auth';
 import { AuthContext, type AuthContextValue } from './auth-context';

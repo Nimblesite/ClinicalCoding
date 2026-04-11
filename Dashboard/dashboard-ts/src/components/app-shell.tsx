@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useAuth } from '../auth/use-auth';
-import { useRoute } from '../router/hash-router';
+import { useRoute } from '../router/router-hooks';
 import { Header } from './header';
 import { Sidebar } from './sidebar';
 

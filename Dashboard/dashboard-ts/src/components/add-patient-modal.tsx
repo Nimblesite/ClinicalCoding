@@ -1,5 +1,5 @@
-import { useState, type ReactElement, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { createPatient } from '../api/clinical';
 import type { Patient } from '../types/fhir';
 import { Modal } from './modal';
@@ -25,7 +25,7 @@ export const AddPatientModal = ({ open, onClose }: AddPatientModalProps): ReactE
     },
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>): void => {
     e.preventDefault();
     mutation.mutate({
       GivenName: givenName,
@@ -83,9 +83,9 @@ export const AddPatientModal = ({ open, onClose }: AddPatientModalProps): ReactE
           <option value="female">Female</option>
           <option value="other">Other</option>
         </select>
-        {mutation.isError && (
+        {mutation.isError ? (
           <div className="alert alert-error">{mutation.error.message}</div>
-        )}
+        ) : null}
         <button
           type="submit"
           data-testid="submit-patient"

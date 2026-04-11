@@ -13,14 +13,12 @@ describe('apiFetch', () => {
   });
 
   it('returns parsed JSON on 200', async () => {
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      );
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
     const result = await apiFetch<{ ok: boolean }>('http://x/y');
     expect(result.ok).toBe(true);
   });

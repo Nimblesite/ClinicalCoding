@@ -3,7 +3,6 @@ import { PatientForm } from '../forms/patient-form';
 import type { PatientFormValues } from '../forms/schemas';
 import { usePatient } from '../hooks/use-patients';
 import { useSavePatient } from '../hooks/use-update-patient';
-import { navigate } from '../router/hash-router';
 
 interface EditPatientPageProps {
   readonly id?: string;
@@ -32,22 +31,21 @@ export const EditPatientPage = ({ id }: EditPatientPageProps): ReactElement => {
       })
       .then(() => {
         setSuccess(true);
-        globalThis.setTimeout(() => {
-          navigate('patients');
-        }, 250);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        // Error handled by mutation state
+      });
   };
 
   return (
     <section className="page" data-testid="edit-patient-page">
       <h2>{id === undefined ? 'Add patient' : 'Edit patient'}</h2>
-      {save.isError && <div className="alert alert-error">{save.error.message}</div>}
-      {success && (
+      {save.isError ? <div className="alert alert-error">{save.error.message}</div> : null}
+      {success ? (
         <div className="alert alert-success" data-testid="edit-success">
           Patient updated successfully
         </div>
-      )}
+      ) : null}
       <PatientForm
         {...(data !== undefined ? { initial: data } : {})}
         onSubmit={handleSubmit}

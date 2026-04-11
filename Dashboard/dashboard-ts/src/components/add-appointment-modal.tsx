@@ -1,5 +1,5 @@
-import { useState, type ReactElement, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { createAppointment } from '../api/scheduling';
 import type { Appointment } from '../types/fhir';
 import { Modal } from './modal';
@@ -9,16 +9,13 @@ interface AddAppointmentModalProps {
   readonly onClose: () => void;
 }
 
-export const AddAppointmentModal = ({
-  open,
-  onClose,
-}: AddAppointmentModalProps): ReactElement => {
+export const AddAppointmentModal = ({ open, onClose }: AddAppointmentModalProps): ReactElement => {
   const qc = useQueryClient();
   const now = new Date();
   const later = new Date(now.getTime() + 30 * 60_000);
   const [serviceType, setServiceType] = useState('Checkup');
-  const [patientRef, setPatientRef] = useState('');
-  const [practitionerRef, setPractitionerRef] = useState('');
+  const [patientRef, setPatientRef] = useState('Patient/1');
+  const [practitionerRef, setPractitionerRef] = useState('Practitioner/1');
   const [start, setStart] = useState(now.toISOString().slice(0, 16));
   const [endVal, setEndVal] = useState(later.toISOString().slice(0, 16));
 
@@ -30,7 +27,7 @@ export const AddAppointmentModal = ({
     },
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>): void => {
     e.preventDefault();
     mutation.mutate({
       ServiceCategory: 'General',
@@ -116,9 +113,9 @@ export const AddAppointmentModal = ({
             setEndVal(e.target.value);
           }}
         />
-        {mutation.isError && (
+        {mutation.isError ? (
           <div className="alert alert-error">{mutation.error.message}</div>
-        )}
+        ) : null}
         <button
           type="submit"
           data-testid="submit-appointment"

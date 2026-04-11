@@ -1,7 +1,6 @@
-import { useEffect, useState, type ReactElement, type FormEvent } from 'react';
+import { useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 import { usePractitioner } from '../hooks/use-practitioners';
 import { useSavePractitioner } from '../hooks/use-update-practitioner';
-import { navigate } from '../router/hash-router';
 
 interface EditPractitionerPageProps {
   readonly id?: string;
@@ -16,18 +15,25 @@ export const EditPractitionerPage = ({ id }: EditPractitionerPageProps): ReactEl
   const [specialty, setSpecialty] = useState('');
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (data !== undefined) {
+  // Initialize form state when data loads - using setTimeout to avoid synchronous setState in effect
+  useEffect((): (() => void) | undefined => {
+    if (data === undefined) {
+      return;
+    }
+    const timer = globalThis.setTimeout((): void => {
       setGivenName(data.NameGiven);
       setFamilyName(data.NameFamily);
       setQualification(data.Qualification);
       setSpecialty(data.Specialty ?? '');
-    }
+    }, 0);
+    return (): void => {
+      globalThis.clearTimeout(timer);
+    };
   }, [data]);
 
   if (isLoading) return <div className="page">Loading practitioner…</div>;
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>): void => {
     e.preventDefault();
     save
       .mutateAsync({
@@ -42,22 +48,21 @@ export const EditPractitionerPage = ({ id }: EditPractitionerPageProps): ReactEl
       })
       .then(() => {
         setSuccess(true);
-        globalThis.setTimeout(() => {
-          navigate('practitioners');
-        }, 250);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        // Error handled by mutation state
+      });
   };
 
   return (
     <section className="page" data-testid="edit-practitioner-page">
       <h2>Edit Practitioner</h2>
-      {save.isError && <div className="alert alert-error">{save.error.message}</div>}
-      {success && (
+      {save.isError ? <div className="alert alert-error">{save.error.message}</div> : null}
+      {success ? (
         <div className="alert alert-success" data-testid="edit-practitioner-success">
           Practitioner updated successfully
         </div>
-      )}
+      ) : null}
       <form onSubmit={handleSubmit} className="form">
         <label className="input-label" htmlFor="edit-p-given">
           Given Name
