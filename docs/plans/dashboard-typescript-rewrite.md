@@ -544,7 +544,7 @@ All must be green before final commit. Command run from repo root.
 
 ### [DASH-TS-PLAN-LIVE-TODO-RULES] Hard rules (no exceptions)
 
-- Never delete legacy Dashboard.Web or Dashboard.Integration.Tests.
+- Never delete `Dashboard/Dashboard.Web/` (legacy H5 app, preserved). **Dashboard.Integration.Tests IS being deleted in Phase 7i** after TS Playwright port reaches parity.
 - Never edit a single assertion or test file — fix the code, not the test.
 - Never suppress a lint rule without a `TODO[DASH-TS-LINT-OFF]` comment.
 - Never add a placeholder; leave a compile error if the implementation is unfinished.
