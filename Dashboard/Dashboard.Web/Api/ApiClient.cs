@@ -14,9 +14,13 @@ namespace Dashboard.Api
         private static string _clinicalBaseUrl = "http://localhost:5080";
         private static string _schedulingBaseUrl = "http://localhost:5001";
         private static string _icd10BaseUrl = "http://localhost:5090";
-        private static string _clinicalToken = "";
-        private static string _schedulingToken = "";
-        private static string _icd10Token = "";
+        private static string _gatekeeperBaseUrl = "http://localhost:5002";
+
+        // All microservices share a single token minted by Gatekeeper.
+        private static string Token => Auth.GetToken() ?? "";
+
+        /// <summary>Gatekeeper base URL for auth calls.</summary>
+        public static string GatekeeperBaseUrl => _gatekeeperBaseUrl;
 
         /// <summary>
         /// Sets the base URLs for the microservices.
@@ -36,20 +40,11 @@ namespace Dashboard.Api
         }
 
         /// <summary>
-        /// Sets the authentication tokens for the microservices.
+        /// Sets the Gatekeeper API base URL.
         /// </summary>
-        public static void SetTokens(string clinicalToken, string schedulingToken)
+        public static void ConfigureGatekeeper(string gatekeeperUrl)
         {
-            _clinicalToken = clinicalToken;
-            _schedulingToken = schedulingToken;
-        }
-
-        /// <summary>
-        /// Sets the ICD-10 API authentication token.
-        /// </summary>
-        public static void SetIcd10Token(string icd10Token)
-        {
-            _icd10Token = icd10Token;
+            _gatekeeperBaseUrl = gatekeeperUrl;
         }
 
         // === CLINICAL API ===
@@ -332,7 +327,7 @@ namespace Dashboard.Api
                     headers = new
                     {
                         Accept = "application/json",
-                        Authorization = "Bearer " + _icd10Token,
+                        Authorization = "Bearer " + Token,
                     },
                 }
             );
@@ -357,7 +352,7 @@ namespace Dashboard.Api
                     {
                         Accept = "application/json",
                         ContentType = "application/json",
-                        Authorization = "Bearer " + _icd10Token,
+                        Authorization = "Bearer " + Token,
                     },
                     body = Script.Call<string>("JSON.stringify", data),
                 }
@@ -382,7 +377,7 @@ namespace Dashboard.Api
                     headers = new
                     {
                         Accept = "application/json",
-                        Authorization = "Bearer " + _clinicalToken,
+                        Authorization = "Bearer " + Token,
                     },
                 }
             );
@@ -406,7 +401,7 @@ namespace Dashboard.Api
                     headers = new
                     {
                         Accept = "application/json",
-                        Authorization = "Bearer " + _schedulingToken,
+                        Authorization = "Bearer " + Token,
                     },
                 }
             );
@@ -431,7 +426,7 @@ namespace Dashboard.Api
                     {
                         Accept = "application/json",
                         ContentType = "application/json",
-                        Authorization = "Bearer " + _clinicalToken,
+                        Authorization = "Bearer " + Token,
                     },
                     body = Script.Call<string>("JSON.stringify", data),
                 }
@@ -457,7 +452,7 @@ namespace Dashboard.Api
                     {
                         Accept = "application/json",
                         ContentType = "application/json",
-                        Authorization = "Bearer " + _clinicalToken,
+                        Authorization = "Bearer " + Token,
                     },
                     body = Script.Call<string>("JSON.stringify", data),
                 }
@@ -483,7 +478,7 @@ namespace Dashboard.Api
                     {
                         Accept = "application/json",
                         ContentType = "application/json",
-                        Authorization = "Bearer " + _schedulingToken,
+                        Authorization = "Bearer " + Token,
                     },
                     body = Script.Call<string>("JSON.stringify", data),
                 }

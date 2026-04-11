@@ -56,35 +56,22 @@ namespace Dashboard.React
 
         /// <summary>
         /// React useEffect hook - manages side effects.
+        /// React requires the effect callback to return either a cleanup function or undefined;
+        /// returning null crashes React's effect teardown with "destroy is not a function".
+        /// H5-transpiled C# Actions return null, so we wrap in a JS shim that returns undefined.
         /// </summary>
-        public static void UseEffect(Action effect, object[] deps = null) =>
-            Script.Call<object>(
-                "React.useEffect",
-                (Func<object>)(
-                    () =>
-                    {
-                        effect();
-                        return null;
-                    }
-                ),
-                deps
-            );
+        public static void UseEffect(Action effect, object[] deps = null)
+        {
+            Script.Write("React.useEffect(function(){ effect(); return undefined; }, deps);");
+        }
 
         /// <summary>
         /// React useEffect hook with cleanup function.
         /// </summary>
-        public static void UseEffect(Action effect, Func<Action> cleanup, object[] deps = null) =>
-            Script.Call<object>(
-                "React.useEffect",
-                (Func<Action>)(
-                    () =>
-                    {
-                        effect();
-                        return cleanup();
-                    }
-                ),
-                deps
-            );
+        public static void UseEffect(Action effect, Func<Action> cleanup, object[] deps = null)
+        {
+            Script.Write("React.useEffect(function(){ effect(); return cleanup(); }, deps);");
+        }
 
         /// <summary>
         /// React useRef hook - creates a mutable ref object.

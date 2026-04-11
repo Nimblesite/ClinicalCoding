@@ -33,8 +33,8 @@ namespace Dashboard.React
         public static void RenderApp(ReactElement element, string containerId = "root")
         {
             var container = document.getElementById(containerId);
-            var root = Script.Call<Root>("ReactDOM.createRoot", container);
-            root.Render(element);
+            var root = Script.Call<object>("ReactDOM.createRoot", container);
+            Script.Write("root.render(element)");
         }
     }
 

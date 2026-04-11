@@ -84,11 +84,12 @@
     };
   </script>
 
-  <!-- H5 Generated JavaScript - DISABLED: has broken React hooks (calls useState from static method) -->
-  <!-- <script src="js/Dashboard.js"></script> -->
+  <!-- H5 Generated JavaScript — renders the C# React app in Pages/*.cs.
+       The ?v query busts nginx's 1-year immutable cache. Bump on each deploy. -->
+  <script src="js/Dashboard.js?v=20260411-185700"></script>
 
-  <!-- Pure JS React Dashboard -->
-  <script>
+  <!-- Legacy inline React Dashboard — DISABLED in favor of H5 C# React. -->
+  <script type="text/inline-disabled">
     window.addEventListener('error', function(event) {
       console.error('[Dashboard] Window error', event.error || event.message);
     });

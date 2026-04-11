@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Dashboard.Api;
 using Dashboard.React;
 using static Dashboard.React.Elements;
 
@@ -47,7 +48,9 @@ namespace Dashboard.Components
             string activeView,
             Action<string> onNavigate,
             bool collapsed,
-            Action onToggle
+            Action onToggle,
+            AuthUser currentUser = null,
+            Action onLogout = null
         )
         {
             var sections = GetNavSections();
@@ -71,10 +74,24 @@ namespace Dashboard.Components
                         onClick: onToggle,
                         children: new[] { collapsed ? Icons.ChevronRight() : Icons.ChevronLeft() }
                     ),
-                    // Footer with user
-                    RenderFooter(collapsed),
+                    // Footer with user + sign out
+                    RenderFooter(currentUser, onLogout),
                 }
             );
+        }
+
+        private static string GetInitials(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return "??";
+            }
+            var parts = name.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+            {
+                return (parts[0][0].ToString() + parts[parts.Length - 1][0].ToString()).ToUpper();
+            }
+            return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
         }
 
         private static NavSection[] GetNavSections() =>
@@ -181,13 +198,14 @@ namespace Dashboard.Components
                         className: "sidebar-logo",
                         children: new[]
                         {
-                            Div(
-                                className: "sidebar-logo-icon",
-                                children: new[] { Icons.Activity() }
+                            Img(
+                                src: "img/nimblesite-logo.webp",
+                                alt: "Nimblesite",
+                                className: "sidebar-logo-img"
                             ),
                             Span(
                                 className: "sidebar-logo-text",
-                                children: new[] { Text("HealthCare") }
+                                children: new[] { Text("Nimblesite") }
                             ),
                         }
                     ),
@@ -253,8 +271,13 @@ namespace Dashboard.Components
             );
         }
 
-        private static ReactElement RenderFooter(bool collapsed) =>
-            Div(
+        private static ReactElement RenderFooter(AuthUser currentUser, Action onLogout)
+        {
+            var name = currentUser?.DisplayName ?? currentUser?.Email ?? "User";
+            var subtitle = currentUser?.Email ?? "Authenticated";
+            var initials = GetInitials(name);
+
+            return Div(
                 className: "sidebar-footer",
                 children: new[]
                 {
@@ -262,24 +285,30 @@ namespace Dashboard.Components
                         className: "sidebar-user",
                         children: new[]
                         {
-                            Div(className: "avatar avatar-md", children: new[] { Text("JD") }),
+                            Div(className: "avatar avatar-md", children: new[] { Text(initials) }),
                             Div(
                                 className: "sidebar-user-info",
                                 children: new[]
                                 {
-                                    Div(
-                                        className: "sidebar-user-name",
-                                        children: new[] { Text("John Doe") }
-                                    ),
-                                    Div(
-                                        className: "sidebar-user-role",
-                                        children: new[] { Text("Administrator") }
-                                    ),
+                                    Div(className: "sidebar-user-name", children: new[] { Text(name) }),
+                                    Div(className: "sidebar-user-role", children: new[] { Text(subtitle) }),
                                 }
                             ),
                         }
                     ),
+                    onLogout != null
+                        ? Button(
+                            className: "sidebar-logout-btn",
+                            onClick: onLogout,
+                            children: new[]
+                            {
+                                Icons.LogOut(),
+                                Span(children: new[] { Text("Sign out") }),
+                            }
+                        )
+                        : Fragment(),
                 }
             );
+        }
     }
 }

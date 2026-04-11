@@ -52652,18 +52652,37 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                 _clinicalBaseUrl: null,
                 _schedulingBaseUrl: null,
                 _icd10BaseUrl: null,
-                _clinicalToken: null,
-                _schedulingToken: null,
-                _icd10Token: null
+                _gatekeeperBaseUrl: null
+            },
+            props: {
+                Token: {
+                    get: function () {
+                        var $t;
+                        return ($t = Dashboard.Api.Auth.GetToken(), $t != null ? $t : "");
+                    }
+                },
+                /**
+                 * Gatekeeper base URL for auth calls.
+                 *
+                 * @static
+                 * @public
+                 * @readonly
+                 * @memberof Dashboard.Api.ApiClient
+                 * @function GatekeeperBaseUrl
+                 * @type string
+                 */
+                GatekeeperBaseUrl: {
+                    get: function () {
+                        return Dashboard.Api.ApiClient._gatekeeperBaseUrl;
+                    }
+                }
             },
             ctors: {
                 init: function () {
                     this._clinicalBaseUrl = "http://localhost:5080";
                     this._schedulingBaseUrl = "http://localhost:5001";
                     this._icd10BaseUrl = "http://localhost:5090";
-                    this._clinicalToken = "";
-                    this._schedulingToken = "";
-                    this._icd10Token = "";
+                    this._gatekeeperBaseUrl = "http://localhost:5002";
                 }
             },
             methods: {
@@ -52696,32 +52715,17 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     Dashboard.Api.ApiClient._icd10BaseUrl = icd10Url;
                 },
                 /**
-                 * Sets the authentication tokens for the microservices.
+                 * Sets the Gatekeeper API base URL.
                  *
                  * @static
                  * @public
                  * @this Dashboard.Api.ApiClient
                  * @memberof Dashboard.Api.ApiClient
-                 * @param   {string}    clinicalToken      
-                 * @param   {string}    schedulingToken
+                 * @param   {string}    gatekeeperUrl
                  * @return  {void}
                  */
-                SetTokens: function (clinicalToken, schedulingToken) {
-                    Dashboard.Api.ApiClient._clinicalToken = clinicalToken;
-                    Dashboard.Api.ApiClient._schedulingToken = schedulingToken;
-                },
-                /**
-                 * Sets the ICD-10 API authentication token.
-                 *
-                 * @static
-                 * @public
-                 * @this Dashboard.Api.ApiClient
-                 * @memberof Dashboard.Api.ApiClient
-                 * @param   {string}    icd10Token
-                 * @return  {void}
-                 */
-                SetIcd10Token: function (icd10Token) {
-                    Dashboard.Api.ApiClient._icd10Token = icd10Token;
+                ConfigureGatekeeper: function (gatekeeperUrl) {
+                    Dashboard.Api.ApiClient._gatekeeperBaseUrl = gatekeeperUrl;
                 },
                 /**
                  * Fetches all patients from the Clinical API.
@@ -53192,7 +53196,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     var $tcs = new System.Threading.Tasks.TaskCompletionSource();
                     (async () => {
                         {
-                            var response = (await H5.toPromise(fetch(url, { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient._icd10Token || "") } })));
+                            var response = (await H5.toPromise(fetch(url, { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient.Token || "") } })));
 
                             if (!response.Ok) {
                                 throw new System.Exception("HTTP " + response.Status);
@@ -53206,7 +53210,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     var $tcs = new System.Threading.Tasks.TaskCompletionSource();
                     (async () => {
                         {
-                            var response = (await H5.toPromise(fetch(url, { method: "POST", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient._icd10Token || "") }, body: JSON.stringify(H5.unbox(data)) })));
+                            var response = (await H5.toPromise(fetch(url, { method: "POST", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient.Token || "") }, body: JSON.stringify(H5.unbox(data)) })));
 
                             if (!response.Ok) {
                                 throw new System.Exception("HTTP " + response.Status);
@@ -53220,7 +53224,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     var $tcs = new System.Threading.Tasks.TaskCompletionSource();
                     (async () => {
                         {
-                            var response = (await H5.toPromise(fetch(url, { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient._clinicalToken || "") } })));
+                            var response = (await H5.toPromise(fetch(url, { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient.Token || "") } })));
 
                             if (!response.Ok) {
                                 throw new System.Exception("HTTP " + response.Status);
@@ -53234,7 +53238,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     var $tcs = new System.Threading.Tasks.TaskCompletionSource();
                     (async () => {
                         {
-                            var response = (await H5.toPromise(fetch(url, { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient._schedulingToken || "") } })));
+                            var response = (await H5.toPromise(fetch(url, { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient.Token || "") } })));
 
                             if (!response.Ok) {
                                 throw new System.Exception("HTTP " + response.Status);
@@ -53248,7 +53252,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     var $tcs = new System.Threading.Tasks.TaskCompletionSource();
                     (async () => {
                         {
-                            var response = (await H5.toPromise(fetch(url, { method: "POST", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient._clinicalToken || "") }, body: JSON.stringify(H5.unbox(data)) })));
+                            var response = (await H5.toPromise(fetch(url, { method: "POST", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient.Token || "") }, body: JSON.stringify(H5.unbox(data)) })));
 
                             if (!response.Ok) {
                                 throw new System.Exception("HTTP " + response.Status);
@@ -53262,7 +53266,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     var $tcs = new System.Threading.Tasks.TaskCompletionSource();
                     (async () => {
                         {
-                            var response = (await H5.toPromise(fetch(url, { method: "PUT", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient._clinicalToken || "") }, body: JSON.stringify(H5.unbox(data)) })));
+                            var response = (await H5.toPromise(fetch(url, { method: "PUT", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient.Token || "") }, body: JSON.stringify(H5.unbox(data)) })));
 
                             if (!response.Ok) {
                                 throw new System.Exception("HTTP " + response.Status);
@@ -53276,7 +53280,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     var $tcs = new System.Threading.Tasks.TaskCompletionSource();
                     (async () => {
                         {
-                            var response = (await H5.toPromise(fetch(url, { method: "PUT", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient._schedulingToken || "") }, body: JSON.stringify(H5.unbox(data)) })));
+                            var response = (await H5.toPromise(fetch(url, { method: "PUT", headers: { Accept: "application/json", ContentType: "application/json", Authorization: "Bearer " + (Dashboard.Api.ApiClient.Token || "") }, body: JSON.stringify(H5.unbox(data)) })));
 
                             if (!response.Ok) {
                                 throw new System.Exception("HTTP " + response.Status);
@@ -53295,6 +53299,438 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
             }
         }
     });
+
+    /**
+     * Persistent auth state stored in localStorage.
+     *
+     * @static
+     * @abstract
+     * @public
+     * @class Dashboard.Api.Auth
+     */
+    H5.define("Dashboard.Api.Auth", {
+        statics: {
+            fields: {
+                TokenKey: null,
+                UserKey: null
+            },
+            ctors: {
+                init: function () {
+                    this.TokenKey = "gatekeeper_token";
+                    this.UserKey = "gatekeeper_user";
+                }
+            },
+            methods: {
+                /**
+                 * Returns the stored bearer token, or null.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.Auth
+                 * @memberof Dashboard.Api.Auth
+                 * @return  {string}
+                 */
+                GetToken: function () {
+                    return window.localStorage.getItem('gatekeeper_token');
+                },
+                /**
+                 * Persists the bearer token.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.Auth
+                 * @memberof Dashboard.Api.Auth
+                 * @param   {string}    token
+                 * @return  {void}
+                 */
+                SetToken: function (token) {
+                    window.localStorage.setItem('gatekeeper_token', token);
+                },
+                /**
+                 * Returns the stored user, or null.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.Auth
+                 * @memberof Dashboard.Api.Auth
+                 * @return  {Dashboard.Api.AuthUser}
+                 */
+                GetUser: function () {
+                    var json = window.localStorage.getItem('gatekeeper_user');
+                    if (System.String.isNullOrEmpty(json)) {
+                        return null;
+                    }
+                    return JSON.parse(json);
+                },
+                /**
+                 * Persists the current user.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.Auth
+                 * @memberof Dashboard.Api.Auth
+                 * @param   {Dashboard.Api.AuthUser}    user
+                 * @return  {void}
+                 */
+                SetUser: function (user) {
+                    var json = JSON.stringify(user);
+                    window.localStorage.setItem('gatekeeper_user', json);
+                },
+                /**
+                 * Clears all auth state.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.Auth
+                 * @memberof Dashboard.Api.Auth
+                 * @return  {void}
+                 */
+                Clear: function () {
+                    window.localStorage.removeItem('gatekeeper_token');
+                    window.localStorage.removeItem('gatekeeper_user');
+                },
+                /**
+                 * Returns true if a token is present.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.Auth
+                 * @memberof Dashboard.Api.Auth
+                 * @return  {boolean}
+                 */
+                IsAuthenticated: function () {
+                    return !System.String.isNullOrEmpty(Dashboard.Api.Auth.GetToken());
+                }
+            }
+        }
+    });
+
+    /**
+     * Authenticated user info persisted to localStorage. Plain class
+     (not a record) so JSON.parse / JSON.stringify interop works without
+     constructor invocation.
+     *
+     * @public
+     * @class Dashboard.Api.AuthUser
+     */
+    H5.define("Dashboard.Api.AuthUser", {
+        fields: {
+            /**
+             * Stable user ID.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Api.AuthUser
+             * @function UserId
+             * @type string
+             */
+            UserId: null,
+            /**
+             * Display name shown in UI.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Api.AuthUser
+             * @function DisplayName
+             * @type string
+             */
+            DisplayName: null,
+            /**
+             * Email address.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Api.AuthUser
+             * @function Email
+             * @type string
+             */
+            Email: null
+        }
+    });
+
+    /**
+     * Gatekeeper passkey (WebAuthn) client. The WebAuthn ceremony itself
+     (challenge encoding, navigator.credentials.get/create, ArrayBuffer
+     conversions) is performed in inline JS via Script.Write because the
+     browser WebAuthn API uses ArrayBuffer types that C# cannot model cleanly.
+     *
+     * @static
+     * @abstract
+     * @public
+     * @class Dashboard.Api.GatekeeperClient
+     */
+    H5.define("Dashboard.Api.GatekeeperClient", {
+        statics: {
+            methods: {
+                /**
+                 * Performs a discoverable-credential passkey login. Browser shows the
+                 passkey picker; on success the returned token is persisted to Auth.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.GatekeeperClient
+                 * @memberof Dashboard.Api.GatekeeperClient
+                 * @return  {System.Threading.Tasks.Task$1}
+                 */
+                LoginAsync: function () {
+                    var $tcs = new System.Threading.Tasks.TaskCompletionSource();
+                    (async () => {
+                        {
+                            var baseUrl = Dashboard.Api.ApiClient.GatekeeperBaseUrl;
+                            var resultJson = (await H5.toPromise(
+                (async function() {
+                    if (!navigator.credentials || !navigator.credentials.get) {
+                        throw new Error('WebAuthn unavailable. Use https or http://localhost.');
+                    }
+                    var beginRes = await fetch(baseUrl + '/auth/login/begin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: '{}'
+                    });
+                    if (!beginRes.ok) {
+                        var errBody = await beginRes.json().catch(function(){return{};});
+                        throw new Error(errBody.Error || ('Login begin failed: HTTP ' + beginRes.status));
+                    }
+                    var beginData = await beginRes.json();
+                    var opts = JSON.parse(beginData.OptionsJson);
+                    opts.challenge = base64UrlDecode(opts.challenge);
+                    delete opts.allowCredentials;
+                    opts.timeout = 120000;
+                    var assertion = await navigator.credentials.get({ publicKey: opts });
+                    var assertionData = {
+                        id: base64UrlEncode(assertion.rawId),
+                        rawId: base64UrlEncode(assertion.rawId),
+                        type: assertion.type,
+                        response: {
+                            authenticatorData: base64UrlEncode(assertion.response.authenticatorData),
+                            clientDataJSON: base64UrlEncode(assertion.response.clientDataJSON),
+                            signature: base64UrlEncode(assertion.response.signature),
+                            userHandle: assertion.response.userHandle ? base64UrlEncode(assertion.response.userHandle) : null
+                        }
+                    };
+                    var completeRes = await fetch(baseUrl + '/auth/login/complete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ChallengeId: beginData.ChallengeId,
+                            OptionsJson: beginData.OptionsJson,
+                            AssertionResponse: assertionData
+                        })
+                    });
+                    if (!completeRes.ok) {
+                        var errBody = await completeRes.json().catch(function(){return{};});
+                        throw new Error(errBody.Error || ('Login complete failed: HTTP ' + completeRes.status));
+                    }
+                    return await completeRes.text();
+
+                    function base64UrlDecode(str) {
+                        str = str.replace(/-/g, '+').replace(/_/g, '/');
+                        while (str.length % 4) str += '=';
+                        var bin = atob(str);
+                        var bytes = new Uint8Array(bin.length);
+                        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                        return bytes.buffer;
+                    }
+                    function base64UrlEncode(buf) {
+                        var bytes = new Uint8Array(buf);
+                        var bin = '';
+                        for (var i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
+                        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                    }
+                })()
+            ));
+
+                            return Dashboard.Api.GatekeeperClient.ParseAndPersist(resultJson);
+                        }})().then(function ($r) { $tcs.setResult($r); }, function ($e) { $tcs.setException(System.Exception.create($e)); });
+                    return $tcs.task;
+                },
+                /**
+                 * Registers a new user with a passkey. Browser prompts the user to
+                 create a credential; on success the returned token is persisted.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.GatekeeperClient
+                 * @memberof Dashboard.Api.GatekeeperClient
+                 * @param   {string}                           email          
+                 * @param   {string}                           displayName
+                 * @return  {System.Threading.Tasks.Task$1}
+                 */
+                RegisterAsync: function (email, displayName) {
+                    var $tcs = new System.Threading.Tasks.TaskCompletionSource();
+                    (async () => {
+                        {
+                            var baseUrl = Dashboard.Api.ApiClient.GatekeeperBaseUrl;
+                            var resultJson = (await H5.toPromise(
+                (async function() {
+                    if (!navigator.credentials || !navigator.credentials.create) {
+                        throw new Error('WebAuthn unavailable. Use https or http://localhost.');
+                    }
+                    var beginRes = await fetch(baseUrl + '/auth/register/begin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Email: email, DisplayName: displayName })
+                    });
+                    if (!beginRes.ok) {
+                        var errBody = await beginRes.json().catch(function(){return{};});
+                        throw new Error(errBody.Error || ('Register begin failed: HTTP ' + beginRes.status));
+                    }
+                    var beginData = await beginRes.json();
+                    var opts = JSON.parse(beginData.OptionsJson);
+                    opts.challenge = base64UrlDecode(opts.challenge);
+                    opts.user.id = base64UrlDecode(opts.user.id);
+                    if (opts.excludeCredentials) {
+                        opts.excludeCredentials = opts.excludeCredentials.map(function(c) {
+                            return Object.assign({}, c, { id: base64UrlDecode(c.id) });
+                        });
+                    }
+                    opts.timeout = 120000;
+                    var cred = await navigator.credentials.create({ publicKey: opts });
+                    var attestation = {
+                        id: base64UrlEncode(cred.rawId),
+                        rawId: base64UrlEncode(cred.rawId),
+                        type: cred.type,
+                        response: {
+                            attestationObject: base64UrlEncode(cred.response.attestationObject),
+                            clientDataJSON: base64UrlEncode(cred.response.clientDataJSON)
+                        }
+                    };
+                    var completeRes = await fetch(baseUrl + '/auth/register/complete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ChallengeId: beginData.ChallengeId,
+                            OptionsJson: beginData.OptionsJson,
+                            AttestationResponse: attestation
+                        })
+                    });
+                    if (!completeRes.ok) {
+                        var errBody = await completeRes.json().catch(function(){return{};});
+                        throw new Error(errBody.Error || ('Register complete failed: HTTP ' + completeRes.status));
+                    }
+                    return await completeRes.text();
+
+                    function base64UrlDecode(str) {
+                        str = str.replace(/-/g, '+').replace(/_/g, '/');
+                        while (str.length % 4) str += '=';
+                        var bin = atob(str);
+                        var bytes = new Uint8Array(bin.length);
+                        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                        return bytes.buffer;
+                    }
+                    function base64UrlEncode(buf) {
+                        var bytes = new Uint8Array(buf);
+                        var bin = '';
+                        for (var i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
+                        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                    }
+                })()
+            ));
+
+                            return Dashboard.Api.GatekeeperClient.ParseAndPersist(resultJson);
+                        }})().then(function ($r) { $tcs.setResult($r); }, function ($e) { $tcs.setException(System.Exception.create($e)); });
+                    return $tcs.task;
+                },
+                /**
+                 * Calls the Gatekeeper logout endpoint to revoke the token server-side
+                 and clears local auth state. Best-effort: local state is always cleared.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Api.GatekeeperClient
+                 * @memberof Dashboard.Api.GatekeeperClient
+                 * @return  {System.Threading.Tasks.Task}
+                 */
+                LogoutAsync: function () {
+                    var $tcs = new System.Threading.Tasks.TaskCompletionSource();
+                    (async () => {
+                        {
+                            var token = Dashboard.Api.Auth.GetToken();
+                            var baseUrl = Dashboard.Api.ApiClient.GatekeeperBaseUrl;
+                            if (!System.String.isNullOrEmpty(token)) {
+                                (await H5.toPromise(
+                    fetch(baseUrl + '/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    }).catch(function(err) {
+                        console.warn('[Auth] Logout request failed:', err);
+                    })
+                ));
+                            }
+                            Dashboard.Api.Auth.Clear();
+                        }})().then(function ($r) { $tcs.setResult($r); }, function ($e) { $tcs.setException(System.Exception.create($e)); });
+                    return $tcs.task;
+                },
+                ParseAndPersist: function (json) {
+                    var $t;
+                    var parsed = JSON.parse(json);
+                    Dashboard.Api.Auth.SetToken(parsed.Token);
+                    Dashboard.Api.Auth.SetUser(($t = new Dashboard.Api.AuthUser(), $t.UserId = parsed.UserId, $t.DisplayName = parsed.DisplayName, $t.Email = parsed.Email, $t));
+                    return parsed;
+                }
+            }
+        }
+    });
+
+    /**
+     * Result returned from a successful Gatekeeper passkey login or registration.
+     Plain class (not a record) so JSON.parse interop works without ctor invocation.
+     *
+     * @public
+     * @class Dashboard.Api.PasskeyAuthResult
+     */
+    H5.define("Dashboard.Api.PasskeyAuthResult", {
+        fields: {
+            /**
+             * Bearer token for subsequent API calls.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Api.PasskeyAuthResult
+             * @function Token
+             * @type string
+             */
+            Token: null,
+            /**
+             * Stable user ID.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Api.PasskeyAuthResult
+             * @function UserId
+             * @type string
+             */
+            UserId: null,
+            /**
+             * Display name.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Api.PasskeyAuthResult
+             * @function DisplayName
+             * @type string
+             */
+            DisplayName: null,
+            /**
+             * Email.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Api.PasskeyAuthResult
+             * @function Email
+             * @type string
+             */
+            Email: null
+        }
+    });
+
+    /** @namespace System */
+
+    /**
+     * @memberof System
+     * @callback System.Func
+     * @return  {Object}
+     */
 
     /** @namespace Dashboard */
 
@@ -53320,22 +53756,52 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                  */
                 Render: function () {
                     var $t;
-                    var stateResult = Dashboard.React.Hooks.UseState(Dashboard.AppState, ($t = new Dashboard.AppState(), $t.ActiveView = "dashboard", $t.SidebarCollapsed = false, $t.SearchQuery = "", $t.NotificationCount = 3, $t.EditingPatientId = null, $t.EditingAppointmentId = null, $t));
+                    var HandleLogout = null;
+                    var stateResult = Dashboard.React.Hooks.UseState(Dashboard.AppState, ($t = new Dashboard.AppState(), $t.ActiveView = "dashboard", $t.SidebarCollapsed = false, $t.SearchQuery = "", $t.NotificationCount = 3, $t.EditingPatientId = null, $t.EditingAppointmentId = null, $t.IsAuthenticated = Dashboard.Api.Auth.IsAuthenticated(), $t.CurrentUser = Dashboard.Api.Auth.GetUser(), $t));
 
                     var state = stateResult.State;
                     var setState = stateResult.SetState;
 
+                    if (!state.IsAuthenticated) {
+                        return Dashboard.App.AsComponent(function () {
+                            return Dashboard.Pages.LoginPage.Render(function (user) {
+                                var next = state.Clone();
+                                next.IsAuthenticated = true;
+                                next.CurrentUser = user;
+                                next.ActiveView = "dashboard";
+                                setState(next);
+                            });
+                        });
+                    }
+
+
+                    HandleLogout = function () {
+                        (async () => {
+                            {
+                                (await H5.toPromise(Dashboard.Api.GatekeeperClient.LogoutAsync()));
+                                var next = state.Clone();
+                                next.IsAuthenticated = false;
+                                next.CurrentUser = null;
+                                next.ActiveView = "dashboard";
+                                next.EditingPatientId = null;
+                                next.EditingAppointmentId = null;
+                                setState(next);
+                            }})()
+                    };
+
                     return Dashboard.React.Elements.Div("app", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Sidebar.Render(state.ActiveView, function (view) {
-                        var $t1;
-                        var newState = ($t1 = new Dashboard.AppState(), $t1.ActiveView = view, $t1.SidebarCollapsed = state.SidebarCollapsed, $t1.SearchQuery = state.SearchQuery, $t1.NotificationCount = state.NotificationCount, $t1.EditingPatientId = null, $t1.EditingAppointmentId = null, $t1);
+                        var newState = state.Clone();
+                        newState.ActiveView = view;
+                        newState.EditingPatientId = null;
+                        newState.EditingAppointmentId = null;
                         setState(newState);
                     }, state.SidebarCollapsed, function () {
-                        var $t1;
-                        var newState = ($t1 = new Dashboard.AppState(), $t1.ActiveView = state.ActiveView, $t1.SidebarCollapsed = !state.SidebarCollapsed, $t1.SearchQuery = state.SearchQuery, $t1.NotificationCount = state.NotificationCount, $t1.EditingPatientId = state.EditingPatientId, $t1.EditingAppointmentId = state.EditingAppointmentId, $t1);
+                        var newState = state.Clone();
+                        newState.SidebarCollapsed = !state.SidebarCollapsed;
                         setState(newState);
-                    }), Dashboard.React.Elements.Div("main-wrapper", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Header.Render(Dashboard.App.GetPageTitle(state.ActiveView), state.SearchQuery, function (query) {
-                        var $t1;
-                        var newState = ($t1 = new Dashboard.AppState(), $t1.ActiveView = state.ActiveView, $t1.SidebarCollapsed = state.SidebarCollapsed, $t1.SearchQuery = query, $t1.NotificationCount = state.NotificationCount, $t1.EditingPatientId = state.EditingPatientId, $t1.EditingAppointmentId = state.EditingAppointmentId, $t1);
+                    }, state.CurrentUser, HandleLogout), Dashboard.React.Elements.Div("main-wrapper", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Header.Render(Dashboard.App.GetPageTitle(state.ActiveView), state.SearchQuery, function (query) {
+                        var newState = state.Clone();
+                        newState.SearchQuery = query;
                         setState(newState);
                     }, state.NotificationCount), Dashboard.React.Elements.Main("main-content", System.Array.init([Dashboard.App.RenderPage(state, setState)], Object))], Object))], Object));
                 },
@@ -53372,53 +53838,96 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     }
                     return "Clinical Coding";
                 },
+                /**
+                 * Wraps a parameterless render delegate as a React function component element.
+                 Hooks (UseState, UseEffect) require a render-phase context — eagerly invoking
+                 page Render() methods violates the rules of hooks.
+                 *
+                 * @static
+                 * @private
+                 * @this Dashboard.App
+                 * @memberof Dashboard.App
+                 * @param   {System.Func}    render
+                 * @return  {Object}
+                 */
+                AsComponent: function (render) {
+                    return React.createElement(render);
+                },
                 RenderPage: function (state, setState) {
                     var view = state.ActiveView;
 
                     if (H5.referenceEquals(view, "patients") && state.EditingPatientId != null) {
-                        return Dashboard.Pages.EditPatientPage.Render(state.EditingPatientId, function () {
-                            var $t;
-                            var newState = ($t = new Dashboard.AppState(), $t.ActiveView = "patients", $t.SidebarCollapsed = state.SidebarCollapsed, $t.SearchQuery = state.SearchQuery, $t.NotificationCount = state.NotificationCount, $t.EditingPatientId = null, $t.EditingAppointmentId = null, $t);
-                            setState(newState);
+                        var editingId = state.EditingPatientId;
+                        var snapshot = state;
+                        return Dashboard.App.AsComponent(function () {
+                            return Dashboard.Pages.EditPatientPage.Render(editingId, function () {
+                                var next = snapshot.Clone();
+                                next.ActiveView = "patients";
+                                next.EditingPatientId = null;
+                                next.EditingAppointmentId = null;
+                                setState(next);
+                            });
                         });
                     }
 
                     if ((H5.referenceEquals(view, "appointments") || H5.referenceEquals(view, "calendar")) && state.EditingAppointmentId != null) {
-                        return Dashboard.Pages.EditAppointmentPage.Render(state.EditingAppointmentId, function () {
-                            var $t;
-                            var newState = ($t = new Dashboard.AppState(), $t.ActiveView = view, $t.SidebarCollapsed = state.SidebarCollapsed, $t.SearchQuery = state.SearchQuery, $t.NotificationCount = state.NotificationCount, $t.EditingPatientId = null, $t.EditingAppointmentId = null, $t);
-                            setState(newState);
+                        var editingId1 = state.EditingAppointmentId;
+                        var snapshot1 = state;
+                        var returnView = view;
+                        return Dashboard.App.AsComponent(function () {
+                            return Dashboard.Pages.EditAppointmentPage.Render(editingId1, function () {
+                                var next = snapshot1.Clone();
+                                next.ActiveView = returnView;
+                                next.EditingPatientId = null;
+                                next.EditingAppointmentId = null;
+                                setState(next);
+                            });
                         });
                     }
 
                     if (H5.referenceEquals(view, "dashboard")) {
-                        return Dashboard.Pages.DashboardPage.Render();
+                        return Dashboard.App.AsComponent(Dashboard.Pages.DashboardPage.Render);
                     }
                     if (H5.referenceEquals(view, "clinical-coding")) {
-                        return Dashboard.Pages.ClinicalCodingPage.Render();
+                        return Dashboard.App.AsComponent(Dashboard.Pages.ClinicalCodingPage.Render);
                     }
                     if (H5.referenceEquals(view, "patients")) {
-                        return Dashboard.Pages.PatientsPage.Render(function (patientId) {
-                            var $t;
-                            var newState = ($t = new Dashboard.AppState(), $t.ActiveView = "patients", $t.SidebarCollapsed = state.SidebarCollapsed, $t.SearchQuery = state.SearchQuery, $t.NotificationCount = state.NotificationCount, $t.EditingPatientId = patientId, $t.EditingAppointmentId = null, $t);
-                            setState(newState);
+                        var snapshot2 = state;
+                        return Dashboard.App.AsComponent(function () {
+                            return Dashboard.Pages.PatientsPage.Render(function (patientId) {
+                                var next = snapshot2.Clone();
+                                next.ActiveView = "patients";
+                                next.EditingPatientId = patientId;
+                                next.EditingAppointmentId = null;
+                                setState(next);
+                            });
                         });
                     }
                     if (H5.referenceEquals(view, "practitioners")) {
-                        return Dashboard.Pages.PractitionersPage.Render();
+                        return Dashboard.App.AsComponent(Dashboard.Pages.PractitionersPage.Render);
                     }
                     if (H5.referenceEquals(view, "appointments")) {
-                        return Dashboard.Pages.AppointmentsPage.Render(function (appointmentId) {
-                            var $t;
-                            var newState = ($t = new Dashboard.AppState(), $t.ActiveView = "appointments", $t.SidebarCollapsed = state.SidebarCollapsed, $t.SearchQuery = state.SearchQuery, $t.NotificationCount = state.NotificationCount, $t.EditingPatientId = null, $t.EditingAppointmentId = appointmentId, $t);
-                            setState(newState);
+                        var snapshot3 = state;
+                        return Dashboard.App.AsComponent(function () {
+                            return Dashboard.Pages.AppointmentsPage.Render(function (appointmentId) {
+                                var next = snapshot3.Clone();
+                                next.ActiveView = "appointments";
+                                next.EditingPatientId = null;
+                                next.EditingAppointmentId = appointmentId;
+                                setState(next);
+                            });
                         });
                     }
                     if (H5.referenceEquals(view, "calendar")) {
-                        return Dashboard.Pages.CalendarPage.Render(function (appointmentId) {
-                            var $t;
-                            var newState = ($t = new Dashboard.AppState(), $t.ActiveView = "calendar", $t.SidebarCollapsed = state.SidebarCollapsed, $t.SearchQuery = state.SearchQuery, $t.NotificationCount = state.NotificationCount, $t.EditingPatientId = null, $t.EditingAppointmentId = appointmentId, $t);
-                            setState(newState);
+                        var snapshot4 = state;
+                        return Dashboard.App.AsComponent(function () {
+                            return Dashboard.Pages.CalendarPage.Render(function (appointmentId) {
+                                var next = snapshot4.Clone();
+                                next.ActiveView = "calendar";
+                                next.EditingPatientId = null;
+                                next.EditingAppointmentId = appointmentId;
+                                setState(next);
+                            });
                         });
                     }
                     if (H5.referenceEquals(view, "encounters")) {
@@ -53443,7 +53952,8 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
     });
 
     /**
-     * Application state class.
+     * Application state. Plain mutable class for H5 compatibility — records
+     with init setters depend on IsExternalInit which H5 may not ship.
      *
      * @public
      * @class Dashboard.AppState
@@ -53509,7 +54019,43 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
              * @function EditingAppointmentId
              * @type string
              */
-            EditingAppointmentId: null
+            EditingAppointmentId: null,
+            /**
+             * Whether the user has a valid Gatekeeper token.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.AppState
+             * @function IsAuthenticated
+             * @type boolean
+             */
+            IsAuthenticated: false,
+            /**
+             * Authenticated user, or null when signed out.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.AppState
+             * @function CurrentUser
+             * @type Dashboard.Api.AuthUser
+             */
+            CurrentUser: null
+        },
+        methods: {
+            /**
+             * Returns a shallow copy of this state, suitable as the
+             base for setState mutations.
+             *
+             * @instance
+             * @public
+             * @this Dashboard.AppState
+             * @memberof Dashboard.AppState
+             * @return  {Dashboard.AppState}
+             */
+            Clone: function () {
+                var $t;
+                return ($t = new Dashboard.AppState(), $t.ActiveView = this.ActiveView, $t.SidebarCollapsed = this.SidebarCollapsed, $t.SearchQuery = this.SearchQuery, $t.NotificationCount = this.NotificationCount, $t.EditingPatientId = this.EditingPatientId, $t.EditingAppointmentId = this.EditingAppointmentId, $t.IsAuthenticated = this.IsAuthenticated, $t.CurrentUser = this.CurrentUser, $t);
+            }
         }
     });
 
@@ -53561,15 +54107,6 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
      * @callback System.Action
      * @param   {T}       arg
      * @return  {void}
-     */
-
-    /** @namespace System */
-
-    /**
-     * @memberof System
-     * @callback System.Func
-     * @param   {T}         arg
-     * @return  {string}
      */
 
     /**
@@ -53815,6 +54352,18 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                  */
                 Search: function () {
                     return Dashboard.React.Elements.Svg("icon", 20, 20, "0 0 24 24", "none", [Dashboard.React.Elements.Path("M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35", void 0, "currentColor", 2)]);
+                },
+                /**
+                 * Sign-out icon.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Components.Icons
+                 * @memberof Dashboard.Components.Icons
+                 * @return  {Object}
+                 */
+                LogOut: function () {
+                    return Dashboard.React.Elements.Svg("icon", 20, 20, "0 0 24 24", "none", [Dashboard.React.Elements.Path("M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9", void 0, "currentColor", 2)]);
                 },
                 /**
                  * Bell/Notification icon.
@@ -54261,25 +54810,39 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                  * @public
                  * @this Dashboard.Components.Sidebar
                  * @memberof Dashboard.Components.Sidebar
-                 * @param   {string}           activeView    
-                 * @param   {System.Action}    onNavigate    
-                 * @param   {boolean}          collapsed     
-                 * @param   {System.Action}    onToggle
+                 * @param   {string}                    activeView     
+                 * @param   {System.Action}             onNavigate     
+                 * @param   {boolean}                   collapsed      
+                 * @param   {System.Action}             onToggle       
+                 * @param   {Dashboard.Api.AuthUser}    currentUser    
+                 * @param   {System.Action}             onLogout
                  * @return  {Object}
                  */
-                Render: function (activeView, onNavigate, collapsed, onToggle) {
+                Render: function (activeView, onNavigate, collapsed, onToggle, currentUser, onLogout) {
+                    if (currentUser === void 0) { currentUser = null; }
+                    if (onLogout === void 0) { onLogout = null; }
                     var sections = Dashboard.Components.Sidebar.GetNavSections();
 
                     return Dashboard.React.Elements.Aside("sidebar " + ((collapsed ? "collapsed" : "") || ""), System.Array.init([Dashboard.Components.Sidebar.RenderHeader(collapsed), Dashboard.React.Elements.Nav("sidebar-nav", System.Linq.Enumerable.from(sections, Dashboard.Components.NavSection).select(function (section) {
                             return Dashboard.Components.Sidebar.RenderSection(section, activeView, onNavigate);
-                        }).ToArray(Object)), Dashboard.React.Elements.Button("sidebar-toggle", onToggle, false, "button", System.Array.init([collapsed ? Dashboard.Components.Icons.ChevronRight() : Dashboard.Components.Icons.ChevronLeft()], Object)), Dashboard.Components.Sidebar.RenderFooter(collapsed)], Object));
+                        }).ToArray(Object)), Dashboard.React.Elements.Button("sidebar-toggle", onToggle, false, "button", System.Array.init([collapsed ? Dashboard.Components.Icons.ChevronRight() : Dashboard.Components.Icons.ChevronLeft()], Object)), Dashboard.Components.Sidebar.RenderFooter(currentUser, onLogout)], Object));
+                },
+                GetInitials: function (name) {
+                    if (System.String.isNullOrWhiteSpace(name)) {
+                        return "??";
+                    }
+                    var parts = System.String.split(name.trim(), System.Array.init([32, 9], System.Char).map(function (i) {{ return String.fromCharCode(i); }}), null, 1);
+                    if (parts.length >= 2) {
+                        return ((String.fromCharCode(parts[System.Array.index(0, parts)].charCodeAt(0)) || "") + (String.fromCharCode(parts[System.Array.index(((parts.length - 1) | 0), parts)].charCodeAt(0)) || "")).toUpperCase();
+                    }
+                    return name.length >= 2 ? name.substr(0, 2).toUpperCase() : name.toUpperCase();
                 },
                 GetNavSections: function () {
                     var $t, $t1;
                     return System.Array.init([($t = new Dashboard.Components.NavSection(), $t.Title = "Overview", $t.Items = System.Array.init([($t1 = new Dashboard.Components.NavItem(), $t1.Id = "dashboard", $t1.Label = "Dashboard", $t1.Icon = Dashboard.Components.Icons.Home, $t1)], Dashboard.Components.NavItem), $t), ($t = new Dashboard.Components.NavSection(), $t.Title = "Clinical", $t.Items = System.Array.init([($t1 = new Dashboard.Components.NavItem(), $t1.Id = "patients", $t1.Label = "Patients", $t1.Icon = Dashboard.Components.Icons.Users, $t1), ($t1 = new Dashboard.Components.NavItem(), $t1.Id = "clinical-coding", $t1.Label = "Clinical Coding", $t1.Icon = Dashboard.Components.Icons.Code, $t1), ($t1 = new Dashboard.Components.NavItem(), $t1.Id = "encounters", $t1.Label = "Encounters", $t1.Icon = Dashboard.Components.Icons.Clipboard, $t1), ($t1 = new Dashboard.Components.NavItem(), $t1.Id = "conditions", $t1.Label = "Conditions", $t1.Icon = Dashboard.Components.Icons.Heart, $t1), ($t1 = new Dashboard.Components.NavItem(), $t1.Id = "medications", $t1.Label = "Medications", $t1.Icon = Dashboard.Components.Icons.Pill, $t1)], Dashboard.Components.NavItem), $t), ($t = new Dashboard.Components.NavSection(), $t.Title = "Scheduling", $t.Items = System.Array.init([($t1 = new Dashboard.Components.NavItem(), $t1.Id = "practitioners", $t1.Label = "Practitioners", $t1.Icon = Dashboard.Components.Icons.UserDoctor, $t1), ($t1 = new Dashboard.Components.NavItem(), $t1.Id = "appointments", $t1.Label = "Appointments", $t1.Icon = Dashboard.Components.Icons.Clipboard, $t1.Badge = 3, $t1), ($t1 = new Dashboard.Components.NavItem(), $t1.Id = "calendar", $t1.Label = "Schedule", $t1.Icon = Dashboard.Components.Icons.Calendar, $t1)], Dashboard.Components.NavItem), $t), ($t = new Dashboard.Components.NavSection(), $t.Title = "System", $t.Items = System.Array.init([($t1 = new Dashboard.Components.NavItem(), $t1.Id = "settings", $t1.Label = "Settings", $t1.Icon = Dashboard.Components.Icons.Settings, $t1)], Dashboard.Components.NavItem), $t)], Dashboard.Components.NavSection);
                 },
                 RenderHeader: function (collapsed) {
-                    return Dashboard.React.Elements.Div("sidebar-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.A("#", "sidebar-logo", void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("sidebar-logo-icon", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Activity()], Object)), Dashboard.React.Elements.Span("sidebar-logo-text", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("HealthCare")], Object))], Object))], Object));
+                    return Dashboard.React.Elements.Div("sidebar-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.A("#", "sidebar-logo", void 0, void 0, System.Array.init([Dashboard.React.Elements.Img("img/nimblesite-logo.webp", "Nimblesite", "sidebar-logo-img", void 0), Dashboard.React.Elements.Span("sidebar-logo-text", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Nimblesite")], Object))], Object))], Object));
                 },
                 RenderSection: function (section, activeView, onNavigate) {
                     var items = System.Linq.Enumerable.from(section.Items, Dashboard.Components.NavItem).select(function (item) {
@@ -54306,8 +54869,13 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                         onNavigate(item.Id);
                     }, children);
                 },
-                RenderFooter: function (collapsed) {
-                    return Dashboard.React.Elements.Div("sidebar-footer", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("sidebar-user", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("avatar avatar-md", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("JD")], Object)), Dashboard.React.Elements.Div("sidebar-user-info", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("sidebar-user-name", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("John Doe")], Object)), Dashboard.React.Elements.Div("sidebar-user-role", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Administrator")], Object))], Object))], Object))], Object));
+                RenderFooter: function (currentUser, onLogout) {
+                    var $t, $t1, $t2;
+                    var name = ($t = (currentUser != null ? currentUser.DisplayName : null), $t != null ? $t : ($t1 = (currentUser != null ? currentUser.Email : null), $t1 != null ? $t1 : "User"));
+                    var subtitle = ($t2 = (currentUser != null ? currentUser.Email : null), $t2 != null ? $t2 : "Authenticated");
+                    var initials = Dashboard.Components.Sidebar.GetInitials(name);
+
+                    return Dashboard.React.Elements.Div("sidebar-footer", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("sidebar-user", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("avatar avatar-md", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(initials)], Object)), Dashboard.React.Elements.Div("sidebar-user-info", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("sidebar-user-name", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(name)], Object)), Dashboard.React.Elements.Div("sidebar-user-role", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(subtitle)], Object))], Object))], Object)), !H5.staticEquals(onLogout, null) ? Dashboard.React.Elements.Button("sidebar-logout-btn", onLogout, false, "button", System.Array.init([Dashboard.Components.Icons.LogOut(), Dashboard.React.Elements.Span(void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Sign out")], Object))], Object)) : Dashboard.React.Elements.Fragment()], Object));
                 }
             }
         }
@@ -54404,6 +54972,47 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
     });
 
     /** @namespace Dashboard.Pages */
+
+    /**
+     * Appointment request row.
+     *
+     * @public
+     * @class Dashboard.Pages.AppointmentRequest
+     */
+    H5.define("Dashboard.Pages.AppointmentRequest", {
+        fields: {
+            /**
+             * Patient name.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.AppointmentRequest
+             * @function Patient
+             * @type string
+             */
+            Patient: null,
+            /**
+             * Requested slot label.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.AppointmentRequest
+             * @function When
+             * @type string
+             */
+            When: null,
+            /**
+             * Whether this is the highlighted primary request.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.AppointmentRequest
+             * @function Primary
+             * @type boolean
+             */
+            Primary: false
+        }
+    });
 
     /**
      * Appointments management page.
@@ -54956,7 +55565,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
     });
 
     /**
-     * Clinical coding page for ICD-10 code lookup and search.
+     * Clinical coding — state mutations and async actions.
      *
      * @static
      * @abstract
@@ -54966,6 +55575,190 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
     H5.define("Dashboard.Pages.ClinicalCodingPage", {
         statics: {
             methods: {
+                Clone: function (s) {
+                    var $t;
+                    return ($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = s.SearchQuery, $t.SearchMode = s.SearchMode, $t.Icd10Results = s.Icd10Results, $t.AchiResults = s.AchiResults, $t.SemanticResults = s.SemanticResults, $t.SelectedCode = s.SelectedCode, $t.Loading = s.Loading, $t.Error = s.Error, $t.IncludeAchi = s.IncludeAchi, $t.CopiedCode = s.CopiedCode, $t);
+                },
+                SetSearchMode: function (state, setState, mode) {
+                    var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                    next.SearchMode = mode;
+                    next.Icd10Results = System.Array.init(0, null, Object);
+                    next.AchiResults = System.Array.init(0, null, Object);
+                    next.SemanticResults = System.Array.init(0, null, Object);
+                    next.SelectedCode = null;
+                    next.Loading = false;
+                    next.Error = null;
+                    next.CopiedCode = null;
+                    setState(next);
+                },
+                UpdateQuery: function (state, setState, query) {
+                    var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                    next.SearchQuery = query;
+                    setState(next);
+                },
+                ToggleAchi: function (state, setState) {
+                    var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                    next.IncludeAchi = !state.IncludeAchi;
+                    setState(next);
+                },
+                CopyCode: function (code, state, setState) {
+                    navigator.clipboard.writeText(code);
+                    var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                    next.CopiedCode = code;
+                    setState(next);
+                },
+                ClearSelection: function (state, setState) {
+                    var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                    next.SelectedCode = null;
+                    next.Loading = false;
+                    next.Error = null;
+                    next.CopiedCode = null;
+                    setState(next);
+                },
+                ExecuteSearch: function (state, setState) {
+                    (async () => {
+                        {
+                            if (System.String.isNullOrWhiteSpace(state.SearchQuery)) {
+                                return;
+                            }
+
+                            var loading = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                            loading.Loading = true;
+                            loading.Error = null;
+                            loading.Icd10Results = System.Array.init(0, null, Object);
+                            loading.SemanticResults = System.Array.init(0, null, Object);
+                            loading.SelectedCode = null;
+                            loading.CopiedCode = null;
+                            setState(loading);
+
+                            try {
+                                if (H5.referenceEquals(state.SearchMode, "keyword")) {
+                                    (await H5.toPromise(Dashboard.Pages.ClinicalCodingPage.DoKeywordSearch(state, setState)));
+                                } else {
+                                    if (H5.referenceEquals(state.SearchMode, "semantic")) {
+                                        (await H5.toPromise(Dashboard.Pages.ClinicalCodingPage.DoSemanticSearch(state, setState)));
+                                    } else {
+                                        (await H5.toPromise(Dashboard.Pages.ClinicalCodingPage.DoLookup(state, setState)));
+                                    }
+                                }
+                            } catch (ex) {
+                                ex = System.Exception.create(ex);
+                                var err = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                                err.Loading = false;
+                                err.Error = ex.Message;
+                                setState(err);
+                            }
+                        }})()
+                },
+                DoKeywordSearch: function (state, setState) {
+                    var $tcs = new System.Threading.Tasks.TaskCompletionSource();
+                    (async () => {
+                        {
+                            var results = (await H5.toPromise(Dashboard.Api.ApiClient.SearchIcd10CodesAsync(state.SearchQuery, 50)));
+                            var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                            next.Icd10Results = results;
+                            next.Loading = false;
+                            setState(next);
+                        }})().then(function ($r) { $tcs.setResult($r); }, function ($e) { $tcs.setException(System.Exception.create($e)); });
+                    return $tcs.task;
+                },
+                DoSemanticSearch: function (state, setState) {
+                    var $tcs = new System.Threading.Tasks.TaskCompletionSource();
+                    (async () => {
+                        {
+                            var results = (await H5.toPromise(Dashboard.Api.ApiClient.SemanticSearchAsync(state.SearchQuery, 20, state.IncludeAchi)));
+                            var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                            next.SemanticResults = results;
+                            next.Loading = false;
+                            setState(next);
+                        }})().then(function ($r) { $tcs.setResult($r); }, function ($e) { $tcs.setException(System.Exception.create($e)); });
+                    return $tcs.task;
+                },
+                DoLookup: function (state, setState) {
+                    var $tcs = new System.Threading.Tasks.TaskCompletionSource();
+                    (async () => {
+                        {
+                            var $t;
+                            var allResults = (await H5.toPromise(Dashboard.Api.ApiClient.SearchIcd10CodesAsync(state.SearchQuery, 100)));
+                            var query = state.SearchQuery.toUpperCase();
+                            var matches = new (System.Collections.Generic.List$1(Object)).ctor();
+                            $t = H5.getEnumerator(allResults);
+                            try {
+                                while ($t.moveNext()) {
+                                    var c = $t.Current;
+                                    if (c.Code != null && System.String.startsWith(c.Code.toUpperCase(), query)) {
+                                        matches.add(c);
+                                    }
+                                }
+                            } finally {
+                                if (H5.is($t, System.IDisposable)) {
+                                    $t.System$IDisposable$Dispose();
+                                }
+                            }
+
+                            var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                            next.Loading = false;
+                            if (matches.Count === 1) {
+                                var full = (await H5.toPromise(Dashboard.Api.ApiClient.GetIcd10CodeAsync(matches.getItem(0).Code)));
+                                next.SelectedCode = full;
+                            } else {
+                                next.Icd10Results = matches.ToArray();
+                            }
+                            setState(next);
+                        }})().then(function ($r) { $tcs.setResult($r); }, function ($e) { $tcs.setException(System.Exception.create($e)); });
+                    return $tcs.task;
+                },
+                SelectCode: function (code, state, setState) {
+                    (async () => {
+                        {
+                            var loading = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                            loading.Loading = true;
+                            loading.SelectedCode = null;
+                            setState(loading);
+
+                            try {
+                                var fullCode = (await H5.toPromise(Dashboard.Api.ApiClient.GetIcd10CodeAsync(code.Code)));
+                                var next = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                                next.SelectedCode = fullCode;
+                                next.Loading = false;
+                                setState(next);
+                            } catch (ex) {
+                                ex = System.Exception.create(ex);
+                                var err = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                                err.Loading = false;
+                                err.Error = "Failed to load code details: " + (ex.Message || "");
+                                setState(err);
+                            }
+                        }})()
+                },
+                LookupSemanticCode: function (code, state, setState) {
+                    (async () => {
+                        {
+                            var loading = Dashboard.Pages.ClinicalCodingPage.Clone(state);
+                            loading.SearchQuery = code;
+                            loading.SearchMode = "lookup";
+                            loading.Loading = true;
+                            loading.Icd10Results = System.Array.init(0, null, Object);
+                            loading.SemanticResults = System.Array.init(0, null, Object);
+                            loading.SelectedCode = null;
+                            loading.CopiedCode = null;
+                            setState(loading);
+
+                            try {
+                                var result = (await H5.toPromise(Dashboard.Api.ApiClient.GetIcd10CodeAsync(code)));
+                                var next = Dashboard.Pages.ClinicalCodingPage.Clone(loading);
+                                next.SelectedCode = result;
+                                next.Loading = false;
+                                setState(next);
+                            } catch (ex) {
+                                ex = System.Exception.create(ex);
+                                var err = Dashboard.Pages.ClinicalCodingPage.Clone(loading);
+                                err.Loading = false;
+                                err.Error = ex.Message;
+                                setState(err);
+                            }
+                        }})()
+                },
                 /**
                  * Renders the clinical coding page.
                  *
@@ -54976,123 +55769,18 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                  * @return  {Object}
                  */
                 Render: function () {
-                    var $t;
-                    var stateResult = Dashboard.React.Hooks.UseState(Dashboard.Pages.ClinicalCodingState, ($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = "", $t.SearchMode = "keyword", $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = null, $t.Loading = false, $t.Error = null, $t.IncludeAchi = false, $t.CopiedCode = null, $t));
-
+                    var stateResult = Dashboard.React.Hooks.UseState(Dashboard.Pages.ClinicalCodingState, Dashboard.Pages.ClinicalCodingPage.InitialState());
                     var state = stateResult.State;
                     var setState = stateResult.SetState;
 
                     return Dashboard.React.Elements.Div("page clinical-coding-page", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderHeader(), Dashboard.Pages.ClinicalCodingPage.RenderSearchSection(state, setState), Dashboard.Pages.ClinicalCodingPage.RenderContent(state, setState)], Object));
                 },
+                InitialState: function () {
+                    var $t;
+                    return ($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = "", $t.SearchMode = "semantic", $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = null, $t.Loading = false, $t.Error = null, $t.IncludeAchi = false, $t.CopiedCode = null, $t);
+                },
                 RenderHeader: function () {
-                    return Dashboard.React.Elements.Div("page-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-3", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("page-header-icon", void 0, { background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", borderRadius: "12px", padding: "12px", display: "flex", alignItems: "center", justifyContent: "center" }, void 0, System.Array.init([Dashboard.Components.Icons.Code()], Object)), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(2, "page-title", System.Array.init([Dashboard.React.Elements.Text("Clinical Coding")], Object)), Dashboard.React.Elements.P("page-description", void 0, System.Array.init([Dashboard.React.Elements.Text("Search ICD-10-AM diagnosis codes and ACHI procedure codes")], Object))], Object))], Object))], Object));
-                },
-                RenderSearchSection: function (state, setState) {
-                    return Dashboard.React.Elements.Div("card mb-6", void 0, { padding: "24px" }, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderSearchTabs(state, setState), Dashboard.Pages.ClinicalCodingPage.RenderSearchInput(state, setState), Dashboard.Pages.ClinicalCodingPage.RenderSearchOptions(state, setState)], Object));
-                },
-                RenderSearchTabs: function (state, setState) {
-                    return Dashboard.React.Elements.Div("flex gap-2 mb-4", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderTab("Keyword Search", Dashboard.Components.Icons.Search, H5.referenceEquals(state.SearchMode, "keyword"), function () {
-                        Dashboard.Pages.ClinicalCodingPage.SetSearchMode(state, setState, "keyword");
-                    }), Dashboard.Pages.ClinicalCodingPage.RenderTab("AI Search", Dashboard.Components.Icons.Sparkles, H5.referenceEquals(state.SearchMode, "semantic"), function () {
-                        Dashboard.Pages.ClinicalCodingPage.SetSearchMode(state, setState, "semantic");
-                    }), Dashboard.Pages.ClinicalCodingPage.RenderTab("Code Lookup", Dashboard.Components.Icons.FileText, H5.referenceEquals(state.SearchMode, "lookup"), function () {
-                        Dashboard.Pages.ClinicalCodingPage.SetSearchMode(state, setState, "lookup");
-                    })], Object));
-                },
-                RenderTab: function (label, icon, isActive, onClick) {
-                    return Dashboard.React.Elements.Button("btn " + ((isActive ? "btn-primary" : "btn-secondary") || ""), onClick, false, "button", System.Array.init([icon(), Dashboard.React.Elements.Text(label)], Object));
-                },
-                SetSearchMode: function (state, setState, mode) {
-                    var $t;
-                    setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = mode, $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = null, $t.Loading = false, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
-                },
-                RenderSearchInput: function (state, setState) {
-                    var placeholder = Dashboard.Pages.ClinicalCodingPage.GetPlaceholder(state.SearchMode);
-
-                    return Dashboard.React.Elements.Div("flex gap-4", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex-1 search-input search-input-lg", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("search-icon", void 0, void 0, System.Array.init([Dashboard.Components.Icons.Search()], Object)), Dashboard.React.Elements.Input("input input-lg", "text", state.SearchQuery, placeholder, function (query) {
-                        Dashboard.Pages.ClinicalCodingPage.UpdateQuery(state, setState, query);
-                    }, function (key) {
-                        if (H5.referenceEquals(key, "Enter")) {
-                            Dashboard.Pages.ClinicalCodingPage.ExecuteSearch(state, setState);
-                        }
-                    }, false)], Object)), Dashboard.React.Elements.Button("btn btn-primary btn-lg", function () {
-                        Dashboard.Pages.ClinicalCodingPage.ExecuteSearch(state, setState);
-                    }, false, "button", System.Array.init([state.Loading ? Dashboard.Components.Icons.Refresh() : Dashboard.Components.Icons.Search(), Dashboard.React.Elements.Text(state.Loading ? "Searching..." : "Search")], Object))], Object));
-                },
-                GetPlaceholder: function (mode) {
-                    if (H5.referenceEquals(mode, "keyword")) {
-                        return "Search by code, description, or keywords (e.g., 'diabetes', 'fracture')";
-                    }
-                    if (H5.referenceEquals(mode, "semantic")) {
-                        return "Describe symptoms or conditions in natural language...";
-                    }
-                    return "Enter ICD-10 code or prefix (e.g., 'O9A.', 'E11', 'J18.9')";
-                },
-                UpdateQuery: function (state, setState, query) {
-                    var $t;
-                    setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = query, $t.SearchMode = state.SearchMode, $t.Icd10Results = state.Icd10Results, $t.AchiResults = state.AchiResults, $t.SemanticResults = state.SemanticResults, $t.SelectedCode = state.SelectedCode, $t.Loading = state.Loading, $t.Error = state.Error, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = state.CopiedCode, $t));
-                },
-                RenderSearchOptions: function (state, setState) {
-                    if (!H5.referenceEquals(state.SearchMode, "semantic")) {
-                        return Dashboard.React.Elements.Text("");
-                    }
-
-                    return Dashboard.React.Elements.Div("flex items-center gap-4 mt-4", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Label(void 0, "flex items-center gap-2 cursor-pointer", System.Array.init([Dashboard.React.Elements.Input("checkbox", "checkbox", state.IncludeAchi ? "true" : "", void 0, function (_) {
-                        Dashboard.Pages.ClinicalCodingPage.ToggleAchi(state, setState);
-                    }, void 0, false), Dashboard.React.Elements.Span(void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Include ACHI procedure codes")], Object))], Object)), Dashboard.React.Elements.Span("text-sm text-gray-500", void 0, void 0, System.Array.init([Dashboard.Components.Icons.Sparkles(), Dashboard.React.Elements.Text(" Powered by medical AI embeddings")], Object))], Object));
-                },
-                ToggleAchi: function (state, setState) {
-                    var $t;
-                    setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = state.Icd10Results, $t.AchiResults = state.AchiResults, $t.SemanticResults = state.SemanticResults, $t.SelectedCode = state.SelectedCode, $t.Loading = state.Loading, $t.Error = state.Error, $t.IncludeAchi = !state.IncludeAchi, $t.CopiedCode = state.CopiedCode, $t));
-                },
-                ExecuteSearch: function (state, setState) {
-                    (async () => {
-                        {
-                            var $t, $t1;
-                            if (System.String.isNullOrWhiteSpace(state.SearchQuery)) {
-                                return;
-                            }
-
-                            setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = null, $t.Loading = true, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
-
-                            try {
-                                if (H5.referenceEquals(state.SearchMode, "keyword")) {
-                                    var results = (await H5.toPromise(Dashboard.Api.ApiClient.SearchIcd10CodesAsync(state.SearchQuery, 50)));
-                                    setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = results, $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = null, $t.Loading = false, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
-                                } else if (H5.referenceEquals(state.SearchMode, "semantic")) {
-                                    var results1 = (await H5.toPromise(Dashboard.Api.ApiClient.SemanticSearchAsync(state.SearchQuery, 20, state.IncludeAchi)));
-                                    setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = results1, $t.SelectedCode = null, $t.Loading = false, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
-                                } else {
-                                    var allResults = (await H5.toPromise(Dashboard.Api.ApiClient.SearchIcd10CodesAsync(state.SearchQuery, 100)));
-
-                                    var query = state.SearchQuery.toUpperCase();
-                                    var matchingCodes = new (System.Collections.Generic.List$1(Object)).ctor();
-                                    $t = H5.getEnumerator(allResults);
-                                    try {
-                                        while ($t.moveNext()) {
-                                            var c = $t.Current;
-                                            if (c.Code != null && System.String.startsWith(c.Code.toUpperCase(), query)) {
-                                                matchingCodes.add(c);
-                                            }
-                                        }
-                                    } finally {
-                                        if (H5.is($t, System.IDisposable)) {
-                                            $t.System$IDisposable$Dispose();
-                                        }
-                                    }
-
-                                    if (matchingCodes.Count === 1) {
-                                        var fullCode = (await H5.toPromise(Dashboard.Api.ApiClient.GetIcd10CodeAsync(matchingCodes.getItem(0).Code)));
-                                        setState(($t1 = new Dashboard.Pages.ClinicalCodingState(), $t1.SearchQuery = state.SearchQuery, $t1.SearchMode = state.SearchMode, $t1.Icd10Results = System.Array.init(0, null, Object), $t1.AchiResults = System.Array.init(0, null, Object), $t1.SemanticResults = System.Array.init(0, null, Object), $t1.SelectedCode = fullCode, $t1.Loading = false, $t1.Error = null, $t1.IncludeAchi = state.IncludeAchi, $t1.CopiedCode = null, $t1));
-                                    } else {
-                                        setState(($t1 = new Dashboard.Pages.ClinicalCodingState(), $t1.SearchQuery = state.SearchQuery, $t1.SearchMode = state.SearchMode, $t1.Icd10Results = matchingCodes.ToArray(), $t1.AchiResults = System.Array.init(0, null, Object), $t1.SemanticResults = System.Array.init(0, null, Object), $t1.SelectedCode = null, $t1.Loading = false, $t1.Error = null, $t1.IncludeAchi = state.IncludeAchi, $t1.CopiedCode = null, $t1));
-                                    }
-                                }
-                            } catch (ex) {
-                                ex = System.Exception.create(ex);
-                                setState(($t1 = new Dashboard.Pages.ClinicalCodingState(), $t1.SearchQuery = state.SearchQuery, $t1.SearchMode = state.SearchMode, $t1.Icd10Results = System.Array.init(0, null, Object), $t1.AchiResults = System.Array.init(0, null, Object), $t1.SemanticResults = System.Array.init(0, null, Object), $t1.SelectedCode = null, $t1.Loading = false, $t1.Error = ex.Message, $t1.IncludeAchi = state.IncludeAchi, $t1.CopiedCode = null, $t1));
-                            }
-                        }})()
+                    return Dashboard.React.Elements.Div("coding-hero", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("coding-eyebrow", void 0, void 0, System.Array.init([Dashboard.Components.Icons.Sparkles(), Dashboard.React.Elements.Text(" Clinical Intelligence")], Object)), Dashboard.React.Elements.H(1, "coding-hero-title", System.Array.init([Dashboard.React.Elements.Text("Diagnostic Coding Search")], Object)), Dashboard.React.Elements.P("coding-hero-subtitle", void 0, System.Array.init([Dashboard.React.Elements.Text("Harness natural language processing to map clinical documentation to ICD-10-AM and ACHI codes.")], Object))], Object));
                 },
                 RenderContent: function (state, setState) {
                     if (state.Loading) {
@@ -55115,26 +55803,50 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                         return Dashboard.Pages.ClinicalCodingPage.RenderKeywordResults(state, setState);
                     }
 
-                    if (H5.referenceEquals(state.SearchMode, "lookup") && !System.String.isNullOrWhiteSpace(state.SearchQuery) && !state.Loading) {
+                    if (H5.referenceEquals(state.SearchMode, "lookup") && !System.String.isNullOrWhiteSpace(state.SearchQuery)) {
                         return Dashboard.Pages.ClinicalCodingPage.RenderNoResults(state.SearchQuery);
                     }
 
                     return Dashboard.Pages.ClinicalCodingPage.RenderEmptyState(state);
                 },
-                RenderNoResults: function (query) {
-                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("empty-state", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, { background: "linear-gradient(135deg, #6b7280, #9ca3af)", borderRadius: "16px", padding: "20px", marginBottom: "16px" }, void 0, System.Array.init([Dashboard.Components.Icons.Search()], Object)), Dashboard.React.Elements.H(4, "empty-state-title", System.Array.init([Dashboard.React.Elements.Text("No codes found")], Object)), Dashboard.React.Elements.P("empty-state-description", void 0, System.Array.init([Dashboard.React.Elements.Text("No ICD-10 codes match '" + (query || "") + "'. Try a different code or use keyword search.")], Object))], Object))], Object));
-                },
                 RenderLoading: function () {
-                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center justify-center p-12", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("loading-spinner", void 0, { width: "48px", height: "48px", border: "4px solid #e5e7eb", borderTop: "4px solid #3b82f6", borderRadius: "50%", animation: "spin 1s linear infinite" }, void 0)], Object))], Object));
+                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center justify-center p-12", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("coding-loading-spinner", void 0, void 0, void 0)], Object))], Object));
                 },
                 RenderError: function (error) {
-                    return Dashboard.React.Elements.Div("card", void 0, { borderLeft: "4px solid var(--error)" }, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-3 p-4", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.X(), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(4, "font-semibold", System.Array.init([Dashboard.React.Elements.Text("Search Error")], Object)), Dashboard.React.Elements.P("text-sm text-gray-600", void 0, System.Array.init([Dashboard.React.Elements.Text(error)], Object)), Dashboard.React.Elements.P("text-sm text-gray-500 mt-2", void 0, System.Array.init([Dashboard.React.Elements.Text("Make sure the ICD-10 API (port 5090) is running.")], Object))], Object))], Object))], Object));
+                    return Dashboard.React.Elements.Div("card coding-alert coding-alert-error", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-3 p-4", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.X(), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(4, "font-semibold", System.Array.init([Dashboard.React.Elements.Text("Search Error")], Object)), Dashboard.React.Elements.P("text-sm text-gray-600", void 0, System.Array.init([Dashboard.React.Elements.Text(error)], Object))], Object))], Object))], Object));
+                },
+                RenderCodeDetail: function (state, setState) {
+                    var code = state.SelectedCode;
+
+                    return Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Button("btn btn-ghost mb-4", function () {
+                        Dashboard.Pages.ClinicalCodingPage.ClearSelection(state, setState);
+                    }, false, "button", System.Array.init([Dashboard.Components.Icons.ChevronLeft(), Dashboard.React.Elements.Text("Back to results")], Object)), Dashboard.React.Elements.Div("card coding-detail-card", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderDetailHeader(code, state, setState), Dashboard.Pages.ClinicalCodingPage.RenderDetailMeta(code), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Full Description", code.LongDescription), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Inclusion Terms", code.InclusionTerms), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Exclusion Terms", code.ExclusionTerms), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Code Also", code.CodeAlso), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Code First", code.CodeFirst)], Object))], Object));
+                },
+                RenderDetailHeader: function (code, state, setState) {
+                    var $t;
+                    return Dashboard.React.Elements.Div("flex items-start justify-between mb-6", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-3 mb-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("code-chip code-chip-icd code-chip-lg", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(code.Code)], Object)), code.Billable ? Dashboard.React.Elements.Span("badge badge-success", void 0, void 0, System.Array.init([Dashboard.Components.Icons.Check(), Dashboard.React.Elements.Text("Billable")], Object)) : Dashboard.React.Elements.Span("badge badge-gray", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Non-billable")], Object))], Object)), Dashboard.React.Elements.H(2, "text-xl font-semibold mt-4", System.Array.init([Dashboard.React.Elements.Text(($t = code.ShortDescription, $t != null ? $t : ""))], Object))], Object)), Dashboard.React.Elements.Button("btn btn-primary", function () {
+                        Dashboard.Pages.ClinicalCodingPage.CopyCode(code.Code, state, setState);
+                    }, false, "button", System.Array.init([H5.referenceEquals(state.CopiedCode, code.Code) ? Dashboard.Components.Icons.Check() : Dashboard.Components.Icons.Copy(), Dashboard.React.Elements.Text(H5.referenceEquals(state.CopiedCode, code.Code) ? "Copied!" : "Copy Code")], Object))], Object));
+                },
+                RenderDetailMeta: function (code) {
+                    var $t, $t1, $t2;
+                    return Dashboard.React.Elements.Div("coding-detail-meta", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderDetailItem("Chapter", (code.ChapterNumber || "") + " - " + ((($t = code.ChapterTitle, $t != null ? $t : "")) || "")), Dashboard.Pages.ClinicalCodingPage.RenderDetailItem("Block", ($t1 = code.BlockCode, $t1 != null ? $t1 : "")), Dashboard.Pages.ClinicalCodingPage.RenderDetailItem("Category", ($t2 = code.CategoryCode, $t2 != null ? $t2 : ""))], Object));
+                },
+                RenderDetailItem: function (label, value) {
+                    return Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("coding-detail-section-title", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(label)], Object)), Dashboard.React.Elements.P("font-medium", void 0, System.Array.init([Dashboard.React.Elements.Text(value)], Object))], Object));
+                },
+                RenderDetailSection: function (title, content) {
+                    if (System.String.isNullOrWhiteSpace(content)) {
+                        return Dashboard.React.Elements.Text("");
+                    }
+
+                    return Dashboard.React.Elements.Div("coding-detail-section", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(4, "coding-detail-section-title", System.Array.init([Dashboard.React.Elements.Text(title)], Object)), Dashboard.React.Elements.Div("coding-detail-section-body", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.P(void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(content)], Object))], Object))], Object));
                 },
                 RenderEmptyState: function (state) {
                     var title = Dashboard.Pages.ClinicalCodingPage.GetEmptyTitle(state.SearchMode);
                     var description = Dashboard.Pages.ClinicalCodingPage.GetEmptyDescription(state.SearchMode);
 
-                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("empty-state", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, { background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", borderRadius: "16px", padding: "20px", marginBottom: "16px" }, void 0, System.Array.init([Dashboard.Components.Icons.Code()], Object)), Dashboard.React.Elements.H(4, "empty-state-title", System.Array.init([Dashboard.React.Elements.Text(title)], Object)), Dashboard.React.Elements.P("empty-state-description", void 0, System.Array.init([Dashboard.React.Elements.Text(description)], Object)), Dashboard.Pages.ClinicalCodingPage.RenderQuickSearches(state)], Object))], Object));
+                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("empty-state", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("empty-state-icon coding-empty-icon", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Code()], Object)), Dashboard.React.Elements.H(4, "empty-state-title", System.Array.init([Dashboard.React.Elements.Text(title)], Object)), Dashboard.React.Elements.P("empty-state-description", void 0, System.Array.init([Dashboard.React.Elements.Text(description)], Object))], Object))], Object));
                 },
                 GetEmptyTitle: function (mode) {
                     if (H5.referenceEquals(mode, "semantic")) {
@@ -55150,188 +55862,104 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                         return "Describe symptoms in natural language and let AI find the right codes.";
                     }
                     if (H5.referenceEquals(mode, "lookup")) {
-                        return "Enter an ICD-10 code or prefix to find matching codes (e.g., 'O9A.' lists all O9A codes).";
+                        return "Enter an ICD-10 code or prefix to find matching codes.";
                     }
                     return "Search diagnosis codes by keyword, description, or code fragment.";
                 },
-                RenderQuickSearches: function (state) {
-                    if (H5.referenceEquals(state.SearchMode, "lookup")) {
-                        return Dashboard.React.Elements.Text("");
-                    }
-
-                    var examples;
-                    if (H5.referenceEquals(state.SearchMode, "semantic")) {
-                        examples = System.Array.init(["Patient with chest pain and shortness of breath", "Type 2 diabetes with kidney complications", "Broken arm from fall", "Chronic lower back pain"], System.String);
-                    } else {
-                        examples = System.Array.init(["diabetes", "pneumonia", "fracture", "hypertension"], System.String);
-                    }
-
-                    var buttons = System.Array.init(examples.length, null, Object);
-                    for (var i = 0; i < examples.length; i = (i + 1) | 0) {
-                        var example = examples[System.Array.index(i, examples)];
-                        buttons[System.Array.index(i, buttons)] = Dashboard.React.Elements.Button("btn btn-ghost btn-sm", function () { }, false, "button", System.Array.init([Dashboard.React.Elements.Text(example)], Object));
-                    }
-
-                    return Dashboard.React.Elements.Div("flex flex-wrap gap-2 mt-4", void 0, void 0, void 0, Dashboard.Pages.ClinicalCodingPage.Concat(System.Array.init([Dashboard.React.Elements.Span("text-sm text-gray-500", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Try: ")], Object))], Object), buttons));
+                RenderNoResults: function (query) {
+                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("empty-state", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("empty-state-icon coding-empty-icon coding-empty-icon-muted", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Search()], Object)), Dashboard.React.Elements.H(4, "empty-state-title", System.Array.init([Dashboard.React.Elements.Text("No codes found")], Object)), Dashboard.React.Elements.P("empty-state-description", void 0, System.Array.init([Dashboard.React.Elements.Text("No ICD-10 codes match '" + (query || "") + "'. Try a different code or use keyword search.")], Object))], Object))], Object));
                 },
-                Concat: function (arr1, arr2) {
-                    var result = System.Array.init(((arr1.length + arr2.length) | 0), null, Object);
-                    for (var i = 0; i < arr1.length; i = (i + 1) | 0) {
-                        result[System.Array.index(i, result)] = arr1[System.Array.index(i, arr1)];
-                    }
-                    for (var i1 = 0; i1 < arr2.length; i1 = (i1 + 1) | 0) {
-                        result[System.Array.index(((arr1.length + i1) | 0), result)] = arr2[System.Array.index(i1, arr2)];
-                    }
-                    return result;
+                RenderResultsHeader: function (count, isAi) {
+                    return Dashboard.React.Elements.Div("coding-results-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(2, "coding-results-title", System.Array.init([Dashboard.React.Elements.Text(count + ((isAi ? " AI-Matched Results" : " results found") || ""))], Object))], Object));
                 },
                 RenderKeywordResults: function (state, setState) {
                     var $t;
-                    var resultRows = System.Array.init(state.Icd10Results.length, null, Object);
+                    var rows = System.Array.init(state.Icd10Results.length, null, Object);
                     for (var i = 0; i < state.Icd10Results.length; i = (i + 1) | 0) {
-                        var code = ($t = state.Icd10Results)[System.Array.index(i, $t)];
-                        resultRows[System.Array.index(i, resultRows)] = Dashboard.Pages.ClinicalCodingPage.RenderCodeRow(code, state, setState);
+                        rows[System.Array.index(i, rows)] = Dashboard.Pages.ClinicalCodingPage.RenderKeywordCard(($t = state.Icd10Results)[System.Array.index(i, $t)], state, setState);
                     }
 
-                    return Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center justify-between mb-4", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("text-sm text-gray-600", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(state.Icd10Results.length + " results found")], Object))], Object)), Dashboard.React.Elements.Div("table-container", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Table("table", System.Array.init([Dashboard.React.Elements.THead([Dashboard.React.Elements.Tr(void 0, void 0, System.Array.init([Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Code")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Description")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Chapter")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Category")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Status")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("")], Object))], Object))]), Dashboard.React.Elements.TBody(resultRows)], Object))], Object))], Object));
-                },
-                RenderCodeRow: function (code, state, setState) {
-                    var $t, $t1, $t2, $t3, $t4;
-                    return Dashboard.React.Elements.Tr("search-result-row", function () {
-                        Dashboard.Pages.ClinicalCodingPage.SelectCode(code, state, setState);
-                    }, System.Array.init([Dashboard.React.Elements.Td(void 0, System.Array.init([Dashboard.React.Elements.Span("badge badge-primary", void 0, { background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", color: "white", fontWeight: "600" }, System.Array.init([Dashboard.React.Elements.Text(code.Code)], Object))], Object)), Dashboard.React.Elements.Td("result-description-cell", System.Array.init([Dashboard.React.Elements.Span(void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(($t = code.ShortDescription, $t != null ? $t : ""))], Object)), Dashboard.React.Elements.Div("result-tooltip", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(4, "font-semibold mb-2", System.Array.init([Dashboard.React.Elements.Text(($t1 = code.ShortDescription, $t1 != null ? $t1 : ""))], Object)), Dashboard.React.Elements.P("text-sm text-gray-600 mb-3", void 0, System.Array.init([Dashboard.React.Elements.Text(($t2 = code.LongDescription, $t2 != null ? $t2 : ($t3 = code.ShortDescription, $t3 != null ? $t3 : "")))], Object)), !System.String.isNullOrEmpty(code.InclusionTerms) ? Dashboard.React.Elements.Div("text-xs text-gray-500 mb-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Includes: ")], Object)), Dashboard.React.Elements.Text(code.InclusionTerms)], Object)) : Dashboard.React.Elements.Text(""), !System.String.isNullOrEmpty(code.ExclusionTerms) ? Dashboard.React.Elements.Div("text-xs text-gray-500", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Excludes: ")], Object)), Dashboard.React.Elements.Text(code.ExclusionTerms)], Object)) : Dashboard.React.Elements.Text("")], Object))], Object)), Dashboard.React.Elements.Td("text-sm text-gray-600", System.Array.init([Dashboard.React.Elements.Text("Ch. " + (code.ChapterNumber || ""))], Object)), Dashboard.React.Elements.Td("text-sm text-gray-600", System.Array.init([Dashboard.React.Elements.Text(($t4 = code.CategoryCode, $t4 != null ? $t4 : ""))], Object)), Dashboard.React.Elements.Td(void 0, System.Array.init([code.Billable ? Dashboard.React.Elements.Span("badge badge-success", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Billable")], Object)) : Dashboard.React.Elements.Span("badge badge-gray", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Non-billable")], Object))], Object)), Dashboard.React.Elements.Td(void 0, System.Array.init([Dashboard.React.Elements.Button("btn btn-ghost btn-sm", function () {
-                        Dashboard.Pages.ClinicalCodingPage.CopyCode(code.Code, state, setState);
-                    }, false, "button", System.Array.init([H5.referenceEquals(state.CopiedCode, code.Code) ? Dashboard.Components.Icons.Check() : Dashboard.Components.Icons.Copy()], Object))], Object))], Object));
-                },
-                SelectCode: function (code, state, setState) {
-                    (async () => {
-                        {
-                            var $t;
-                            setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = state.Icd10Results, $t.AchiResults = state.AchiResults, $t.SemanticResults = state.SemanticResults, $t.SelectedCode = null, $t.Loading = true, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = state.CopiedCode, $t));
+                    var children = System.Array.init(((rows.length + 1) | 0), null, Object);
+                    children[System.Array.index(0, children)] = Dashboard.Pages.ClinicalCodingPage.RenderResultsHeader(state.Icd10Results.length, false);
+                    for (var i1 = 0; i1 < rows.length; i1 = (i1 + 1) | 0) {
+                        children[System.Array.index(((i1 + 1) | 0), children)] = rows[System.Array.index(i1, rows)];
+                    }
 
-                            try {
-                                var fullCode = (await H5.toPromise(Dashboard.Api.ApiClient.GetIcd10CodeAsync(code.Code)));
-                                setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = state.Icd10Results, $t.AchiResults = state.AchiResults, $t.SemanticResults = state.SemanticResults, $t.SelectedCode = fullCode, $t.Loading = false, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = state.CopiedCode, $t));
-                            } catch (ex) {
-                                ex = System.Exception.create(ex);
-                                setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = state.Icd10Results, $t.AchiResults = state.AchiResults, $t.SemanticResults = state.SemanticResults, $t.SelectedCode = null, $t.Loading = false, $t.Error = "Failed to load code details: " + (ex.Message || ""), $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = state.CopiedCode, $t));
-                            }
-                        }})()
+                    return Dashboard.React.Elements.Div("coding-results", void 0, void 0, void 0, children);
                 },
-                CopyCode: function (code, state, setState) {
-                    var $t;
-                    navigator.clipboard.writeText(code);
-                    setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = state.Icd10Results, $t.AchiResults = state.AchiResults, $t.SemanticResults = state.SemanticResults, $t.SelectedCode = state.SelectedCode, $t.Loading = state.Loading, $t.Error = state.Error, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = code, $t));
+                RenderKeywordCard: function (code, state, setState) {
+                    var $t, $t1, $t2;
+                    return Dashboard.React.Elements.Div("coding-result-card", void 0, void 0, function () {
+                        Dashboard.Pages.ClinicalCodingPage.SelectCode(code, state, setState);
+                    }, System.Array.init([Dashboard.React.Elements.Div("coding-result-code", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("code-chip code-chip-icd", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(code.Code)], Object)), Dashboard.React.Elements.Span("code-type-label", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("ICD-10-AM")], Object))], Object)), Dashboard.React.Elements.Div("coding-result-body", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(3, "coding-result-title", System.Array.init([Dashboard.React.Elements.Text(($t = code.ShortDescription, $t != null ? $t : ""))], Object)), Dashboard.React.Elements.P("coding-result-desc", void 0, System.Array.init([Dashboard.React.Elements.Text(($t1 = code.LongDescription, $t1 != null ? $t1 : ($t2 = code.ShortDescription, $t2 != null ? $t2 : "")))], Object))], Object)), Dashboard.React.Elements.Div("coding-result-meta", void 0, void 0, void 0, System.Array.init([code.Billable ? Dashboard.React.Elements.Span("badge badge-success", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Billable")], Object)) : Dashboard.React.Elements.Span("badge badge-gray", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Non-billable")], Object))], Object))], Object));
                 },
                 RenderSemanticResults: function (state, setState) {
                     var $t;
-                    var resultRows = System.Array.init(state.SemanticResults.length, null, Object);
+                    var rows = System.Array.init(state.SemanticResults.length, null, Object);
                     for (var i = 0; i < state.SemanticResults.length; i = (i + 1) | 0) {
-                        var result = ($t = state.SemanticResults)[System.Array.index(i, $t)];
-                        resultRows[System.Array.index(i, resultRows)] = Dashboard.Pages.ClinicalCodingPage.RenderSemanticRow(result, state, setState);
+                        rows[System.Array.index(i, rows)] = Dashboard.Pages.ClinicalCodingPage.RenderSemanticCard(($t = state.SemanticResults)[System.Array.index(i, $t)], state, setState);
                     }
 
-                    return Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center justify-between mb-4", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-2", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Sparkles(), Dashboard.React.Elements.Span("text-sm text-gray-600", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(state.SemanticResults.length + " AI-matched results")], Object))], Object))], Object)), Dashboard.React.Elements.Div("table-container", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Table("table", System.Array.init([Dashboard.React.Elements.THead([Dashboard.React.Elements.Tr(void 0, void 0, System.Array.init([Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Code")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Type")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Chapter")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Category")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Description")], Object)), Dashboard.React.Elements.Th(void 0, System.Array.init([Dashboard.React.Elements.Text("Confidence")], Object))], Object))]), Dashboard.React.Elements.TBody(resultRows)], Object))], Object))], Object));
+                    var children = System.Array.init(((rows.length + 1) | 0), null, Object);
+                    children[System.Array.index(0, children)] = Dashboard.Pages.ClinicalCodingPage.RenderResultsHeader(state.SemanticResults.length, true);
+                    for (var i1 = 0; i1 < rows.length; i1 = (i1 + 1) | 0) {
+                        children[System.Array.index(((i1 + 1) | 0), children)] = rows[System.Array.index(i1, rows)];
+                    }
+
+                    return Dashboard.React.Elements.Div("coding-results", void 0, void 0, void 0, children);
                 },
-                RenderSemanticRow: function (result, state, setState) {
+                RenderSemanticCard: function (result, state, setState) {
                     var $t, $t1, $t2;
-                    var confidencePercent = H5.Int.clip32(result.Confidence * 100);
-                    var confidenceColor = confidencePercent >= 80 ? "#22c55e" : confidencePercent >= 60 ? "#f59e0b" : "#ef4444";
-                    var badgeClass = confidencePercent >= 80 ? "badge-success" : confidencePercent >= 60 ? "badge-warning" : "badge-error";
+                    var pct = H5.Int.clip32(result.Confidence * 100);
+                    var isAchi = H5.referenceEquals(result.CodeType, "ACHI");
 
-                    return Dashboard.React.Elements.Tr("search-result-row", function () {
+                    return Dashboard.React.Elements.Div("coding-result-card", void 0, void 0, function () {
                         Dashboard.Pages.ClinicalCodingPage.LookupSemanticCode(result.Code, state, setState);
-                    }, System.Array.init([Dashboard.React.Elements.Td(void 0, System.Array.init([Dashboard.React.Elements.Span("badge badge-primary", void 0, { background: H5.referenceEquals(result.CodeType, "ACHI") ? "linear-gradient(135deg, #14b8a6, #0d9488)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)", color: "white", fontWeight: "600" }, System.Array.init([Dashboard.React.Elements.Text(result.Code)], Object))], Object)), Dashboard.React.Elements.Td(void 0, System.Array.init([Dashboard.React.Elements.Span(H5.referenceEquals(result.CodeType, "ACHI") ? "badge badge-teal" : "badge badge-violet", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(($t = result.CodeType, $t != null ? $t : "ICD10CM"))], Object))], Object)), Dashboard.React.Elements.Td("text-sm text-gray-600", System.Array.init([Dashboard.React.Elements.Text(!System.String.isNullOrEmpty(result.Chapter) ? "Ch. " + (result.Chapter || "") : "-")], Object)), Dashboard.React.Elements.Td("text-sm text-gray-600", System.Array.init([Dashboard.React.Elements.Text(($t1 = result.Category, $t1 != null ? $t1 : "-"))], Object)), Dashboard.React.Elements.Td("result-description-cell", System.Array.init([Dashboard.React.Elements.Span(void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(($t2 = result.Description, $t2 != null ? $t2 : ""))], Object)), Dashboard.React.Elements.Div("result-tooltip", void 0, void 0, void 0, Dashboard.Pages.ClinicalCodingPage.RenderSemanticTooltipContent(result, confidenceColor, confidencePercent))], Object)), Dashboard.React.Elements.Td(void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, { width: "60px", height: "8px", background: "#e5e7eb", borderRadius: "4px", overflow: "hidden" }, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, { width: confidencePercent + "%", height: "100%", background: confidenceColor }, void 0)], Object)), Dashboard.React.Elements.Span("badge " + (badgeClass || ""), void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(confidencePercent + "%")], Object))], Object))], Object))], Object));
+                    }, System.Array.init([Dashboard.React.Elements.Div("coding-result-code", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span(isAchi ? "code-chip code-chip-achi" : "code-chip code-chip-icd", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(result.Code)], Object)), Dashboard.React.Elements.Span("code-type-label", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(isAchi ? "ACHI" : "ICD-10-AM")], Object))], Object)), Dashboard.React.Elements.Div("coding-result-body", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(3, "coding-result-title", System.Array.init([Dashboard.React.Elements.Text(($t = result.Description, $t != null ? $t : ""))], Object)), Dashboard.React.Elements.P("coding-result-desc", void 0, System.Array.init([Dashboard.React.Elements.Text(($t1 = result.LongDescription, $t1 != null ? $t1 : ($t2 = result.Description, $t2 != null ? $t2 : "")))], Object))], Object)), Dashboard.React.Elements.Div("coding-result-meta", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("ai-match", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("ai-match-label", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("AI Match")], Object)), Dashboard.React.Elements.Span("ai-match-value", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(pct + "%")], Object))], Object)), Dashboard.React.Elements.Div("confidence-bar", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("confidence-bar-fill", void 0, { width: pct + "%" }, void 0)], Object))], Object))], Object));
                 },
-                RenderSemanticTooltipContent: function (result, confidenceColor, confidencePercent) {
-                    var $t;
-                    var elements = function (_o1) {
-                            var $t, $t1, $t2;
-                            _o1.add(Dashboard.React.Elements.H(4, "font-semibold mb-2", System.Array.init([Dashboard.React.Elements.Text((result.Code || "") + " - " + ((($t = result.Description, $t != null ? $t : "")) || ""))], Object)));
-                            _o1.add(Dashboard.React.Elements.P("text-sm text-gray-600 mb-3", void 0, System.Array.init([Dashboard.React.Elements.Text(($t1 = result.LongDescription, $t1 != null ? $t1 : ($t2 = result.Description, $t2 != null ? $t2 : "")))], Object)));
-                            return _o1;
-                        }(new (System.Collections.Generic.List$1(Object)).ctor());
-
-                    if (!System.String.isNullOrEmpty(result.InclusionTerms)) {
-                        elements.add(Dashboard.React.Elements.Div("text-xs text-green-700 mb-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Includes: ")], Object)), Dashboard.React.Elements.Text(result.InclusionTerms)], Object)));
-                    }
-
-                    if (!System.String.isNullOrEmpty(result.ExclusionTerms)) {
-                        elements.add(Dashboard.React.Elements.Div("text-xs text-red-700 mb-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Excludes: ")], Object)), Dashboard.React.Elements.Text(result.ExclusionTerms)], Object)));
-                    }
-
-                    if (!System.String.isNullOrEmpty(result.CodeAlso)) {
-                        elements.add(Dashboard.React.Elements.Div("text-xs text-blue-700 mb-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Code also: ")], Object)), Dashboard.React.Elements.Text(result.CodeAlso)], Object)));
-                    }
-
-                    if (!System.String.isNullOrEmpty(result.CodeFirst)) {
-                        elements.add(Dashboard.React.Elements.Div("text-xs text-purple-700 mb-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Code first: ")], Object)), Dashboard.React.Elements.Text(result.CodeFirst)], Object)));
-                    }
-
-                    var footerChildren = function (_o2) {
-                            var $t;
-                            _o2.add(Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Type: ")], Object)));
-                            _o2.add(Dashboard.React.Elements.Text(($t = result.CodeType, $t != null ? $t : "ICD10CM")));
-                            return _o2;
-                        }(new (System.Collections.Generic.List$1(Object)).ctor());
-
-                    if (!System.String.isNullOrEmpty(result.Chapter)) {
-                        footerChildren.add(Dashboard.React.Elements.Text(" | "));
-                        footerChildren.add(Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Chapter: ")], Object)));
-                        footerChildren.add(Dashboard.React.Elements.Text((result.Chapter || "") + " - " + ((($t = result.ChapterTitle, $t != null ? $t : "")) || "")));
-                    }
-
-                    if (!System.String.isNullOrEmpty(result.Category)) {
-                        footerChildren.add(Dashboard.React.Elements.Text(" | "));
-                        footerChildren.add(Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Category: ")], Object)));
-                        footerChildren.add(Dashboard.React.Elements.Text(result.Category));
-                    }
-
-                    footerChildren.add(Dashboard.React.Elements.Text(" | "));
-                    footerChildren.add(Dashboard.React.Elements.Span("font-semibold", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Confidence: ")], Object)));
-                    footerChildren.add(Dashboard.React.Elements.Span(void 0, void 0, { color: confidenceColor }, System.Array.init([Dashboard.React.Elements.Text(confidencePercent + "%")], Object)));
-
-                    elements.add(Dashboard.React.Elements.Div("text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200", void 0, void 0, void 0, footerChildren.ToArray()));
-
-                    return elements.ToArray();
+                RenderSearchSection: function (state, setState) {
+                    return Dashboard.React.Elements.Div("coding-console", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderSearchTabs(state, setState), Dashboard.Pages.ClinicalCodingPage.RenderSearchInput(state, setState), Dashboard.Pages.ClinicalCodingPage.RenderSearchOptions(state, setState)], Object));
                 },
-                LookupSemanticCode: function (code, state, setState) {
-                    (async () => {
-                        {
-                            var $t;
-                            setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = code, $t.SearchMode = "lookup", $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = null, $t.Loading = true, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
-
-                            try {
-                                var result = (await H5.toPromise(Dashboard.Api.ApiClient.GetIcd10CodeAsync(code)));
-                                setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = code, $t.SearchMode = "lookup", $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = result, $t.Loading = false, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
-                            } catch (ex) {
-                                ex = System.Exception.create(ex);
-                                setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = code, $t.SearchMode = "lookup", $t.Icd10Results = System.Array.init(0, null, Object), $t.AchiResults = System.Array.init(0, null, Object), $t.SemanticResults = System.Array.init(0, null, Object), $t.SelectedCode = null, $t.Loading = false, $t.Error = ex.Message, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
-                            }
-                        }})()
+                RenderSearchTabs: function (state, setState) {
+                    return Dashboard.React.Elements.Div("coding-tabs", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderTab("AI Search", H5.referenceEquals(state.SearchMode, "semantic"), function () {
+                        Dashboard.Pages.ClinicalCodingPage.SetSearchMode(state, setState, "semantic");
+                    }), Dashboard.Pages.ClinicalCodingPage.RenderTab("Keyword Search", H5.referenceEquals(state.SearchMode, "keyword"), function () {
+                        Dashboard.Pages.ClinicalCodingPage.SetSearchMode(state, setState, "keyword");
+                    }), Dashboard.Pages.ClinicalCodingPage.RenderTab("Code Lookup", H5.referenceEquals(state.SearchMode, "lookup"), function () {
+                        Dashboard.Pages.ClinicalCodingPage.SetSearchMode(state, setState, "lookup");
+                    })], Object));
                 },
-                RenderCodeDetail: function (state, setState) {
-                    var $t, $t1, $t2, $t3;
-                    var code = state.SelectedCode;
-
-                    return Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Button("btn btn-ghost mb-4", function () {
-                        Dashboard.Pages.ClinicalCodingPage.ClearSelection(state, setState);
-                    }, false, "button", System.Array.init([Dashboard.Components.Icons.ChevronLeft(), Dashboard.React.Elements.Text("Back to results")], Object)), Dashboard.React.Elements.Div("card", void 0, { padding: "32px" }, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-start justify-between mb-6", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-3 mb-2", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span(void 0, void 0, { background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", color: "white", padding: "8px 20px", borderRadius: "8px", fontWeight: "700", fontSize: "20px" }, System.Array.init([Dashboard.React.Elements.Text(code.Code)], Object)), code.Billable ? Dashboard.React.Elements.Span("badge badge-success", void 0, void 0, System.Array.init([Dashboard.Components.Icons.Check(), Dashboard.React.Elements.Text("Billable")], Object)) : Dashboard.React.Elements.Span("badge badge-gray", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Non-billable")], Object))], Object)), Dashboard.React.Elements.H(2, "text-xl font-semibold mt-4", System.Array.init([Dashboard.React.Elements.Text(($t = code.ShortDescription, $t != null ? $t : ""))], Object))], Object)), Dashboard.React.Elements.Button("btn btn-primary", function () {
-                        Dashboard.Pages.ClinicalCodingPage.CopyCode(code.Code, state, setState);
-                    }, false, "button", System.Array.init([H5.referenceEquals(state.CopiedCode, code.Code) ? Dashboard.Components.Icons.Check() : Dashboard.Components.Icons.Copy(), Dashboard.React.Elements.Text(H5.referenceEquals(state.CopiedCode, code.Code) ? "Copied!" : "Copy Code")], Object))], Object)), Dashboard.React.Elements.Div("grid grid-cols-3 gap-4 mb-6 p-4", void 0, { background: "#f9fafb", borderRadius: "8px" }, void 0, System.Array.init([Dashboard.Pages.ClinicalCodingPage.RenderDetailItem("Chapter", (code.ChapterNumber || "") + " - " + ((($t1 = code.ChapterTitle, $t1 != null ? $t1 : "")) || "")), Dashboard.Pages.ClinicalCodingPage.RenderDetailItem("Block", ($t2 = code.BlockCode, $t2 != null ? $t2 : "")), Dashboard.Pages.ClinicalCodingPage.RenderDetailItem("Category", ($t3 = code.CategoryCode, $t3 != null ? $t3 : ""))], Object)), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Full Description", code.LongDescription), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Inclusion Terms", code.InclusionTerms), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Exclusion Terms", code.ExclusionTerms), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Code Also", code.CodeAlso), Dashboard.Pages.ClinicalCodingPage.RenderDetailSection("Code First", code.CodeFirst)], Object))], Object));
+                RenderTab: function (label, isActive, onClick) {
+                    return Dashboard.React.Elements.Button("coding-tab " + ((isActive ? "active" : "") || ""), onClick, false, "button", System.Array.init([Dashboard.React.Elements.Text(label)], Object));
                 },
-                RenderDetailItem: function (label, value) {
-                    return Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("text-xs text-gray-500 uppercase tracking-wide", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(label)], Object)), Dashboard.React.Elements.P("font-medium", void 0, System.Array.init([Dashboard.React.Elements.Text(value)], Object))], Object));
+                RenderSearchInput: function (state, setState) {
+                    return Dashboard.React.Elements.Div("coding-search-field", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("coding-search-icon", void 0, void 0, System.Array.init([Dashboard.Components.Icons.Search()], Object)), Dashboard.React.Elements.Input("coding-search-input", "text", state.SearchQuery, Dashboard.Pages.ClinicalCodingPage.GetPlaceholder(state.SearchMode), function (q) {
+                        Dashboard.Pages.ClinicalCodingPage.UpdateQuery(state, setState, q);
+                    }, function (k) {
+                        if (H5.referenceEquals(k, "Enter")) {
+                            Dashboard.Pages.ClinicalCodingPage.ExecuteSearch(state, setState);
+                        }
+                    }, false), Dashboard.React.Elements.Button("btn btn-primary coding-analyze-btn", function () {
+                        Dashboard.Pages.ClinicalCodingPage.ExecuteSearch(state, setState);
+                    }, false, "button", System.Array.init([Dashboard.React.Elements.Text(state.Loading ? "Analyzing..." : "Analyze")], Object))], Object));
                 },
-                RenderDetailSection: function (title, content) {
-                    if (System.String.isNullOrWhiteSpace(content)) {
+                RenderSearchOptions: function (state, setState) {
+                    if (!H5.referenceEquals(state.SearchMode, "semantic")) {
                         return Dashboard.React.Elements.Text("");
                     }
 
-                    return Dashboard.React.Elements.Div("mb-4", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(4, "font-semibold text-gray-700 mb-2", System.Array.init([Dashboard.React.Elements.Text(title)], Object)), Dashboard.React.Elements.Div("p-4", void 0, { background: "#f9fafb", borderRadius: "8px", borderLeft: "4px solid #3b82f6" }, void 0, System.Array.init([Dashboard.React.Elements.P("text-gray-700 whitespace-pre-wrap", void 0, System.Array.init([Dashboard.React.Elements.Text(content)], Object))], Object))], Object));
+                    return Dashboard.React.Elements.Div("coding-options", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Label(void 0, "coding-option-checkbox", System.Array.init([Dashboard.React.Elements.Input("checkbox", "checkbox", state.IncludeAchi ? "true" : "", void 0, function (_) {
+                        Dashboard.Pages.ClinicalCodingPage.ToggleAchi(state, setState);
+                    }, void 0, false), Dashboard.React.Elements.Span(void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Include ACHI procedure codes")], Object))], Object)), Dashboard.React.Elements.Div("coding-options-divider", void 0, void 0, void 0), Dashboard.React.Elements.Div("coding-verified", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Sparkles(), Dashboard.React.Elements.Text(" Verified AI-Powered Engine")], Object))], Object));
                 },
-                ClearSelection: function (state, setState) {
-                    var $t;
-                    setState(($t = new Dashboard.Pages.ClinicalCodingState(), $t.SearchQuery = state.SearchQuery, $t.SearchMode = state.SearchMode, $t.Icd10Results = state.Icd10Results, $t.AchiResults = state.AchiResults, $t.SemanticResults = state.SemanticResults, $t.SelectedCode = null, $t.Loading = false, $t.Error = null, $t.IncludeAchi = state.IncludeAchi, $t.CopiedCode = null, $t));
+                GetPlaceholder: function (mode) {
+                    if (H5.referenceEquals(mode, "keyword")) {
+                        return "Search by code, description, or keywords (e.g. 'diabetes', 'fracture')";
+                    }
+                    if (H5.referenceEquals(mode, "semantic")) {
+                        return "Describe symptoms or diagnosis in natural language...";
+                    }
+                    return "Enter ICD-10 code or prefix (e.g. 'O9A.', 'E11', 'J18.9')";
                 }
             }
         }
@@ -55449,7 +56077,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
     });
 
     /**
-     * Main dashboard overview page.
+     * Main dashboard overview page — Clinical Curator design.
      *
      * @static
      * @abstract
@@ -55479,14 +56107,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                         Dashboard.Pages.DashboardPage.LoadData(setState);
                     }, System.Array.init(0, null, System.Object));
 
-                    var errorElement;
-                    if (state.Error != null) {
-                        errorElement = Dashboard.Pages.DashboardPage.RenderError(state.Error);
-                    } else {
-                        errorElement = Dashboard.React.Elements.Text("");
-                    }
-
-                    return Dashboard.React.Elements.Div("page", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("page-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(2, "page-title", System.Array.init([Dashboard.React.Elements.Text("Dashboard")], Object)), Dashboard.React.Elements.P("page-description", void 0, System.Array.init([Dashboard.React.Elements.Text("Overview of your healthcare system")], Object))], Object)), errorElement, Dashboard.React.Elements.Div("dashboard-grid metrics mb-6", void 0, void 0, void 0, System.Array.init([Dashboard.Components.MetricCard.Render(($t = new Dashboard.Components.MetricCardProps(), $t.Label = "Total Patients", $t.Value = state.Loading ? "-" : H5.toString(state.PatientCount), $t.Icon = Dashboard.Components.Icons.Users, $t.IconColor = "blue", $t.TrendValue = "+12%", $t.Trend = Dashboard.Components.TrendDirection.Up, $t)), Dashboard.Components.MetricCard.Render(($t = new Dashboard.Components.MetricCardProps(), $t.Label = "Practitioners", $t.Value = state.Loading ? "-" : H5.toString(state.PractitionerCount), $t.Icon = Dashboard.Components.Icons.UserDoctor, $t.IconColor = "teal", $t)), Dashboard.Components.MetricCard.Render(($t = new Dashboard.Components.MetricCardProps(), $t.Label = "Appointments", $t.Value = state.Loading ? "-" : H5.toString(state.AppointmentCount), $t.Icon = Dashboard.Components.Icons.Calendar, $t.IconColor = "success", $t.TrendValue = "+8%", $t.Trend = Dashboard.Components.TrendDirection.Up, $t)), Dashboard.Components.MetricCard.Render(($t = new Dashboard.Components.MetricCardProps(), $t.Label = "Encounters", $t.Value = state.Loading ? "-" : H5.toString(state.EncounterCount), $t.Icon = Dashboard.Components.Icons.Clipboard, $t.IconColor = "warning", $t.TrendValue = "-3%", $t.Trend = Dashboard.Components.TrendDirection.Down, $t))], Object)), Dashboard.React.Elements.Div("dashboard-grid mixed", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.DashboardPage.RenderQuickActions(), Dashboard.Pages.DashboardPage.RenderRecentActivity()], Object))], Object));
+                    return Dashboard.React.Elements.Div("page dashboard-page", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.DashboardPage.RenderWelcome(), Dashboard.Pages.DashboardPage.RenderConnectionWarning(state.Error), Dashboard.Pages.DashboardPage.RenderMetricsRow(state), Dashboard.Pages.DashboardPage.RenderMainGrid(), Dashboard.Pages.DashboardPage.RenderQuickActions()], Object));
                 },
                 LoadData: function (setState) {
                     (async () => {
@@ -55504,20 +56125,66 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                             }
                         }})()
                 },
-                RenderError: function (message) {
-                    return Dashboard.React.Elements.Div("card mb-6", void 0, { borderLeft: "4px solid var(--warning)" }, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-3", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Bell(), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(4, "font-semibold", System.Array.init([Dashboard.React.Elements.Text("Connection Warning")], Object)), Dashboard.React.Elements.P("text-sm text-gray-600", void 0, System.Array.init([Dashboard.React.Elements.Text("Could not connect to API: " + (message || ""))], Object)), Dashboard.React.Elements.P("text-sm text-gray-500", void 0, System.Array.init([Dashboard.React.Elements.Text("Make sure Clinical API (port 5000) and Scheduling API (port 5001) are running.")], Object))], Object))], Object))], Object));
+                RenderWelcome: function () {
+                    return Dashboard.React.Elements.Div("dashboard-welcome page-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(2, "welcome-title", System.Array.init([Dashboard.React.Elements.Text("Welcome back, Dr. Robert!")], Object)), Dashboard.React.Elements.P("page-description", void 0, System.Array.init([Dashboard.React.Elements.Text("Here's what's happening in your department today.")], Object))], Object)), Dashboard.React.Elements.Div("welcome-actions", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("date-filter", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Calendar(), Dashboard.React.Elements.Span(void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Oct 24, 2023")], Object))], Object))], Object))], Object));
+                },
+                RenderConnectionWarning: function (error) {
+                    if (error == null) {
+                        return Dashboard.React.Elements.Text("");
+                    }
+                    return Dashboard.React.Elements.Div("alert alert-warning", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("flex items-center gap-3", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Bell(), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(4, "font-semibold", System.Array.init([Dashboard.React.Elements.Text("Connection Warning")], Object)), Dashboard.React.Elements.P("text-sm", void 0, System.Array.init([Dashboard.React.Elements.Text("Could not connect to API. Make sure Clinical API (5080) and Scheduling API (5001) are running.")], Object))], Object))], Object))], Object));
+                },
+                RenderMetricsRow: function (state) {
+                    return Dashboard.React.Elements.Div("dashboard-metrics-row", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.DashboardPage.RenderTopTreatmentCard(), Dashboard.Pages.DashboardPage.RenderMetricCard("Satisfaction Rate", "98.2", "/ 100", Dashboard.Components.Icons.TrendUp(), "tertiary"), Dashboard.Pages.DashboardPage.RenderMetricCard("Total Patients", state.Loading ? "-" : H5.toString(state.PatientCount), "Active clinical cases", Dashboard.Components.Icons.Users(), "secondary"), Dashboard.Pages.DashboardPage.RenderMetricCard("Appointments", state.Loading ? "-" : H5.toString(state.AppointmentCount), "Scheduled for today", Dashboard.Components.Icons.Calendar(), "primary")], Object));
+                },
+                RenderTopTreatmentCard: function () {
+                    return Dashboard.React.Elements.Div("metric-card metric-card-rich", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("metric-card-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("metric-card-title", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Top Treatment")], Object)), Dashboard.React.Elements.Div("metric-card-icon primary", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Activity()], Object))], Object)), Dashboard.React.Elements.Div("donut-chart-container", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, { width: "44px", height: "44px", flexShrink: 0 }, void 0, System.Array.init([Dashboard.React.Elements.Svg(void 0, 44, 44, "0 0 36 36", void 0, System.Array.init([Dashboard.React.Elements.Path("M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831", "none", "#dbe1ff", 4), Dashboard.React.Elements.Path("M18 2.0845 a 15.9155 15.9155 0 0 1 20.3 15.9155", "none", "#003fab", 4)], Object))], Object)), Dashboard.React.Elements.Div(void 0, void 0, { minWidth: 0, flex: "1" }, void 0, System.Array.init([Dashboard.React.Elements.H(3, "text-xl font-bold", System.Array.init([Dashboard.React.Elements.Text("Cardiology")], Object)), Dashboard.React.Elements.P("metric-card-breakdown", void 0, System.Array.init([Dashboard.React.Elements.Text("+12%")], Object))], Object))], Object))], Object));
+                },
+                RenderMetricCard: function (label, value, trendLabel, icon, accent) {
+                    return Dashboard.React.Elements.Div("metric-card metric-card-rich", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("metric-card-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("metric-card-title", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(label)], Object)), Dashboard.React.Elements.Div("metric-card-icon " + (accent || ""), void 0, void 0, void 0, System.Array.init([icon], Object))], Object)), Dashboard.React.Elements.Div("metric-card-body", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("metric-card-value-row", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Span("metric-card-value", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(value)], Object))], Object)), Dashboard.React.Elements.P("metric-card-breakdown", void 0, System.Array.init([Dashboard.React.Elements.Text(trendLabel)], Object))], Object))], Object));
+                },
+                RenderMainGrid: function () {
+                    return Dashboard.React.Elements.Div("dashboard-main-grid", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.DashboardPage.RenderAppointmentsList(), Dashboard.Pages.DashboardPage.RenderRequestsColumn()], Object));
+                },
+                RenderAppointmentsList: function () {
+                    var appointments = Dashboard.Pages.DashboardPage.GetUpcomingAppointments();
+                    var rows = System.Array.init(appointments.length, null, Object);
+                    for (var i = 0; i < appointments.length; i = (i + 1) | 0) {
+                        rows[System.Array.index(i, rows)] = Dashboard.Pages.DashboardPage.RenderAppointmentRow(appointments[System.Array.index(i, appointments)]);
+                    }
+
+                    return Dashboard.React.Elements.Div("dashboard-appointments-section appointments-table", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("dashboard-section-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(3, "dashboard-section-title", System.Array.init([Dashboard.React.Elements.Text("Upcoming Appointments")], Object)), Dashboard.React.Elements.A("#", "view-more-link", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("View Calendar")], Object))], Object)), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, rows)], Object));
+                },
+                RenderAppointmentRow: function (apt) {
+                    return Dashboard.React.Elements.Div("row", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("patient-cell", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("avatar avatar-md", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(apt.Initials)], Object)), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("font-bold", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(apt.Patient)], Object)), Dashboard.React.Elements.Div("text-xs text-gray-500", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(apt.Subtitle)], Object))], Object))], Object)), Dashboard.React.Elements.Div("text-right", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("font-bold text-sm", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(apt.Time)], Object)), Dashboard.React.Elements.Div("text-2xs text-gray-400 uppercase tracking-wider", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(apt.Meta)], Object))], Object))], Object));
+                },
+                RenderRequestsColumn: function () {
+                    var requests = Dashboard.Pages.DashboardPage.GetAppointmentRequests();
+                    var cards = System.Array.init(((requests.length + 2) | 0), null, Object);
+                    cards[System.Array.index(0, cards)] = Dashboard.React.Elements.Div("dashboard-section-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(3, "dashboard-section-title", System.Array.init([Dashboard.React.Elements.Text("Requests")], Object)), Dashboard.React.Elements.Span("badge badge-error", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("3 New")], Object))], Object));
+                    for (var i = 0; i < requests.length; i = (i + 1) | 0) {
+                        cards[System.Array.index(((i + 1) | 0), cards)] = Dashboard.Pages.DashboardPage.RenderRequestCard(requests[System.Array.index(i, requests)]);
+                    }
+                    cards[System.Array.index(((cards.length - 1) | 0), cards)] = Dashboard.React.Elements.A("#", "view-all-requests", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("View All Requests (14)")], Object));
+
+                    return Dashboard.React.Elements.Div("dashboard-requests-section", void 0, void 0, void 0, cards);
+                },
+                RenderRequestCard: function (req) {
+                    return Dashboard.React.Elements.Div(req.Primary ? "appointment-request" : "appointment-request neutral", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("appointment-request-info", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("icon-wrap", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Users()], Object)), Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("appointment-request-name", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(req.Patient)], Object)), Dashboard.React.Elements.Div("appointment-request-time", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text("Requested for: " + (req.When || ""))], Object))], Object))], Object)), Dashboard.React.Elements.Div("appointment-request-actions", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Button("btn btn-primary btn-sm flex-1", void 0, false, "button", System.Array.init([Dashboard.React.Elements.Text("Approve")], Object)), Dashboard.React.Elements.Button("btn btn-outline btn-sm flex-1", void 0, false, "button", System.Array.init([Dashboard.React.Elements.Text("Decline")], Object))], Object))], Object));
                 },
                 RenderQuickActions: function () {
-                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("card-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(3, "card-title", System.Array.init([Dashboard.React.Elements.Text("Quick Actions")], Object))], Object)), Dashboard.React.Elements.Div("card-body", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("grid grid-cols-2 gap-4", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.DashboardPage.RenderActionButton("New Patient", Dashboard.Components.Icons.Plus, "primary"), Dashboard.Pages.DashboardPage.RenderActionButton("New Appointment", Dashboard.Components.Icons.Calendar, "secondary"), Dashboard.Pages.DashboardPage.RenderActionButton("View Schedule", Dashboard.Components.Icons.Calendar, "secondary"), Dashboard.Pages.DashboardPage.RenderActionButton("Patient Search", Dashboard.Components.Icons.Search, "secondary")], Object))], Object))], Object));
+                    return Dashboard.React.Elements.Div("quick-actions-grid", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.DashboardPage.RenderQuickActionCard("primary", Dashboard.Components.Icons.Code(), "Clinical Coding Guide", "Review latest ICD-11 updates for cardiology.", "Access Library"), Dashboard.Pages.DashboardPage.RenderQuickActionCard("tertiary", Dashboard.Components.Icons.Users(), "On-Call Directory", "Direct contact list for emergency department staff.", "View Staff"), Dashboard.Pages.DashboardPage.RenderQuickActionCard("neutral", Dashboard.Components.Icons.Sparkles(), "Lab Results", "12 pending lab results require your digital signature.", "Review Results")], Object));
                 },
-                RenderActionButton: function (label, icon, variant) {
-                    return Dashboard.React.Elements.Button("btn btn-" + (variant || "") + " w-full", void 0, false, "button", System.Array.init([icon(), Dashboard.React.Elements.Text(label)], Object));
+                RenderQuickActionCard: function (variant, icon, title, description, cta) {
+                    return Dashboard.React.Elements.Button("quick-action-btn " + (variant || ""), void 0, false, "button", System.Array.init([Dashboard.React.Elements.Div(void 0, void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("quick-action-icon", void 0, void 0, void 0, System.Array.init([icon], Object)), Dashboard.React.Elements.H(4, void 0, System.Array.init([Dashboard.React.Elements.Text(title)], Object)), Dashboard.React.Elements.P(void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(description)], Object))], Object)), Dashboard.React.Elements.Span("cta", void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(cta)], Object))], Object));
                 },
-                RenderRecentActivity: function () {
-                    return Dashboard.React.Elements.Div("card", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("card-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.H(3, "card-title", System.Array.init([Dashboard.React.Elements.Text("Recent Activity")], Object)), Dashboard.React.Elements.Button("btn btn-ghost btn-sm", void 0, false, "button", System.Array.init([Dashboard.React.Elements.Text("View All")], Object))], Object)), Dashboard.React.Elements.Div("card-body", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("data-list", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.DashboardPage.RenderActivityItem("New patient registered", "John Smith added to system", "2 min ago"), Dashboard.Pages.DashboardPage.RenderActivityItem("Appointment completed", "Dr. Wilson with Jane Doe", "15 min ago"), Dashboard.Pages.DashboardPage.RenderActivityItem("Lab results available", "Patient ID: PAT-0042", "1 hour ago")], Object))], Object))], Object));
+                GetUpcomingAppointments: function () {
+                    var $t;
+                    return System.Array.init([($t = new Dashboard.Pages.UpcomingAppointment(), $t.Patient = "John Simmons", $t.Initials = "JS", $t.Subtitle = "Post-Op Consultation \u2022 Room 402", $t.Time = "09:30 AM", $t.Meta = "In 15 minutes", $t), ($t = new Dashboard.Pages.UpcomingAppointment(), $t.Patient = "Sarah Miller", $t.Initials = "SM", $t.Subtitle = "Routine Checkup \u2022 Virtual Session", $t.Time = "11:00 AM", $t.Meta = "Duration: 30m", $t), ($t = new Dashboard.Pages.UpcomingAppointment(), $t.Patient = "Robert King", $t.Initials = "RK", $t.Subtitle = "New Patient Onboarding \u2022 Room 102", $t.Time = "01:45 PM", $t.Meta = "Pending History", $t)], Dashboard.Pages.UpcomingAppointment);
                 },
-                RenderActivityItem: function (title, subtitle, time) {
-                    return Dashboard.React.Elements.Div("data-list-item", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("avatar avatar-sm", void 0, void 0, void 0, System.Array.init([Dashboard.Components.Icons.Activity()], Object)), Dashboard.React.Elements.Div("data-list-item-content", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Div("data-list-item-title", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(title)], Object)), Dashboard.React.Elements.Div("data-list-item-subtitle", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(subtitle)], Object))], Object)), Dashboard.React.Elements.Div("data-list-item-meta", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(time)], Object))], Object));
+                GetAppointmentRequests: function () {
+                    var $t;
+                    return System.Array.init([($t = new Dashboard.Pages.AppointmentRequest(), $t.Patient = "Emily Watson", $t.When = "Tomorrow, 10:00 AM", $t.Primary = true, $t), ($t = new Dashboard.Pages.AppointmentRequest(), $t.Patient = "Marcus T.", $t.When = "Friday, 02:30 PM", $t.Primary = false, $t)], Dashboard.Pages.AppointmentRequest);
                 }
             }
         }
@@ -56385,6 +57052,192 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
     });
 
     /**
+     * Login screen with WebAuthn passkey authentication via Gatekeeper.
+     Discoverable-credential login (no email needed) is the default; users
+     can switch to register mode to create a new account.
+     *
+     * @static
+     * @abstract
+     * @public
+     * @class Dashboard.Pages.LoginPage
+     */
+    H5.define("Dashboard.Pages.LoginPage", {
+        statics: {
+            methods: {
+                /**
+                 * Renders the login page. Calls onLogin with the authenticated user
+                 after a successful passkey ceremony.
+                 *
+                 * @static
+                 * @public
+                 * @this Dashboard.Pages.LoginPage
+                 * @memberof Dashboard.Pages.LoginPage
+                 * @param   {System.Action}    onLogin
+                 * @return  {Object}
+                 */
+                Render: function (onLogin) {
+                    var $t;
+                    var Mutate = null;
+                    var DoLogin = null;
+                    var DoRegister = null;
+                    var stateResult = Dashboard.React.Hooks.UseState(Dashboard.Pages.LoginState, ($t = new Dashboard.Pages.LoginState(), $t.Mode = "login", $t.Email = "", $t.DisplayName = "", $t.Loading = false, $t.Error = null, $t));
+                    var state = stateResult.State;
+                    var setState = stateResult.SetState;
+
+
+
+
+
+
+                    Mutate = function (mutator) {
+                        var $t1;
+                        var next = ($t1 = new Dashboard.Pages.LoginState(), $t1.Mode = state.Mode, $t1.Email = state.Email, $t1.DisplayName = state.DisplayName, $t1.Loading = state.Loading, $t1.Error = state.Error, $t1);
+                        mutator(next);
+                        setState(next);
+                    };
+                    DoLogin = function () {
+                        (async () => {
+                            {
+                                var $t1;
+                                Mutate(function (s) {
+                                    s.Loading = true;
+                                    s.Error = null;
+                                });
+                                try {
+                                    var result = (await H5.toPromise(Dashboard.Api.GatekeeperClient.LoginAsync()));
+                                    onLogin(($t1 = new Dashboard.Api.AuthUser(), $t1.UserId = result.UserId, $t1.DisplayName = result.DisplayName, $t1.Email = result.Email, $t1));
+                                } catch (ex) {
+                                    ex = System.Exception.create(ex);
+                                    Mutate(function (s) {
+                                        s.Loading = false;
+                                        s.Error = ex.Message;
+                                    });
+                                }
+                            }})()
+                    };
+                    DoRegister = function () {
+                        (async () => {
+                            {
+                                var $t1;
+                                Mutate(function (s) {
+                                    s.Loading = true;
+                                    s.Error = null;
+                                });
+                                try {
+                                    var result = (await H5.toPromise(Dashboard.Api.GatekeeperClient.RegisterAsync(state.Email, state.DisplayName)));
+                                    onLogin(($t1 = new Dashboard.Api.AuthUser(), $t1.UserId = result.UserId, $t1.DisplayName = result.DisplayName, $t1.Email = result.Email, $t1));
+                                } catch (ex) {
+                                    ex = System.Exception.create(ex);
+                                    Mutate(function (s) {
+                                        s.Loading = false;
+                                        s.Error = ex.Message;
+                                    });
+                                }
+                            }})()
+                    };
+
+                    return Dashboard.React.Elements.Div("login-page", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.LoginPage.RenderCard(state, Mutate, DoLogin, DoRegister)], Object));
+                },
+                RenderCard: function (state, mutate, onLogin, onRegister) {
+                    return Dashboard.React.Elements.Div("login-card", void 0, void 0, void 0, System.Array.init([Dashboard.Pages.LoginPage.RenderHeader(state.Mode), state.Error != null ? Dashboard.React.Elements.Div("login-error", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(state.Error)], Object)) : Dashboard.React.Elements.Fragment(), Dashboard.React.Elements.Form(void 0, function () {
+                        if (H5.referenceEquals(state.Mode, "login")) {
+                            onLogin();
+                        } else {
+                            onRegister();
+                        }
+                    }, H5.referenceEquals(state.Mode, "register") ? System.Array.init([Dashboard.Pages.LoginPage.RenderField("Email", "email", state.Email, state.Loading, function (v) {
+                        mutate(function (s) {
+                            s.Email = v;
+                        });
+                    }), Dashboard.Pages.LoginPage.RenderField("Display Name", "text", state.DisplayName, state.Loading, function (v) {
+                        mutate(function (s) {
+                            s.DisplayName = v;
+                        });
+                    }), Dashboard.Pages.LoginPage.RenderSubmit(state)], Object) : System.Array.init([Dashboard.Pages.LoginPage.RenderSubmit(state)], Object)), Dashboard.Pages.LoginPage.RenderFooter(state.Mode, mutate)], Object));
+                },
+                RenderHeader: function (mode) {
+                    return Dashboard.React.Elements.Div("login-header", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Img("img/nimblesite-logo.webp", "Nimblesite", "login-logo-img", void 0), Dashboard.React.Elements.H(1, void 0, System.Array.init([Dashboard.React.Elements.Text("Nimblesite Clinical Coding Platform")], Object)), Dashboard.React.Elements.P(void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(H5.referenceEquals(mode, "login") ? "Sign in with your passkey" : "Create your account")], Object))], Object));
+                },
+                RenderField: function (label, type, value, disabled, onChange) {
+                    return Dashboard.React.Elements.Div("form-group", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.Label(void 0, "form-label", System.Array.init([Dashboard.React.Elements.Text(label)], Object)), Dashboard.React.Elements.Input("form-input", type, value, label, onChange, void 0, disabled)], Object));
+                },
+                RenderSubmit: function (state) {
+                    return Dashboard.React.Elements.Button("btn btn-primary login-btn", void 0, state.Loading, "submit", System.Array.init([Dashboard.React.Elements.Text(state.Loading ? "Please wait..." : (H5.referenceEquals(state.Mode, "login") ? "Sign in with Passkey" : "Register with Passkey"))], Object));
+                },
+                RenderFooter: function (mode, mutate) {
+                    return Dashboard.React.Elements.Div("login-footer", void 0, void 0, void 0, System.Array.init([Dashboard.React.Elements.P(void 0, void 0, System.Array.init([Dashboard.React.Elements.Text(H5.referenceEquals(mode, "login") ? "Don't have an account? " : "Already have an account? "), Dashboard.React.Elements.Button("link-btn", function () {
+                        mutate(function (s) {
+                            s.Mode = H5.referenceEquals(mode, "login") ? "register" : "login";
+                            s.Error = null;
+                        });
+                    }, false, "button", System.Array.init([Dashboard.React.Elements.Text(H5.referenceEquals(mode, "login") ? "Register" : "Sign in")], Object))], Object))], Object));
+                }
+            }
+        }
+    });
+
+    /**
+     * Mutable state class for the login page (React useState requires a single state object).
+     *
+     * @public
+     * @class Dashboard.Pages.LoginState
+     */
+    H5.define("Dashboard.Pages.LoginState", {
+        fields: {
+            /**
+             * "login" or "register".
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.LoginState
+             * @function Mode
+             * @type string
+             */
+            Mode: null,
+            /**
+             * Email field (register mode only).
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.LoginState
+             * @function Email
+             * @type string
+             */
+            Email: null,
+            /**
+             * Display name field (register mode only).
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.LoginState
+             * @function DisplayName
+             * @type string
+             */
+            DisplayName: null,
+            /**
+             * Whether a request is in flight.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.LoginState
+             * @function Loading
+             * @type boolean
+             */
+            Loading: false,
+            /**
+             * Last error message, or null.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.LoginState
+             * @function Error
+             * @type string
+             */
+            Error: null
+        }
+    });
+
+    /**
      * Patients list page.
      *
      * @static
@@ -56778,6 +57631,67 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
     });
 
     /**
+     * Upcoming appointment sample row.
+     *
+     * @public
+     * @class Dashboard.Pages.UpcomingAppointment
+     */
+    H5.define("Dashboard.Pages.UpcomingAppointment", {
+        fields: {
+            /**
+             * Patient display name.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.UpcomingAppointment
+             * @function Patient
+             * @type string
+             */
+            Patient: null,
+            /**
+             * Patient initials for avatar.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.UpcomingAppointment
+             * @function Initials
+             * @type string
+             */
+            Initials: null,
+            /**
+             * Subtitle (treatment + room).
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.UpcomingAppointment
+             * @function Subtitle
+             * @type string
+             */
+            Subtitle: null,
+            /**
+             * Time of day.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.UpcomingAppointment
+             * @function Time
+             * @type string
+             */
+            Time: null,
+            /**
+             * Meta / countdown.
+             *
+             * @instance
+             * @public
+             * @memberof Dashboard.Pages.UpcomingAppointment
+             * @function Meta
+             * @type string
+             */
+            Meta: null
+        }
+    });
+
+    /**
      * Application entry point.
      *
      * @static
@@ -56804,17 +57718,19 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
             var icd10Url = Dashboard.Program.GetConfigValue("ICD10_API_URL", "http://localhost:5090");
             Dashboard.Api.ApiClient.ConfigureIcd10(icd10Url);
 
-            var authToken = Dashboard.Program.GetConfigValue("AUTH_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkYXNoYm9hcmQtdXNlciIsImp0aSI6IjE1MTMwYTg0LTY4NTktNGNmMy05MjA3LTMyMGJhYWRiNzhjNSIsInJvbGVzIjpbImNsaW5pY2lhbiIsInNjaGVkdWxlciJdLCJleHAiOjIwODE5MjIxMDQsImlhdCI6MTc2NjM4OTMwNH0.mk66XyKaLWukzZOmGNwss74lSlXobt6Em0NoEbXRdKU");
-            Dashboard.Api.ApiClient.SetTokens(authToken, authToken);
+            var gatekeeperUrl = Dashboard.Program.GetConfigValue("GATEKEEPER_API_URL", "http://localhost:5002");
+            Dashboard.Api.ApiClient.ConfigureGatekeeper(gatekeeperUrl);
 
             Dashboard.Program.Log("Nimblesite Clinical Coding Platform starting...");
             Dashboard.Program.Log("Clinical API: " + (clinicalUrl || ""));
             Dashboard.Program.Log("Scheduling API: " + (schedulingUrl || ""));
             Dashboard.Program.Log("ICD-10 API: " + (icd10Url || ""));
+            Dashboard.Program.Log("Gatekeeper API: " + (gatekeeperUrl || ""));
 
             Dashboard.Program.HideLoadingScreen();
 
-            Dashboard.React.ReactInterop.RenderApp(Dashboard.App.Render());
+            var appComponent = React.createElement(Dashboard.App.Render);
+            Dashboard.React.ReactInterop.RenderApp(appComponent);
 
             Dashboard.Program.Log("Dashboard initialized successfully!");
         },
@@ -57495,7 +58411,14 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                         };
                     }
                     var props = { className: className, id: id, style: style, onClick: clickHandler };
-                    return React.createElement(tag, props, children);
+                    var childCount = children == null ? 0 : children.length;
+                    var args = System.Array.init(((childCount + 2) | 0), null, System.Object);
+                    args[System.Array.index(0, args)] = tag;
+                    args[System.Array.index(1, args)] = props;
+                    for (var i = 0; i < childCount; i = (i + 1) | 0) {
+                        args[System.Array.index(((i + 2) | 0), args)] = children[System.Array.index(i, children)];
+                    }
+                    return React.createElement.apply(React, args);
                 }
             }
         }
@@ -57550,6 +58473,9 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                 },
                 /**
                  * React useEffect hook - manages side effects.
+                 React requires the effect callback to return either a cleanup function or undefined;
+                 returning null crashes React's effect teardown with "destroy is not a function".
+                 H5-transpiled C# Actions return null, so we wrap in a JS shim that returns undefined.
                  *
                  * @static
                  * @public
@@ -57561,10 +58487,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                  */
                 UseEffect$1: function (effect, deps) {
                     if (deps === void 0) { deps = null; }
-                    React.useEffect(function () {
-                        effect();
-                        return null;
-                    }, H5.unbox(deps));
+                    React.useEffect(function(){ effect(); return undefined; }, deps);
                 },
                 /**
                  * React useEffect hook with cleanup function.
@@ -57580,10 +58503,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                  */
                 UseEffect: function (effect, cleanup, deps) {
                     if (deps === void 0) { deps = null; }
-                    React.useEffect(function () {
-                        effect();
-                        return cleanup();
-                    }, H5.unbox(deps));
+                    React.useEffect(function(){ effect(); return cleanup(); }, deps);
                 },
                 /**
                  * React useRef hook - creates a mutable ref object.
@@ -57709,7 +58629,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     if (containerId === void 0) { containerId = "root"; }
                     var container = document.getElementById(containerId);
                     var root = ReactDOM.createRoot(container);
-                    root.Render(element);
+                    root.render(element);
                 }
             }
         }
@@ -57784,41 +58704,49 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
 
 
     var $m = H5.setMetadata,
-        $n = ["System","Dashboard","Dashboard.React","Dashboard.Pages","Dashboard.Components","System.Threading.Tasks"];
-    $m("Dashboard.AppState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"ActiveView","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_ActiveView","t":8,"rt":$n[0].String,"fg":"ActiveView"},"s":{"a":2,"n":"set_ActiveView","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"ActiveView"},"fn":"ActiveView"},{"a":2,"n":"EditingAppointmentId","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_EditingAppointmentId","t":8,"rt":$n[0].String,"fg":"EditingAppointmentId"},"s":{"a":2,"n":"set_EditingAppointmentId","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"EditingAppointmentId"},"fn":"EditingAppointmentId"},{"a":2,"n":"EditingPatientId","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_EditingPatientId","t":8,"rt":$n[0].String,"fg":"EditingPatientId"},"s":{"a":2,"n":"set_EditingPatientId","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"EditingPatientId"},"fn":"EditingPatientId"},{"a":2,"n":"NotificationCount","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_NotificationCount","t":8,"rt":$n[0].Int32,"fg":"NotificationCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_NotificationCount","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"NotificationCount"},"fn":"NotificationCount"},{"a":2,"n":"SearchQuery","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_SearchQuery","t":8,"rt":$n[0].String,"fg":"SearchQuery"},"s":{"a":2,"n":"set_SearchQuery","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"SearchQuery"},"fn":"SearchQuery"},{"a":2,"n":"SidebarCollapsed","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_SidebarCollapsed","t":8,"rt":$n[0].Boolean,"fg":"SidebarCollapsed","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_SidebarCollapsed","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"SidebarCollapsed"},"fn":"SidebarCollapsed"},{"a":1,"backing":true,"n":"<ActiveView>k__BackingField","t":4,"rt":$n[0].String,"sn":"ActiveView"},{"a":1,"backing":true,"n":"<EditingAppointmentId>k__BackingField","t":4,"rt":$n[0].String,"sn":"EditingAppointmentId"},{"a":1,"backing":true,"n":"<EditingPatientId>k__BackingField","t":4,"rt":$n[0].String,"sn":"EditingPatientId"},{"a":1,"backing":true,"n":"<NotificationCount>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"NotificationCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<SearchQuery>k__BackingField","t":4,"rt":$n[0].String,"sn":"SearchQuery"},{"a":1,"backing":true,"n":"<SidebarCollapsed>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"SidebarCollapsed","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}}]}; }, $n);
-    $m("Dashboard.App", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"GetPageTitle","is":true,"t":8,"pi":[{"n":"view","pt":$n[0].String,"ps":0}],"sn":"GetPageTitle","rt":$n[0].String,"p":[$n[0].String]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderPage","is":true,"t":8,"pi":[{"n":"state","pt":$n[1].AppState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderPage","rt":Object,"p":[$n[1].AppState,Function]},{"a":1,"n":"RenderPlaceholderPage","is":true,"t":8,"pi":[{"n":"title","pt":$n[0].String,"ps":0},{"n":"description","pt":$n[0].String,"ps":1}],"sn":"RenderPlaceholderPage","rt":Object,"p":[$n[0].String,$n[0].String]}]}; }, $n);
-    $m("Dashboard.Program", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"GetConfigValue","is":true,"t":8,"pi":[{"n":"key","pt":$n[0].String,"ps":0},{"n":"defaultValue","pt":$n[0].String,"ps":1}],"sn":"GetConfigValue","rt":$n[0].String,"p":[$n[0].String,$n[0].String]},{"a":1,"n":"HideLoadingScreen","is":true,"t":8,"sn":"HideLoadingScreen","rt":$n[0].Void},{"a":1,"n":"Log","is":true,"t":8,"pi":[{"n":"message","pt":$n[0].String,"ps":0}],"sn":"Log","rt":$n[0].Void,"p":[$n[0].String]},{"a":2,"n":"Main","is":true,"t":8,"sn":"Main","rt":$n[0].Void}]}; }, $n);
-    $m("Dashboard.React.Elements", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"A","is":true,"t":8,"pi":[{"n":"href","pt":$n[0].String,"ps":0},{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"target","dv":null,"o":true,"pt":$n[0].String,"ps":2},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":3},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":4}],"sn":"A","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,Function,System.Array.type(Object)]},{"a":2,"n":"Article","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Article","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Aside","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Aside","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Button","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":1},{"n":"disabled","dv":false,"o":true,"pt":$n[0].Boolean,"ps":2},{"n":"type","dv":"button","o":true,"pt":$n[0].String,"ps":3},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":4}],"sn":"Button","rt":Object,"p":[$n[0].String,Function,$n[0].Boolean,$n[0].String,System.Array.type(Object)]},{"a":1,"n":"CreateElement","is":true,"t":8,"pi":[{"n":"tag","pt":$n[0].String,"ps":0},{"n":"className","pt":$n[0].String,"ps":1},{"n":"id","pt":$n[0].String,"ps":2},{"n":"style","pt":$n[0].Object,"ps":3},{"n":"onClick","pt":Function,"ps":4},{"n":"children","pt":System.Array.type(Object),"ps":5}],"sn":"CreateElement","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].Object,Function,System.Array.type(Object)]},{"a":2,"n":"Div","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"id","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"style","dv":null,"o":true,"pt":$n[0].Object,"ps":2},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":3},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":4}],"sn":"Div","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].Object,Function,System.Array.type(Object)]},{"a":2,"n":"Footer","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Footer","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Form","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"onSubmit","dv":null,"o":true,"pt":Function,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Form","rt":Object,"p":[$n[0].String,Function,System.Array.type(Object)]},{"a":2,"n":"Fragment","is":true,"t":8,"pi":[{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":0}],"sn":"Fragment","rt":Object,"p":[System.Array.type(Object)]},{"a":2,"n":"H","is":true,"t":8,"pi":[{"n":"level","pt":$n[0].Int32,"ps":0},{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"H","rt":Object,"p":[$n[0].Int32,$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Header","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Header","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Img","is":true,"t":8,"pi":[{"n":"src","pt":$n[0].String,"ps":0},{"n":"alt","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":2},{"n":"style","dv":null,"o":true,"pt":$n[0].Object,"ps":3}],"sn":"Img","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].Object]},{"a":2,"n":"Input","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"type","dv":"text","o":true,"pt":$n[0].String,"ps":1},{"n":"value","dv":null,"o":true,"pt":$n[0].String,"ps":2},{"n":"placeholder","dv":null,"o":true,"pt":$n[0].String,"ps":3},{"n":"onChange","dv":null,"o":true,"pt":Function,"ps":4},{"n":"onKeyDown","dv":null,"o":true,"pt":Function,"ps":5},{"n":"disabled","dv":false,"o":true,"pt":$n[0].Boolean,"ps":6}],"sn":"Input","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].String,Function,Function,$n[0].Boolean]},{"a":2,"n":"Label","is":true,"t":8,"pi":[{"n":"htmlFor","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Label","rt":Object,"p":[$n[0].String,$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Li","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Li","rt":Object,"p":[$n[0].String,Function,System.Array.type(Object)]},{"a":2,"n":"Main","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Main","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Nav","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Nav","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Option","is":true,"t":8,"pi":[{"n":"value","pt":$n[0].String,"ps":0},{"n":"label","pt":$n[0].String,"ps":1}],"sn":"Option","rt":Object,"p":[$n[0].String,$n[0].String]},{"a":2,"n":"P","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"style","dv":null,"o":true,"pt":$n[0].Object,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"P","rt":Object,"p":[$n[0].String,$n[0].Object,System.Array.type(Object)]},{"a":2,"n":"Path","is":true,"t":8,"pi":[{"n":"d","pt":$n[0].String,"ps":0},{"n":"fill","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"stroke","dv":null,"o":true,"pt":$n[0].String,"ps":2},{"n":"strokeWidth","dv":0,"o":true,"pt":$n[0].Int32,"ps":3}],"sn":"Path","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].Int32]},{"a":2,"n":"Section","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Section","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Select","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"value","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"onChange","dv":null,"o":true,"pt":Function,"ps":2},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":3}],"sn":"Select","rt":Object,"p":[$n[0].String,$n[0].String,Function,System.Array.type(Object)]},{"a":2,"n":"Span","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"id","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"style","dv":null,"o":true,"pt":$n[0].Object,"ps":2},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":3}],"sn":"Span","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].Object,System.Array.type(Object)]},{"a":2,"n":"Svg","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"width","dv":0,"o":true,"pt":$n[0].Int32,"ps":1},{"n":"height","dv":0,"o":true,"pt":$n[0].Int32,"ps":2},{"n":"viewBox","dv":null,"o":true,"pt":$n[0].String,"ps":3},{"n":"fill","dv":null,"o":true,"pt":$n[0].String,"ps":4},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":5}],"sn":"Svg","rt":Object,"p":[$n[0].String,$n[0].Int32,$n[0].Int32,$n[0].String,$n[0].String,System.Array.type(Object)]},{"a":2,"n":"TBody","is":true,"t":8,"pi":[{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":0}],"sn":"TBody","rt":Object,"p":[System.Array.type(Object)]},{"a":2,"n":"THead","is":true,"t":8,"pi":[{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":0}],"sn":"THead","rt":Object,"p":[System.Array.type(Object)]},{"a":2,"n":"Table","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Table","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Td","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Td","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Text","is":true,"t":8,"pi":[{"n":"content","pt":$n[0].String,"ps":0}],"sn":"Text","rt":Object,"p":[$n[0].String]},{"a":2,"n":"TextArea","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"value","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"placeholder","dv":null,"o":true,"pt":$n[0].String,"ps":2},{"n":"rows","dv":0,"o":true,"pt":$n[0].Int32,"ps":3},{"n":"onChange","dv":null,"o":true,"pt":Function,"ps":4}],"sn":"TextArea","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].Int32,Function]},{"a":2,"n":"Th","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Th","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":2,"n":"Tr","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Tr","rt":Object,"p":[$n[0].String,Function,System.Array.type(Object)]},{"a":2,"n":"Ul","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[0].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Ul","rt":Object,"p":[$n[0].String,System.Array.type(Object)]}]}; }, $n);
-    $m("Dashboard.React.StateResult$1", function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"SetState","t":16,"rt":Function,"g":{"a":2,"n":"get_SetState","t":8,"rt":Function,"fg":"SetState"},"s":{"a":2,"n":"set_SetState","t":8,"p":[Function],"rt":$n[0].Void,"fs":"SetState"},"fn":"SetState"},{"a":2,"n":"State","t":16,"rt":T,"g":{"a":2,"n":"get_State","t":8,"rt":T,"fg":"State"},"s":{"a":2,"n":"set_State","t":8,"p":[T],"rt":$n[0].Void,"fs":"State"},"fn":"State"},{"a":1,"backing":true,"n":"<SetState>k__BackingField","t":4,"rt":Function,"sn":"SetState"},{"a":1,"backing":true,"n":"<State>k__BackingField","t":4,"rt":T,"sn":"State"}]}; }, $n);
-    $m("Dashboard.React.StateFuncResult$1", function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"SetState","t":16,"rt":Function,"g":{"a":2,"n":"get_SetState","t":8,"rt":Function,"fg":"SetState"},"s":{"a":2,"n":"set_SetState","t":8,"p":[Function],"rt":$n[0].Void,"fs":"SetState"},"fn":"SetState"},{"a":2,"n":"State","t":16,"rt":T,"g":{"a":2,"n":"get_State","t":8,"rt":T,"fg":"State"},"s":{"a":2,"n":"set_State","t":8,"p":[T],"rt":$n[0].Void,"fs":"State"},"fn":"State"},{"a":1,"backing":true,"n":"<SetState>k__BackingField","t":4,"rt":Function,"sn":"SetState"},{"a":1,"backing":true,"n":"<State>k__BackingField","t":4,"rt":T,"sn":"State"}]}; }, $n);
-    $m("Dashboard.React.Hooks", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"UseCallback","is":true,"t":8,"pi":[{"n":"callback","pt":System.Object,"ps":0},{"n":"deps","pt":$n[0].Array.type(System.Object),"ps":1}],"tpc":1,"tprm":["T"],"sn":"UseCallback","rt":System.Object,"p":[System.Object,$n[0].Array.type(System.Object)]},{"a":2,"n":"UseContext","is":true,"t":8,"pi":[{"n":"context","pt":$n[0].Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseContext","rt":System.Object,"p":[$n[0].Object]},{"a":2,"n":"UseEffect","is":true,"t":8,"pi":[{"n":"effect","pt":Function,"ps":0},{"n":"deps","dv":null,"o":true,"pt":$n[0].Array.type(System.Object),"ps":1}],"sn":"UseEffect$1","rt":$n[0].Void,"p":[Function,$n[0].Array.type(System.Object)]},{"a":2,"n":"UseEffect","is":true,"t":8,"pi":[{"n":"effect","pt":Function,"ps":0},{"n":"cleanup","pt":Function,"ps":1},{"n":"deps","dv":null,"o":true,"pt":$n[0].Array.type(System.Object),"ps":2}],"sn":"UseEffect","rt":$n[0].Void,"p":[Function,Function,$n[0].Array.type(System.Object)]},{"a":2,"n":"UseMemo","is":true,"t":8,"pi":[{"n":"factory","pt":Function,"ps":0},{"n":"deps","pt":$n[0].Array.type(System.Object),"ps":1}],"tpc":1,"tprm":["T"],"sn":"UseMemo","rt":System.Object,"p":[Function,$n[0].Array.type(System.Object)]},{"a":2,"n":"UseRef","is":true,"t":8,"pi":[{"n":"initialValue","dv":null,"o":true,"pt":System.Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseRef","rt":Object(System.Object),"p":[System.Object]},{"a":2,"n":"UseState","is":true,"t":8,"pi":[{"n":"initialValue","pt":System.Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseState","rt":$n[2].StateResult$1(System.Object),"p":[System.Object]},{"a":2,"n":"UseStateFunc","is":true,"t":8,"pi":[{"n":"initialValue","pt":System.Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseStateFunc","rt":$n[2].StateFuncResult$1(System.Object),"p":[System.Object]}]}; }, $n);
-    $m("Dashboard.React.ReactInterop", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"CreateElement","is":true,"t":8,"pi":[{"n":"component","pt":Function,"ps":0},{"n":"props","dv":null,"o":true,"pt":$n[0].Object,"ps":1},{"n":"children","ip":true,"pt":$n[0].Array.type(System.Object),"ps":2}],"sn":"CreateElement","rt":Object,"p":[Function,$n[0].Object,$n[0].Array.type(System.Object)]},{"a":2,"n":"CreateElement","is":true,"t":8,"pi":[{"n":"type","pt":$n[0].String,"ps":0},{"n":"props","dv":null,"o":true,"pt":$n[0].Object,"ps":1},{"n":"children","ip":true,"pt":$n[0].Array.type(System.Object),"ps":2}],"sn":"CreateElement$1","rt":Object,"p":[$n[0].String,$n[0].Object,$n[0].Array.type(System.Object)]},{"a":2,"n":"RenderApp","is":true,"t":8,"pi":[{"n":"element","pt":Object,"ps":0},{"n":"containerId","dv":"root","o":true,"pt":$n[0].String,"ps":1}],"sn":"RenderApp","rt":$n[0].Void,"p":[Object,$n[0].String]}]}; }, $n);
-    $m("Dashboard.Pages.AppointmentsState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Appointments","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Appointments","t":8,"rt":System.Array.type(Object),"fg":"Appointments"},"s":{"a":2,"n":"set_Appointments","t":8,"p":[System.Array.type(Object)],"rt":$n[0].Void,"fs":"Appointments"},"fn":"Appointments"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"StatusFilter","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_StatusFilter","t":8,"rt":$n[0].String,"fg":"StatusFilter"},"s":{"a":2,"n":"set_StatusFilter","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"StatusFilter"},"fn":"StatusFilter"},{"a":1,"backing":true,"n":"<Appointments>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Appointments"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<StatusFilter>k__BackingField","t":4,"rt":$n[0].String,"sn":"StatusFilter"}]}; }, $n);
-    $m("Dashboard.Pages.AppointmentsPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FilterByStatus","is":true,"t":8,"pi":[{"n":"status","pt":$n[0].String,"ps":0},{"n":"currentState","pt":$n[3].AppointmentsState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"FilterByStatus","rt":$n[0].Void,"p":[$n[0].String,$n[3].AppointmentsState,Function]},{"a":1,"n":"FormatReference","is":true,"t":8,"pi":[{"n":"reference","pt":$n[0].String,"ps":0}],"sn":"FormatReference","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"FormatTime","is":true,"t":8,"pi":[{"n":"dateTime","pt":$n[0].String,"ps":0}],"sn":"FormatTime","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"LoadAppointments","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadAppointments","rt":$n[0].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"onEditAppointment","pt":Function,"ps":0}],"sn":"Render","rt":Object,"p":[Function]},{"a":1,"n":"RenderAppointmentCard","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0},{"n":"onEditAppointment","pt":Function,"ps":1}],"sn":"RenderAppointmentCard","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderAppointmentList","is":true,"t":8,"pi":[{"n":"appointments","pt":System.Array.type(Object),"ps":0},{"n":"statusFilter","pt":$n[0].String,"ps":1},{"n":"onEditAppointment","pt":Function,"ps":2}],"sn":"RenderAppointmentList","rt":Object,"p":[System.Array.type(Object),$n[0].String,Function]},{"a":1,"n":"RenderEmpty","is":true,"t":8,"sn":"RenderEmpty","rt":Object},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[0].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderInternal","is":true,"t":8,"pi":[{"n":"onEditAppointment","pt":Function,"ps":0}],"sn":"RenderInternal","rt":Object,"p":[Function]},{"a":1,"n":"RenderLoadingList","is":true,"t":8,"sn":"RenderLoadingList","rt":Object},{"a":1,"n":"RenderPriorityBadge","is":true,"t":8,"pi":[{"n":"priority","pt":$n[0].String,"ps":0}],"sn":"RenderPriorityBadge","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderStatusBadge","is":true,"t":8,"pi":[{"n":"status","pt":$n[0].String,"ps":0}],"sn":"RenderStatusBadge","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderTab","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"status","pt":$n[0].String,"ps":1},{"n":"currentFilter","pt":$n[0].String,"ps":2},{"n":"onSelect","pt":Function,"ps":3}],"sn":"RenderTab","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,Function]}]}; }, $n);
-    $m("Dashboard.Pages.CalendarState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Appointments","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Appointments","t":8,"rt":System.Array.type(Object),"fg":"Appointments"},"s":{"a":2,"n":"set_Appointments","t":8,"p":[System.Array.type(Object)],"rt":$n[0].Void,"fs":"Appointments"},"fn":"Appointments"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Month","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_Month","t":8,"rt":$n[0].Int32,"fg":"Month","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_Month","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"Month"},"fn":"Month"},{"a":2,"n":"SelectedDay","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_SelectedDay","t":8,"rt":$n[0].Int32,"fg":"SelectedDay","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_SelectedDay","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"SelectedDay"},"fn":"SelectedDay"},{"a":2,"n":"Year","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_Year","t":8,"rt":$n[0].Int32,"fg":"Year","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_Year","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"Year"},"fn":"Year"},{"a":1,"backing":true,"n":"<Appointments>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Appointments"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Month>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"Month","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<SelectedDay>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"SelectedDay","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<Year>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"Year","box":function ($v) { return H5.box($v, System.Int32);}}]}; }, $n);
-    $m("Dashboard.Pages.CalendarPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FormatReference","is":true,"t":8,"pi":[{"n":"reference","pt":$n[0].String,"ps":0}],"sn":"FormatReference","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"FormatTime","is":true,"t":8,"pi":[{"n":"dateTime","pt":$n[0].String,"ps":0}],"sn":"FormatTime","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"GetAppointmentsForDay","is":true,"t":8,"pi":[{"n":"appointments","pt":System.Array.type(Object),"ps":0},{"n":"year","pt":$n[0].Int32,"ps":1},{"n":"month","pt":$n[0].Int32,"ps":2},{"n":"day","pt":$n[0].Int32,"ps":3}],"sn":"GetAppointmentsForDay","rt":System.Array.type(Object),"p":[System.Array.type(Object),$n[0].Int32,$n[0].Int32,$n[0].Int32]},{"a":1,"n":"GetStatusClass","is":true,"t":8,"pi":[{"n":"status","pt":$n[0].String,"ps":0}],"sn":"GetStatusClass","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"GoToToday","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"GoToToday","rt":$n[0].Void,"p":[$n[3].CalendarState,Function]},{"a":1,"n":"LoadAppointments","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0},{"n":"currentState","pt":$n[3].CalendarState,"ps":1}],"sn":"LoadAppointments","rt":$n[0].Void,"p":[Function,$n[3].CalendarState]},{"a":1,"n":"NavigateMonth","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"delta","pt":$n[0].Int32,"ps":2}],"sn":"NavigateMonth","rt":$n[0].Void,"p":[$n[3].CalendarState,Function,$n[0].Int32]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"onEditAppointment","pt":Function,"ps":0}],"sn":"Render","rt":Object,"p":[Function]},{"a":1,"n":"RenderAppointmentDot","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0}],"sn":"RenderAppointmentDot","rt":Object,"p":[Object]},{"a":1,"n":"RenderCalendarContent","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onEditAppointment","pt":Function,"ps":2}],"sn":"RenderCalendarContent","rt":Object,"p":[$n[3].CalendarState,Function,Function]},{"a":1,"n":"RenderCalendarGrid","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderCalendarGrid","rt":Object,"p":[$n[3].CalendarState,Function]},{"a":1,"n":"RenderDayAppointment","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0},{"n":"onEditAppointment","pt":Function,"ps":1}],"sn":"RenderDayAppointment","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderDayDetails","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onEditAppointment","pt":Function,"ps":2}],"sn":"RenderDayDetails","rt":Object,"p":[$n[3].CalendarState,Function,Function]},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[0].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderHeader","rt":Object,"p":[$n[3].CalendarState,Function]},{"a":1,"n":"RenderLoadingState","is":true,"t":8,"sn":"RenderLoadingState","rt":Object},{"a":1,"n":"RenderNoSelection","is":true,"t":8,"sn":"RenderNoSelection","rt":Object},{"a":1,"n":"SelectDay","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"day","pt":$n[0].Int32,"ps":2}],"sn":"SelectDay","rt":$n[0].Void,"p":[$n[3].CalendarState,Function,$n[0].Int32]},{"a":1,"n":"DayNames","is":true,"t":4,"rt":$n[0].Array.type(System.String),"sn":"DayNames","ro":true},{"a":1,"n":"MonthNames","is":true,"t":4,"rt":$n[0].Array.type(System.String),"sn":"MonthNames","ro":true}]}; }, $n);
-    $m("Dashboard.Pages.ClinicalCodingState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"AchiResults","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_AchiResults","t":8,"rt":System.Array.type(Object),"fg":"AchiResults"},"s":{"a":2,"n":"set_AchiResults","t":8,"p":[System.Array.type(Object)],"rt":$n[0].Void,"fs":"AchiResults"},"fn":"AchiResults"},{"a":2,"n":"CopiedCode","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_CopiedCode","t":8,"rt":$n[0].String,"fg":"CopiedCode"},"s":{"a":2,"n":"set_CopiedCode","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"CopiedCode"},"fn":"CopiedCode"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Icd10Results","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Icd10Results","t":8,"rt":System.Array.type(Object),"fg":"Icd10Results"},"s":{"a":2,"n":"set_Icd10Results","t":8,"p":[System.Array.type(Object)],"rt":$n[0].Void,"fs":"Icd10Results"},"fn":"Icd10Results"},{"a":2,"n":"IncludeAchi","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_IncludeAchi","t":8,"rt":$n[0].Boolean,"fg":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_IncludeAchi","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"IncludeAchi"},"fn":"IncludeAchi"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"SearchMode","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_SearchMode","t":8,"rt":$n[0].String,"fg":"SearchMode"},"s":{"a":2,"n":"set_SearchMode","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"SearchMode"},"fn":"SearchMode"},{"a":2,"n":"SearchQuery","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_SearchQuery","t":8,"rt":$n[0].String,"fg":"SearchQuery"},"s":{"a":2,"n":"set_SearchQuery","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"SearchQuery"},"fn":"SearchQuery"},{"a":2,"n":"SelectedCode","t":16,"rt":Object,"g":{"a":2,"n":"get_SelectedCode","t":8,"rt":Object,"fg":"SelectedCode"},"s":{"a":2,"n":"set_SelectedCode","t":8,"p":[Object],"rt":$n[0].Void,"fs":"SelectedCode"},"fn":"SelectedCode"},{"a":2,"n":"SemanticResults","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_SemanticResults","t":8,"rt":System.Array.type(Object),"fg":"SemanticResults"},"s":{"a":2,"n":"set_SemanticResults","t":8,"p":[System.Array.type(Object)],"rt":$n[0].Void,"fs":"SemanticResults"},"fn":"SemanticResults"},{"a":1,"backing":true,"n":"<AchiResults>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"AchiResults"},{"a":1,"backing":true,"n":"<CopiedCode>k__BackingField","t":4,"rt":$n[0].String,"sn":"CopiedCode"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Icd10Results>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Icd10Results"},{"a":1,"backing":true,"n":"<IncludeAchi>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<SearchMode>k__BackingField","t":4,"rt":$n[0].String,"sn":"SearchMode"},{"a":1,"backing":true,"n":"<SearchQuery>k__BackingField","t":4,"rt":$n[0].String,"sn":"SearchQuery"},{"a":1,"backing":true,"n":"<SelectedCode>k__BackingField","t":4,"rt":Object,"sn":"SelectedCode"},{"a":1,"backing":true,"n":"<SemanticResults>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"SemanticResults"}]}; }, $n);
-    $m("Dashboard.Pages.ClinicalCodingPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"ClearSelection","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"ClearSelection","rt":$n[0].Void,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"Concat","is":true,"t":8,"pi":[{"n":"arr1","pt":System.Array.type(Object),"ps":0},{"n":"arr2","pt":System.Array.type(Object),"ps":1}],"sn":"Concat","rt":System.Array.type(Object),"p":[System.Array.type(Object),System.Array.type(Object)]},{"a":1,"n":"CopyCode","is":true,"t":8,"pi":[{"n":"code","pt":$n[0].String,"ps":0},{"n":"state","pt":$n[3].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"CopyCode","rt":$n[0].Void,"p":[$n[0].String,$n[3].ClinicalCodingState,Function]},{"a":1,"n":"ExecuteSearch","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"ExecuteSearch","rt":$n[0].Void,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"GetEmptyDescription","is":true,"t":8,"pi":[{"n":"mode","pt":$n[0].String,"ps":0}],"sn":"GetEmptyDescription","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"GetEmptyTitle","is":true,"t":8,"pi":[{"n":"mode","pt":$n[0].String,"ps":0}],"sn":"GetEmptyTitle","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"GetPlaceholder","is":true,"t":8,"pi":[{"n":"mode","pt":$n[0].String,"ps":0}],"sn":"GetPlaceholder","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"LookupSemanticCode","is":true,"t":8,"pi":[{"n":"code","pt":$n[0].String,"ps":0},{"n":"state","pt":$n[3].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"LookupSemanticCode","rt":$n[0].Void,"p":[$n[0].String,$n[3].ClinicalCodingState,Function]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderCodeDetail","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderCodeDetail","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderCodeRow","is":true,"t":8,"pi":[{"n":"code","pt":Object,"ps":0},{"n":"state","pt":$n[3].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"RenderCodeRow","rt":Object,"p":[Object,$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderContent","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderContent","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderDetailItem","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"value","pt":$n[0].String,"ps":1}],"sn":"RenderDetailItem","rt":Object,"p":[$n[0].String,$n[0].String]},{"a":1,"n":"RenderDetailSection","is":true,"t":8,"pi":[{"n":"title","pt":$n[0].String,"ps":0},{"n":"content","pt":$n[0].String,"ps":1}],"sn":"RenderDetailSection","rt":Object,"p":[$n[0].String,$n[0].String]},{"a":1,"n":"RenderEmptyState","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0}],"sn":"RenderEmptyState","rt":Object,"p":[$n[3].ClinicalCodingState]},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"error","pt":$n[0].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderHeader","is":true,"t":8,"sn":"RenderHeader","rt":Object},{"a":1,"n":"RenderKeywordResults","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderKeywordResults","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderLoading","is":true,"t":8,"sn":"RenderLoading","rt":Object},{"a":1,"n":"RenderNoResults","is":true,"t":8,"pi":[{"n":"query","pt":$n[0].String,"ps":0}],"sn":"RenderNoResults","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderQuickSearches","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0}],"sn":"RenderQuickSearches","rt":Object,"p":[$n[3].ClinicalCodingState]},{"a":1,"n":"RenderSearchInput","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchInput","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderSearchOptions","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchOptions","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderSearchSection","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchSection","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderSearchTabs","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchTabs","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderSemanticResults","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSemanticResults","rt":Object,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderSemanticRow","is":true,"t":8,"pi":[{"n":"result","pt":Object,"ps":0},{"n":"state","pt":$n[3].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"RenderSemanticRow","rt":Object,"p":[Object,$n[3].ClinicalCodingState,Function]},{"a":1,"n":"RenderSemanticTooltipContent","is":true,"t":8,"pi":[{"n":"result","pt":Object,"ps":0},{"n":"confidenceColor","pt":$n[0].String,"ps":1},{"n":"confidencePercent","pt":$n[0].Int32,"ps":2}],"sn":"RenderSemanticTooltipContent","rt":System.Array.type(Object),"p":[Object,$n[0].String,$n[0].Int32]},{"a":1,"n":"RenderTab","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"icon","pt":Function,"ps":1},{"n":"isActive","pt":$n[0].Boolean,"ps":2},{"n":"onClick","pt":Function,"ps":3}],"sn":"RenderTab","rt":Object,"p":[$n[0].String,Function,$n[0].Boolean,Function]},{"a":1,"n":"SelectCode","is":true,"t":8,"pi":[{"n":"code","pt":Object,"ps":0},{"n":"state","pt":$n[3].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"SelectCode","rt":$n[0].Void,"p":[Object,$n[3].ClinicalCodingState,Function]},{"a":1,"n":"SetSearchMode","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"mode","pt":$n[0].String,"ps":2}],"sn":"SetSearchMode","rt":$n[0].Void,"p":[$n[3].ClinicalCodingState,Function,$n[0].String]},{"a":1,"n":"ToggleAchi","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"ToggleAchi","rt":$n[0].Void,"p":[$n[3].ClinicalCodingState,Function]},{"a":1,"n":"UpdateQuery","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"query","pt":$n[0].String,"ps":2}],"sn":"UpdateQuery","rt":$n[0].Void,"p":[$n[3].ClinicalCodingState,Function,$n[0].String]}]}; }, $n);
-    $m("Dashboard.Pages.DashboardState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"AppointmentCount","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_AppointmentCount","t":8,"rt":$n[0].Int32,"fg":"AppointmentCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_AppointmentCount","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"AppointmentCount"},"fn":"AppointmentCount"},{"a":2,"n":"EncounterCount","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_EncounterCount","t":8,"rt":$n[0].Int32,"fg":"EncounterCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_EncounterCount","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"EncounterCount"},"fn":"EncounterCount"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"PatientCount","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_PatientCount","t":8,"rt":$n[0].Int32,"fg":"PatientCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_PatientCount","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"PatientCount"},"fn":"PatientCount"},{"a":2,"n":"PractitionerCount","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_PractitionerCount","t":8,"rt":$n[0].Int32,"fg":"PractitionerCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_PractitionerCount","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"PractitionerCount"},"fn":"PractitionerCount"},{"a":1,"backing":true,"n":"<AppointmentCount>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"AppointmentCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<EncounterCount>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"EncounterCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<PatientCount>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"PatientCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<PractitionerCount>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"PractitionerCount","box":function ($v) { return H5.box($v, System.Int32);}}]}; }, $n);
-    $m("Dashboard.Pages.DashboardPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"LoadData","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadData","rt":$n[0].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderActionButton","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"icon","pt":Function,"ps":1},{"n":"variant","pt":$n[0].String,"ps":2}],"sn":"RenderActionButton","rt":Object,"p":[$n[0].String,Function,$n[0].String]},{"a":1,"n":"RenderActivityItem","is":true,"t":8,"pi":[{"n":"title","pt":$n[0].String,"ps":0},{"n":"subtitle","pt":$n[0].String,"ps":1},{"n":"time","pt":$n[0].String,"ps":2}],"sn":"RenderActivityItem","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String]},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[0].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderQuickActions","is":true,"t":8,"sn":"RenderQuickActions","rt":Object},{"a":1,"n":"RenderRecentActivity","is":true,"t":8,"sn":"RenderRecentActivity","rt":Object}]}; }, $n);
-    $m("Dashboard.Pages.EditAppointmentState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Appointment","t":16,"rt":Object,"g":{"a":2,"n":"get_Appointment","t":8,"rt":Object,"fg":"Appointment"},"s":{"a":2,"n":"set_Appointment","t":8,"p":[Object],"rt":$n[0].Void,"fs":"Appointment"},"fn":"Appointment"},{"a":2,"n":"Comment","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Comment","t":8,"rt":$n[0].String,"fg":"Comment"},"s":{"a":2,"n":"set_Comment","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Comment"},"fn":"Comment"},{"a":2,"n":"Description","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Description","t":8,"rt":$n[0].String,"fg":"Description"},"s":{"a":2,"n":"set_Description","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Description"},"fn":"Description"},{"a":2,"n":"EndDate","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_EndDate","t":8,"rt":$n[0].String,"fg":"EndDate"},"s":{"a":2,"n":"set_EndDate","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"EndDate"},"fn":"EndDate"},{"a":2,"n":"EndTime","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_EndTime","t":8,"rt":$n[0].String,"fg":"EndTime"},"s":{"a":2,"n":"set_EndTime","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"EndTime"},"fn":"EndTime"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"PatientReference","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_PatientReference","t":8,"rt":$n[0].String,"fg":"PatientReference"},"s":{"a":2,"n":"set_PatientReference","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"PatientReference"},"fn":"PatientReference"},{"a":2,"n":"PractitionerReference","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_PractitionerReference","t":8,"rt":$n[0].String,"fg":"PractitionerReference"},"s":{"a":2,"n":"set_PractitionerReference","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"PractitionerReference"},"fn":"PractitionerReference"},{"a":2,"n":"Priority","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Priority","t":8,"rt":$n[0].String,"fg":"Priority"},"s":{"a":2,"n":"set_Priority","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Priority"},"fn":"Priority"},{"a":2,"n":"ReasonCode","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_ReasonCode","t":8,"rt":$n[0].String,"fg":"ReasonCode"},"s":{"a":2,"n":"set_ReasonCode","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"ReasonCode"},"fn":"ReasonCode"},{"a":2,"n":"Saving","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Saving","t":8,"rt":$n[0].Boolean,"fg":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Saving","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Saving"},"fn":"Saving"},{"a":2,"n":"ServiceCategory","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_ServiceCategory","t":8,"rt":$n[0].String,"fg":"ServiceCategory"},"s":{"a":2,"n":"set_ServiceCategory","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"ServiceCategory"},"fn":"ServiceCategory"},{"a":2,"n":"ServiceType","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_ServiceType","t":8,"rt":$n[0].String,"fg":"ServiceType"},"s":{"a":2,"n":"set_ServiceType","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"ServiceType"},"fn":"ServiceType"},{"a":2,"n":"StartDate","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_StartDate","t":8,"rt":$n[0].String,"fg":"StartDate"},"s":{"a":2,"n":"set_StartDate","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"StartDate"},"fn":"StartDate"},{"a":2,"n":"StartTime","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_StartTime","t":8,"rt":$n[0].String,"fg":"StartTime"},"s":{"a":2,"n":"set_StartTime","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"StartTime"},"fn":"StartTime"},{"a":2,"n":"Status","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Status","t":8,"rt":$n[0].String,"fg":"Status"},"s":{"a":2,"n":"set_Status","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Status"},"fn":"Status"},{"a":2,"n":"Success","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Success","t":8,"rt":$n[0].String,"fg":"Success"},"s":{"a":2,"n":"set_Success","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Success"},"fn":"Success"},{"a":1,"backing":true,"n":"<Appointment>k__BackingField","t":4,"rt":Object,"sn":"Appointment"},{"a":1,"backing":true,"n":"<Comment>k__BackingField","t":4,"rt":$n[0].String,"sn":"Comment"},{"a":1,"backing":true,"n":"<Description>k__BackingField","t":4,"rt":$n[0].String,"sn":"Description"},{"a":1,"backing":true,"n":"<EndDate>k__BackingField","t":4,"rt":$n[0].String,"sn":"EndDate"},{"a":1,"backing":true,"n":"<EndTime>k__BackingField","t":4,"rt":$n[0].String,"sn":"EndTime"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<PatientReference>k__BackingField","t":4,"rt":$n[0].String,"sn":"PatientReference"},{"a":1,"backing":true,"n":"<PractitionerReference>k__BackingField","t":4,"rt":$n[0].String,"sn":"PractitionerReference"},{"a":1,"backing":true,"n":"<Priority>k__BackingField","t":4,"rt":$n[0].String,"sn":"Priority"},{"a":1,"backing":true,"n":"<ReasonCode>k__BackingField","t":4,"rt":$n[0].String,"sn":"ReasonCode"},{"a":1,"backing":true,"n":"<Saving>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<ServiceCategory>k__BackingField","t":4,"rt":$n[0].String,"sn":"ServiceCategory"},{"a":1,"backing":true,"n":"<ServiceType>k__BackingField","t":4,"rt":$n[0].String,"sn":"ServiceType"},{"a":1,"backing":true,"n":"<StartDate>k__BackingField","t":4,"rt":$n[0].String,"sn":"StartDate"},{"a":1,"backing":true,"n":"<StartTime>k__BackingField","t":4,"rt":$n[0].String,"sn":"StartTime"},{"a":1,"backing":true,"n":"<Status>k__BackingField","t":4,"rt":$n[0].String,"sn":"Status"},{"a":1,"backing":true,"n":"<Success>k__BackingField","t":4,"rt":$n[0].String,"sn":"Success"}]}; }, $n);
-    $m("Dashboard.Pages.EditAppointmentPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"CombineDateTime","is":true,"t":8,"pi":[{"n":"date","pt":$n[0].String,"ps":0},{"n":"time","pt":$n[0].String,"ps":1}],"sn":"CombineDateTime","rt":$n[0].String,"p":[$n[0].String,$n[0].String]},{"a":1,"n":"LoadAppointment","is":true,"t":8,"pi":[{"n":"appointmentId","pt":$n[0].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"LoadAppointment","rt":$n[0].Void,"p":[$n[0].String,Function]},{"a":1,"n":"ParseDateTime","is":true,"t":8,"pi":[{"n":"isoDateTime","pt":$n[0].String,"ps":0}],"sn":"ParseDateTime","rt":$n[0].ValueTuple$2(System.String,System.String),"p":[$n[0].String]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"appointmentId","pt":$n[0].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"Render","rt":Object,"p":[$n[0].String,Function]},{"a":1,"n":"RenderErrorState","is":true,"t":8,"pi":[{"n":"error","pt":$n[0].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderErrorState","rt":Object,"p":[$n[0].String,Function]},{"a":1,"n":"RenderForm","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditAppointmentState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"RenderForm","rt":Object,"p":[$n[3].EditAppointmentState,Function,Function]},{"a":1,"n":"RenderFormActions","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditAppointmentState,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderFormActions","rt":Object,"p":[$n[3].EditAppointmentState,Function]},{"a":1,"n":"RenderFormSection","is":true,"t":8,"pi":[{"n":"title","pt":$n[0].String,"ps":0},{"n":"fields","pt":System.Array.type(Object),"ps":1}],"sn":"RenderFormSection","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderHeader","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderInputField","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"id","pt":$n[0].String,"ps":1},{"n":"value","pt":$n[0].String,"ps":2},{"n":"placeholder","pt":$n[0].String,"ps":3},{"n":"onChange","pt":Function,"ps":4},{"n":"type","dv":"text","o":true,"pt":$n[0].String,"ps":5}],"sn":"RenderInputField","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].String,Function,$n[0].String]},{"a":1,"n":"RenderLoadingState","is":true,"t":8,"sn":"RenderLoadingState","rt":Object},{"a":1,"n":"RenderSelectField","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"id","pt":$n[0].String,"ps":1},{"n":"value","pt":$n[0].String,"ps":2},{"n":"options","pt":$n[0].Array.type(System.ValueTuple$2(System.String,System.String)),"ps":3},{"n":"onChange","pt":Function,"ps":4}],"sn":"RenderSelectField","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].Array.type(System.ValueTuple$2(System.String,System.String)),Function]},{"a":1,"n":"RenderTextareaField","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"id","pt":$n[0].String,"ps":1},{"n":"value","pt":$n[0].String,"ps":2},{"n":"placeholder","pt":$n[0].String,"ps":3},{"n":"onChange","pt":Function,"ps":4}],"sn":"RenderTextareaField","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].String,Function]},{"a":1,"n":"SaveAppointment","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditAppointmentState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"SaveAppointment","rt":$n[0].Void,"p":[$n[3].EditAppointmentState,Function,Function]},{"a":1,"n":"UpdateField","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditAppointmentState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"field","pt":$n[0].String,"ps":2},{"n":"value","pt":$n[0].String,"ps":3}],"sn":"UpdateField","rt":$n[0].Void,"p":[$n[3].EditAppointmentState,Function,$n[0].String,$n[0].String]}]}; }, $n);
-    $m("Dashboard.Pages.EditPatientState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Active","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Active","t":8,"rt":$n[0].Boolean,"fg":"Active","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Active","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Active"},"fn":"Active"},{"a":2,"n":"AddressLine","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_AddressLine","t":8,"rt":$n[0].String,"fg":"AddressLine"},"s":{"a":2,"n":"set_AddressLine","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"AddressLine"},"fn":"AddressLine"},{"a":2,"n":"BirthDate","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_BirthDate","t":8,"rt":$n[0].String,"fg":"BirthDate"},"s":{"a":2,"n":"set_BirthDate","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"BirthDate"},"fn":"BirthDate"},{"a":2,"n":"City","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_City","t":8,"rt":$n[0].String,"fg":"City"},"s":{"a":2,"n":"set_City","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"City"},"fn":"City"},{"a":2,"n":"Country","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Country","t":8,"rt":$n[0].String,"fg":"Country"},"s":{"a":2,"n":"set_Country","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Country"},"fn":"Country"},{"a":2,"n":"Email","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Email","t":8,"rt":$n[0].String,"fg":"Email"},"s":{"a":2,"n":"set_Email","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Email"},"fn":"Email"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"FamilyName","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_FamilyName","t":8,"rt":$n[0].String,"fg":"FamilyName"},"s":{"a":2,"n":"set_FamilyName","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"FamilyName"},"fn":"FamilyName"},{"a":2,"n":"Gender","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Gender","t":8,"rt":$n[0].String,"fg":"Gender"},"s":{"a":2,"n":"set_Gender","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Gender"},"fn":"Gender"},{"a":2,"n":"GivenName","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_GivenName","t":8,"rt":$n[0].String,"fg":"GivenName"},"s":{"a":2,"n":"set_GivenName","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"GivenName"},"fn":"GivenName"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Patient","t":16,"rt":Object,"g":{"a":2,"n":"get_Patient","t":8,"rt":Object,"fg":"Patient"},"s":{"a":2,"n":"set_Patient","t":8,"p":[Object],"rt":$n[0].Void,"fs":"Patient"},"fn":"Patient"},{"a":2,"n":"Phone","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Phone","t":8,"rt":$n[0].String,"fg":"Phone"},"s":{"a":2,"n":"set_Phone","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Phone"},"fn":"Phone"},{"a":2,"n":"PostalCode","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_PostalCode","t":8,"rt":$n[0].String,"fg":"PostalCode"},"s":{"a":2,"n":"set_PostalCode","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"PostalCode"},"fn":"PostalCode"},{"a":2,"n":"Saving","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Saving","t":8,"rt":$n[0].Boolean,"fg":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Saving","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Saving"},"fn":"Saving"},{"a":2,"n":"State","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_State","t":8,"rt":$n[0].String,"fg":"State"},"s":{"a":2,"n":"set_State","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"State"},"fn":"State"},{"a":2,"n":"Success","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Success","t":8,"rt":$n[0].String,"fg":"Success"},"s":{"a":2,"n":"set_Success","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Success"},"fn":"Success"},{"a":1,"backing":true,"n":"<Active>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Active","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<AddressLine>k__BackingField","t":4,"rt":$n[0].String,"sn":"AddressLine"},{"a":1,"backing":true,"n":"<BirthDate>k__BackingField","t":4,"rt":$n[0].String,"sn":"BirthDate"},{"a":1,"backing":true,"n":"<City>k__BackingField","t":4,"rt":$n[0].String,"sn":"City"},{"a":1,"backing":true,"n":"<Country>k__BackingField","t":4,"rt":$n[0].String,"sn":"Country"},{"a":1,"backing":true,"n":"<Email>k__BackingField","t":4,"rt":$n[0].String,"sn":"Email"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<FamilyName>k__BackingField","t":4,"rt":$n[0].String,"sn":"FamilyName"},{"a":1,"backing":true,"n":"<Gender>k__BackingField","t":4,"rt":$n[0].String,"sn":"Gender"},{"a":1,"backing":true,"n":"<GivenName>k__BackingField","t":4,"rt":$n[0].String,"sn":"GivenName"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Patient>k__BackingField","t":4,"rt":Object,"sn":"Patient"},{"a":1,"backing":true,"n":"<Phone>k__BackingField","t":4,"rt":$n[0].String,"sn":"Phone"},{"a":1,"backing":true,"n":"<PostalCode>k__BackingField","t":4,"rt":$n[0].String,"sn":"PostalCode"},{"a":1,"backing":true,"n":"<Saving>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<State>k__BackingField","t":4,"rt":$n[0].String,"sn":"State"},{"a":1,"backing":true,"n":"<Success>k__BackingField","t":4,"rt":$n[0].String,"sn":"Success"}]}; }, $n);
-    $m("Dashboard.Pages.EditPatientPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"LoadPatient","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[0].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"LoadPatient","rt":$n[0].Void,"p":[$n[0].String,Function]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[0].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"Render","rt":Object,"p":[$n[0].String,Function]},{"a":1,"n":"RenderCheckboxField","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"id","pt":$n[0].String,"ps":1},{"n":"value","pt":$n[0].Boolean,"ps":2},{"n":"onChange","pt":Function,"ps":3}],"sn":"RenderCheckboxField","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].Boolean,Function]},{"a":1,"n":"RenderErrorState","is":true,"t":8,"pi":[{"n":"error","pt":$n[0].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderErrorState","rt":Object,"p":[$n[0].String,Function]},{"a":1,"n":"RenderForm","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"RenderForm","rt":Object,"p":[$n[3].EditPatientState,Function,Function]},{"a":1,"n":"RenderFormActions","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditPatientState,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderFormActions","rt":Object,"p":[$n[3].EditPatientState,Function]},{"a":1,"n":"RenderFormSection","is":true,"t":8,"pi":[{"n":"title","pt":$n[0].String,"ps":0},{"n":"fields","pt":System.Array.type(Object),"ps":1}],"sn":"RenderFormSection","rt":Object,"p":[$n[0].String,System.Array.type(Object)]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderHeader","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderInputField","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"id","pt":$n[0].String,"ps":1},{"n":"value","pt":$n[0].String,"ps":2},{"n":"placeholder","pt":$n[0].String,"ps":3},{"n":"onChange","pt":Function,"ps":4},{"n":"type","dv":"text","o":true,"pt":$n[0].String,"ps":5}],"sn":"RenderInputField","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].String,Function,$n[0].String]},{"a":1,"n":"RenderLoadingState","is":true,"t":8,"sn":"RenderLoadingState","rt":Object},{"a":1,"n":"RenderSelectField","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"id","pt":$n[0].String,"ps":1},{"n":"value","pt":$n[0].String,"ps":2},{"n":"options","pt":$n[0].Array.type(System.ValueTuple$2(System.String,System.String)),"ps":3},{"n":"onChange","pt":Function,"ps":4}],"sn":"RenderSelectField","rt":Object,"p":[$n[0].String,$n[0].String,$n[0].String,$n[0].Array.type(System.ValueTuple$2(System.String,System.String)),Function]},{"a":1,"n":"SavePatient","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"SavePatient","rt":$n[0].Void,"p":[$n[3].EditPatientState,Function,Function]},{"a":1,"n":"UpdateActive","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"value","pt":$n[0].Boolean,"ps":2}],"sn":"UpdateActive","rt":$n[0].Void,"p":[$n[3].EditPatientState,Function,$n[0].Boolean]},{"a":1,"n":"UpdateField","is":true,"t":8,"pi":[{"n":"state","pt":$n[3].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"field","pt":$n[0].String,"ps":2},{"n":"value","pt":$n[0].String,"ps":3}],"sn":"UpdateField","rt":$n[0].Void,"p":[$n[3].EditPatientState,Function,$n[0].String,$n[0].String]}]}; }, $n);
-    $m("Dashboard.Pages.PatientsState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Patients","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Patients","t":8,"rt":System.Array.type(Object),"fg":"Patients"},"s":{"a":2,"n":"set_Patients","t":8,"p":[System.Array.type(Object)],"rt":$n[0].Void,"fs":"Patients"},"fn":"Patients"},{"a":2,"n":"SearchQuery","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_SearchQuery","t":8,"rt":$n[0].String,"fg":"SearchQuery"},"s":{"a":2,"n":"set_SearchQuery","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"SearchQuery"},"fn":"SearchQuery"},{"a":2,"n":"SelectedPatient","t":16,"rt":Object,"g":{"a":2,"n":"get_SelectedPatient","t":8,"rt":Object,"fg":"SelectedPatient"},"s":{"a":2,"n":"set_SelectedPatient","t":8,"p":[Object],"rt":$n[0].Void,"fs":"SelectedPatient"},"fn":"SelectedPatient"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Patients>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Patients"},{"a":1,"backing":true,"n":"<SearchQuery>k__BackingField","t":4,"rt":$n[0].String,"sn":"SearchQuery"},{"a":1,"backing":true,"n":"<SelectedPatient>k__BackingField","t":4,"rt":Object,"sn":"SelectedPatient"}]}; }, $n);
-    $m("Dashboard.Pages.PatientsPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FirstChar","is":true,"t":8,"pi":[{"n":"s","pt":$n[0].String,"ps":0}],"sn":"FirstChar","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"GenderBadgeClass","is":true,"t":8,"pi":[{"n":"gender","pt":$n[0].String,"ps":0}],"sn":"GenderBadgeClass","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"GetInitials","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"GetInitials","rt":$n[0].String,"p":[Object]},{"a":1,"n":"HandleSearch","is":true,"t":8,"pi":[{"n":"query","pt":$n[0].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"HandleSearch","rt":$n[0].Void,"p":[$n[0].String,Function]},{"a":1,"n":"LoadPatients","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadPatients","rt":$n[0].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"onEditPatient","dv":null,"o":true,"pt":Function,"ps":0}],"sn":"Render","rt":Object,"p":[Function]},{"a":1,"n":"RenderActions","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"onSelect","pt":Function,"ps":1}],"sn":"RenderActions","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderCell","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"key","pt":$n[0].String,"ps":1},{"n":"onSelect","pt":Function,"ps":2}],"sn":"RenderCell","rt":Object,"p":[Object,$n[0].String,Function]},{"a":1,"n":"RenderContact","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"RenderContact","rt":Object,"p":[Object]},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[0].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderGender","is":true,"t":8,"pi":[{"n":"gender","pt":$n[0].String,"ps":0}],"sn":"RenderGender","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderPatientName","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"RenderPatientName","rt":Object,"p":[Object]},{"a":1,"n":"RenderPatientTable","is":true,"t":8,"pi":[{"n":"patients","pt":System.Array.type(Object),"ps":0},{"n":"onSelect","pt":Function,"ps":1}],"sn":"RenderPatientTable","rt":Object,"p":[System.Array.type(Object),Function]},{"a":1,"n":"RenderStatus","is":true,"t":8,"pi":[{"n":"active","pt":$n[0].Boolean,"ps":0}],"sn":"RenderStatus","rt":Object,"p":[$n[0].Boolean]},{"a":1,"n":"SelectPatient","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"SelectPatient","rt":$n[0].Void,"p":[Object,Function]},{"a":1,"n":"_onEditPatient","is":true,"t":4,"rt":Function,"sn":"_onEditPatient"}]}; }, $n);
-    $m("Dashboard.Pages.PractitionersState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Error","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[0].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[0].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Practitioners","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Practitioners","t":8,"rt":System.Array.type(Object),"fg":"Practitioners"},"s":{"a":2,"n":"set_Practitioners","t":8,"p":[System.Array.type(Object)],"rt":$n[0].Void,"fs":"Practitioners"},"fn":"Practitioners"},{"a":2,"n":"SpecialtyFilter","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_SpecialtyFilter","t":8,"rt":$n[0].String,"fg":"SpecialtyFilter"},"s":{"a":2,"n":"set_SpecialtyFilter","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"SpecialtyFilter"},"fn":"SpecialtyFilter"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[0].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Practitioners>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Practitioners"},{"a":1,"backing":true,"n":"<SpecialtyFilter>k__BackingField","t":4,"rt":$n[0].String,"sn":"SpecialtyFilter"}]}; }, $n);
-    $m("Dashboard.Pages.PractitionersPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FilterBySpecialty","is":true,"t":8,"pi":[{"n":"specialty","pt":$n[0].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"FilterBySpecialty","rt":$n[0].Void,"p":[$n[0].String,Function]},{"a":1,"n":"FirstChar","is":true,"t":8,"pi":[{"n":"s","pt":$n[0].String,"ps":0}],"sn":"FirstChar","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"GetInitials","is":true,"t":8,"pi":[{"n":"p","pt":Object,"ps":0}],"sn":"GetInitials","rt":$n[0].String,"p":[Object]},{"a":1,"n":"LoadPractitioners","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadPractitioners","rt":$n[0].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderDetail","is":true,"t":8,"pi":[{"n":"label","pt":$n[0].String,"ps":0},{"n":"value","pt":$n[0].String,"ps":1}],"sn":"RenderDetail","rt":Object,"p":[$n[0].String,$n[0].String]},{"a":1,"n":"RenderEmpty","is":true,"t":8,"sn":"RenderEmpty","rt":Object},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[0].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[0].String]},{"a":1,"n":"RenderLoadingGrid","is":true,"t":8,"sn":"RenderLoadingGrid","rt":Object},{"a":1,"n":"RenderPractitionerCard","is":true,"t":8,"pi":[{"n":"practitioner","pt":Object,"ps":0}],"sn":"RenderPractitionerCard","rt":Object,"p":[Object]},{"a":1,"n":"RenderPractitionerGrid","is":true,"t":8,"pi":[{"n":"practitioners","pt":System.Array.type(Object),"ps":0}],"sn":"RenderPractitionerGrid","rt":Object,"p":[System.Array.type(Object)]}]}; }, $n);
-    $m("Dashboard.Models.SemanticSearchRequest", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"IncludeAchi","t":16,"rt":$n[0].Boolean,"g":{"a":2,"n":"get_IncludeAchi","t":8,"rt":$n[0].Boolean,"fg":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_IncludeAchi","t":8,"p":[$n[0].Boolean],"rt":$n[0].Void,"fs":"IncludeAchi"},"fn":"IncludeAchi"},{"a":2,"n":"Limit","t":16,"rt":$n[0].Int32,"g":{"a":2,"n":"get_Limit","t":8,"rt":$n[0].Int32,"fg":"Limit","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_Limit","t":8,"p":[$n[0].Int32],"rt":$n[0].Void,"fs":"Limit"},"fn":"Limit"},{"a":2,"n":"Query","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Query","t":8,"rt":$n[0].String,"fg":"Query"},"s":{"a":2,"n":"set_Query","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Query"},"fn":"Query"},{"a":1,"backing":true,"n":"<IncludeAchi>k__BackingField","t":4,"rt":$n[0].Boolean,"sn":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Limit>k__BackingField","t":4,"rt":$n[0].Int32,"sn":"Limit","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<Query>k__BackingField","t":4,"rt":$n[0].String,"sn":"Query"}]}; }, $n);
-    $m("Dashboard.Components.Column", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"ClassName","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_ClassName","t":8,"rt":$n[0].String,"fg":"ClassName"},"s":{"a":2,"n":"set_ClassName","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"ClassName"},"fn":"ClassName"},{"a":2,"n":"Header","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Header","t":8,"rt":$n[0].String,"fg":"Header"},"s":{"a":2,"n":"set_Header","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Header"},"fn":"Header"},{"a":2,"n":"Key","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Key","t":8,"rt":$n[0].String,"fg":"Key"},"s":{"a":2,"n":"set_Key","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Key"},"fn":"Key"},{"a":1,"backing":true,"n":"<ClassName>k__BackingField","t":4,"rt":$n[0].String,"sn":"ClassName"},{"a":1,"backing":true,"n":"<Header>k__BackingField","t":4,"rt":$n[0].String,"sn":"Header"},{"a":1,"backing":true,"n":"<Key>k__BackingField","t":4,"rt":$n[0].String,"sn":"Key"}]}; }, $n);
-    $m("Dashboard.Components.DataTable", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"columns","pt":System.Array.type(Dashboard.Components.Column),"ps":0},{"n":"data","pt":System.Array.type(System.Object),"ps":1},{"n":"getKey","pt":Function,"ps":2},{"n":"renderCell","pt":Function,"ps":3},{"n":"onRowClick","dv":null,"o":true,"pt":Function,"ps":4}],"tpc":1,"tprm":["T"],"sn":"Render","rt":Object,"p":[System.Array.type(Dashboard.Components.Column),System.Array.type(System.Object),Function,Function,Function]},{"a":2,"n":"RenderEmpty","is":true,"t":8,"pi":[{"n":"message","dv":"No data available","o":true,"pt":$n[0].String,"ps":0}],"sn":"RenderEmpty","rt":Object,"p":[$n[0].String]},{"a":2,"n":"RenderLoading","is":true,"t":8,"pi":[{"n":"rows","dv":5,"o":true,"pt":$n[0].Int32,"ps":0},{"n":"columns","dv":4,"o":true,"pt":$n[0].Int32,"ps":1}],"sn":"RenderLoading","rt":Object,"p":[$n[0].Int32,$n[0].Int32]}]}; }, $n);
-    $m("Dashboard.Components.Header", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"title","pt":$n[0].String,"ps":0},{"n":"searchQuery","dv":null,"o":true,"pt":$n[0].String,"ps":1},{"n":"onSearchChange","dv":null,"o":true,"pt":Function,"ps":2},{"n":"notificationCount","dv":0,"o":true,"pt":$n[0].Int32,"ps":3}],"sn":"Render","rt":Object,"p":[$n[0].String,$n[0].String,Function,$n[0].Int32]},{"a":1,"n":"RenderNotificationButton","is":true,"t":8,"pi":[{"n":"count","pt":$n[0].Int32,"ps":0}],"sn":"RenderNotificationButton","rt":Object,"p":[$n[0].Int32]},{"a":1,"n":"RenderUserAvatar","is":true,"t":8,"sn":"RenderUserAvatar","rt":Object}]}; }, $n);
-    $m("Dashboard.Components.Icons", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Activity","is":true,"t":8,"sn":"Activity","rt":Object},{"a":2,"n":"Bell","is":true,"t":8,"sn":"Bell","rt":Object},{"a":2,"n":"Calendar","is":true,"t":8,"sn":"Calendar","rt":Object},{"a":2,"n":"Check","is":true,"t":8,"sn":"Check","rt":Object},{"a":2,"n":"ChevronLeft","is":true,"t":8,"sn":"ChevronLeft","rt":Object},{"a":2,"n":"ChevronRight","is":true,"t":8,"sn":"ChevronRight","rt":Object},{"a":2,"n":"Clipboard","is":true,"t":8,"sn":"Clipboard","rt":Object},{"a":2,"n":"Code","is":true,"t":8,"sn":"Code","rt":Object},{"a":2,"n":"Copy","is":true,"t":8,"sn":"Copy","rt":Object},{"a":2,"n":"Edit","is":true,"t":8,"sn":"Edit","rt":Object},{"a":2,"n":"Eye","is":true,"t":8,"sn":"Eye","rt":Object},{"a":2,"n":"FileText","is":true,"t":8,"sn":"FileText","rt":Object},{"a":2,"n":"Heart","is":true,"t":8,"sn":"Heart","rt":Object},{"a":2,"n":"Home","is":true,"t":8,"sn":"Home","rt":Object},{"a":2,"n":"Menu","is":true,"t":8,"sn":"Menu","rt":Object},{"a":2,"n":"Pill","is":true,"t":8,"sn":"Pill","rt":Object},{"a":2,"n":"Plus","is":true,"t":8,"sn":"Plus","rt":Object},{"a":2,"n":"Refresh","is":true,"t":8,"sn":"Refresh","rt":Object},{"a":2,"n":"Search","is":true,"t":8,"sn":"Search","rt":Object},{"a":2,"n":"Settings","is":true,"t":8,"sn":"Settings","rt":Object},{"a":2,"n":"Sparkles","is":true,"t":8,"sn":"Sparkles","rt":Object},{"a":2,"n":"Trash","is":true,"t":8,"sn":"Trash","rt":Object},{"a":2,"n":"TrendDown","is":true,"t":8,"sn":"TrendDown","rt":Object},{"a":2,"n":"TrendUp","is":true,"t":8,"sn":"TrendUp","rt":Object},{"a":2,"n":"UserDoctor","is":true,"t":8,"sn":"UserDoctor","rt":Object},{"a":2,"n":"Users","is":true,"t":8,"sn":"Users","rt":Object},{"a":2,"n":"X","is":true,"t":8,"sn":"X","rt":Object}]}; }, $n);
-    $m("Dashboard.Components.TrendDirection", function () { return {"att":257,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Down","is":true,"t":4,"rt":$n[4].TrendDirection,"sn":"Down","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},{"a":2,"n":"Neutral","is":true,"t":4,"rt":$n[4].TrendDirection,"sn":"Neutral","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},{"a":2,"n":"Up","is":true,"t":4,"rt":$n[4].TrendDirection,"sn":"Up","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}}]}; }, $n);
-    $m("Dashboard.Components.MetricCardProps", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Icon","t":16,"rt":Function,"g":{"a":2,"n":"get_Icon","t":8,"rt":Function,"fg":"Icon"},"s":{"a":2,"n":"set_Icon","t":8,"p":[Function],"rt":$n[0].Void,"fs":"Icon"},"fn":"Icon"},{"a":2,"n":"IconColor","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_IconColor","t":8,"rt":$n[0].String,"fg":"IconColor"},"s":{"a":2,"n":"set_IconColor","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"IconColor"},"fn":"IconColor"},{"a":2,"n":"Label","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Label","t":8,"rt":$n[0].String,"fg":"Label"},"s":{"a":2,"n":"set_Label","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Label"},"fn":"Label"},{"a":2,"n":"Trend","t":16,"rt":$n[4].TrendDirection,"g":{"a":2,"n":"get_Trend","t":8,"rt":$n[4].TrendDirection,"fg":"Trend","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},"s":{"a":2,"n":"set_Trend","t":8,"p":[$n[4].TrendDirection],"rt":$n[0].Void,"fs":"Trend"},"fn":"Trend"},{"a":2,"n":"TrendValue","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_TrendValue","t":8,"rt":$n[0].String,"fg":"TrendValue"},"s":{"a":2,"n":"set_TrendValue","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"TrendValue"},"fn":"TrendValue"},{"a":2,"n":"Value","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Value","t":8,"rt":$n[0].String,"fg":"Value"},"s":{"a":2,"n":"set_Value","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Value"},"fn":"Value"},{"a":1,"backing":true,"n":"<Icon>k__BackingField","t":4,"rt":Function,"sn":"Icon"},{"a":1,"backing":true,"n":"<IconColor>k__BackingField","t":4,"rt":$n[0].String,"sn":"IconColor"},{"a":1,"backing":true,"n":"<Label>k__BackingField","t":4,"rt":$n[0].String,"sn":"Label"},{"a":1,"backing":true,"n":"<Trend>k__BackingField","t":4,"rt":$n[4].TrendDirection,"sn":"Trend","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},{"a":1,"backing":true,"n":"<TrendValue>k__BackingField","t":4,"rt":$n[0].String,"sn":"TrendValue"},{"a":1,"backing":true,"n":"<Value>k__BackingField","t":4,"rt":$n[0].String,"sn":"Value"}]}; }, $n);
-    $m("Dashboard.Components.MetricCard", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"props","pt":$n[4].MetricCardProps,"ps":0}],"sn":"Render","rt":Object,"p":[$n[4].MetricCardProps]},{"a":1,"n":"TrendClass","is":true,"t":8,"pi":[{"n":"trend","pt":$n[4].TrendDirection,"ps":0}],"sn":"TrendClass","rt":$n[0].String,"p":[$n[4].TrendDirection]},{"a":1,"n":"TrendIcon","is":true,"t":8,"pi":[{"n":"trend","pt":$n[4].TrendDirection,"ps":0}],"sn":"TrendIcon","rt":Object,"p":[$n[4].TrendDirection]}]}; }, $n);
-    $m("Dashboard.Components.NavItem", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Badge","t":16,"rt":$n[0].Nullable$1(System.Int32),"g":{"a":2,"n":"get_Badge","t":8,"rt":$n[0].Nullable$1(System.Int32),"fg":"Badge","box":function ($v) { return H5.box($v, System.Int32, System.Nullable.toString, System.Nullable.getHashCode);}},"s":{"a":2,"n":"set_Badge","t":8,"p":[$n[0].Nullable$1(System.Int32)],"rt":$n[0].Void,"fs":"Badge"},"fn":"Badge"},{"a":2,"n":"Icon","t":16,"rt":Function,"g":{"a":2,"n":"get_Icon","t":8,"rt":Function,"fg":"Icon"},"s":{"a":2,"n":"set_Icon","t":8,"p":[Function],"rt":$n[0].Void,"fs":"Icon"},"fn":"Icon"},{"a":2,"n":"Id","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Id","t":8,"rt":$n[0].String,"fg":"Id"},"s":{"a":2,"n":"set_Id","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Id"},"fn":"Id"},{"a":2,"n":"Label","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Label","t":8,"rt":$n[0].String,"fg":"Label"},"s":{"a":2,"n":"set_Label","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Label"},"fn":"Label"},{"a":1,"backing":true,"n":"<Badge>k__BackingField","t":4,"rt":$n[0].Nullable$1(System.Int32),"sn":"Badge","box":function ($v) { return H5.box($v, System.Int32, System.Nullable.toString, System.Nullable.getHashCode);}},{"a":1,"backing":true,"n":"<Icon>k__BackingField","t":4,"rt":Function,"sn":"Icon"},{"a":1,"backing":true,"n":"<Id>k__BackingField","t":4,"rt":$n[0].String,"sn":"Id"},{"a":1,"backing":true,"n":"<Label>k__BackingField","t":4,"rt":$n[0].String,"sn":"Label"}]}; }, $n);
-    $m("Dashboard.Components.NavSection", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Items","t":16,"rt":System.Array.type(Dashboard.Components.NavItem),"g":{"a":2,"n":"get_Items","t":8,"rt":System.Array.type(Dashboard.Components.NavItem),"fg":"Items"},"s":{"a":2,"n":"set_Items","t":8,"p":[System.Array.type(Dashboard.Components.NavItem)],"rt":$n[0].Void,"fs":"Items"},"fn":"Items"},{"a":2,"n":"Title","t":16,"rt":$n[0].String,"g":{"a":2,"n":"get_Title","t":8,"rt":$n[0].String,"fg":"Title"},"s":{"a":2,"n":"set_Title","t":8,"p":[$n[0].String],"rt":$n[0].Void,"fs":"Title"},"fn":"Title"},{"a":1,"backing":true,"n":"<Items>k__BackingField","t":4,"rt":System.Array.type(Dashboard.Components.NavItem),"sn":"Items"},{"a":1,"backing":true,"n":"<Title>k__BackingField","t":4,"rt":$n[0].String,"sn":"Title"}]}; }, $n);
-    $m("Dashboard.Components.Sidebar", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"GetNavSections","is":true,"t":8,"sn":"GetNavSections","rt":System.Array.type(Dashboard.Components.NavSection)},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"activeView","pt":$n[0].String,"ps":0},{"n":"onNavigate","pt":Function,"ps":1},{"n":"collapsed","pt":$n[0].Boolean,"ps":2},{"n":"onToggle","pt":Function,"ps":3}],"sn":"Render","rt":Object,"p":[$n[0].String,Function,$n[0].Boolean,Function]},{"a":1,"n":"RenderFooter","is":true,"t":8,"pi":[{"n":"collapsed","pt":$n[0].Boolean,"ps":0}],"sn":"RenderFooter","rt":Object,"p":[$n[0].Boolean]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"collapsed","pt":$n[0].Boolean,"ps":0}],"sn":"RenderHeader","rt":Object,"p":[$n[0].Boolean]},{"a":1,"n":"RenderNavItem","is":true,"t":8,"pi":[{"n":"item","pt":$n[4].NavItem,"ps":0},{"n":"activeView","pt":$n[0].String,"ps":1},{"n":"onNavigate","pt":Function,"ps":2}],"sn":"RenderNavItem","rt":Object,"p":[$n[4].NavItem,$n[0].String,Function]},{"a":1,"n":"RenderSection","is":true,"t":8,"pi":[{"n":"section","pt":$n[4].NavSection,"ps":0},{"n":"activeView","pt":$n[0].String,"ps":1},{"n":"onNavigate","pt":Function,"ps":2}],"sn":"RenderSection","rt":Object,"p":[$n[4].NavSection,$n[0].String,Function]}]}; }, $n);
-    $m("Dashboard.Api.ApiClient", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Configure","is":true,"t":8,"pi":[{"n":"clinicalUrl","pt":$n[0].String,"ps":0},{"n":"schedulingUrl","pt":$n[0].String,"ps":1}],"sn":"Configure","rt":$n[0].Void,"p":[$n[0].String,$n[0].String]},{"a":2,"n":"ConfigureIcd10","is":true,"t":8,"pi":[{"n":"icd10Url","pt":$n[0].String,"ps":0}],"sn":"ConfigureIcd10","rt":$n[0].Void,"p":[$n[0].String]},{"a":2,"n":"CreatePatientAsync","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"CreatePatientAsync","rt":$n[5].Task$1(Object),"p":[Object]},{"a":1,"n":"EncodeUri","is":true,"t":8,"pi":[{"n":"value","pt":$n[0].String,"ps":0}],"sn":"EncodeUri","rt":$n[0].String,"p":[$n[0].String]},{"a":1,"n":"FetchClinicalAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[0].String,"ps":0}],"sn":"FetchClinicalAsync","rt":$n[5].Task$1(System.String),"p":[$n[0].String]},{"a":1,"n":"FetchIcd10Async","is":true,"t":8,"pi":[{"n":"url","pt":$n[0].String,"ps":0}],"sn":"FetchIcd10Async","rt":$n[5].Task$1(System.String),"p":[$n[0].String]},{"a":1,"n":"FetchSchedulingAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[0].String,"ps":0}],"sn":"FetchSchedulingAsync","rt":$n[5].Task$1(System.String),"p":[$n[0].String]},{"a":2,"n":"GetAppointmentAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[0].String,"ps":0}],"sn":"GetAppointmentAsync","rt":$n[5].Task$1(Object),"p":[$n[0].String]},{"a":2,"n":"GetAppointmentsAsync","is":true,"t":8,"sn":"GetAppointmentsAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":2,"n":"GetConditionsAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[0].String,"ps":0}],"sn":"GetConditionsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetEncountersAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[0].String,"ps":0}],"sn":"GetEncountersAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetIcd10BlocksAsync","is":true,"t":8,"pi":[{"n":"chapterId","pt":$n[0].String,"ps":0}],"sn":"GetIcd10BlocksAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetIcd10CategoriesAsync","is":true,"t":8,"pi":[{"n":"blockId","pt":$n[0].String,"ps":0}],"sn":"GetIcd10CategoriesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetIcd10ChaptersAsync","is":true,"t":8,"sn":"GetIcd10ChaptersAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":2,"n":"GetIcd10CodeAsync","is":true,"t":8,"pi":[{"n":"code","pt":$n[0].String,"ps":0}],"sn":"GetIcd10CodeAsync","rt":$n[5].Task$1(Object),"p":[$n[0].String]},{"a":2,"n":"GetIcd10CodesAsync","is":true,"t":8,"pi":[{"n":"categoryId","pt":$n[0].String,"ps":0}],"sn":"GetIcd10CodesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetMedicationsAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[0].String,"ps":0}],"sn":"GetMedicationsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetPatientAppointmentsAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[0].String,"ps":0}],"sn":"GetPatientAppointmentsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetPatientAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[0].String,"ps":0}],"sn":"GetPatientAsync","rt":$n[5].Task$1(Object),"p":[$n[0].String]},{"a":2,"n":"GetPatientsAsync","is":true,"t":8,"sn":"GetPatientsAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":2,"n":"GetPractitionerAppointmentsAsync","is":true,"t":8,"pi":[{"n":"practitionerId","pt":$n[0].String,"ps":0}],"sn":"GetPractitionerAppointmentsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"GetPractitionerAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[0].String,"ps":0}],"sn":"GetPractitionerAsync","rt":$n[5].Task$1(Object),"p":[$n[0].String]},{"a":2,"n":"GetPractitionersAsync","is":true,"t":8,"sn":"GetPractitionersAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":1,"n":"ParseJson","is":true,"t":8,"pi":[{"n":"json","pt":$n[0].String,"ps":0}],"tpc":1,"tprm":["T"],"sn":"ParseJson","rt":System.Object,"p":[$n[0].String]},{"a":1,"n":"PostClinicalAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[0].String,"ps":0},{"n":"data","pt":$n[0].Object,"ps":1}],"sn":"PostClinicalAsync","rt":$n[5].Task$1(System.String),"p":[$n[0].String,$n[0].Object]},{"a":1,"n":"PostIcd10Async","is":true,"t":8,"pi":[{"n":"url","pt":$n[0].String,"ps":0},{"n":"data","pt":$n[0].Object,"ps":1}],"sn":"PostIcd10Async","rt":$n[5].Task$1(System.String),"p":[$n[0].String,$n[0].Object]},{"a":1,"n":"PutClinicalAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[0].String,"ps":0},{"n":"data","pt":$n[0].Object,"ps":1}],"sn":"PutClinicalAsync","rt":$n[5].Task$1(System.String),"p":[$n[0].String,$n[0].Object]},{"a":1,"n":"PutSchedulingAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[0].String,"ps":0},{"n":"data","pt":$n[0].Object,"ps":1}],"sn":"PutSchedulingAsync","rt":$n[5].Task$1(System.String),"p":[$n[0].String,$n[0].Object]},{"a":2,"n":"SearchAchiCodesAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[0].String,"ps":0},{"n":"limit","dv":20,"o":true,"pt":$n[0].Int32,"ps":1}],"sn":"SearchAchiCodesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String,$n[0].Int32]},{"a":2,"n":"SearchIcd10CodesAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[0].String,"ps":0},{"n":"limit","dv":20,"o":true,"pt":$n[0].Int32,"ps":1}],"sn":"SearchIcd10CodesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String,$n[0].Int32]},{"a":2,"n":"SearchPatientsAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[0].String,"ps":0}],"sn":"SearchPatientsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"SearchPractitionersAsync","is":true,"t":8,"pi":[{"n":"specialty","pt":$n[0].String,"ps":0}],"sn":"SearchPractitionersAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String]},{"a":2,"n":"SemanticSearchAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[0].String,"ps":0},{"n":"limit","dv":10,"o":true,"pt":$n[0].Int32,"ps":1},{"n":"includeAchi","dv":false,"o":true,"pt":$n[0].Boolean,"ps":2}],"sn":"SemanticSearchAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[0].String,$n[0].Int32,$n[0].Boolean]},{"a":2,"n":"SetIcd10Token","is":true,"t":8,"pi":[{"n":"icd10Token","pt":$n[0].String,"ps":0}],"sn":"SetIcd10Token","rt":$n[0].Void,"p":[$n[0].String]},{"a":2,"n":"SetTokens","is":true,"t":8,"pi":[{"n":"clinicalToken","pt":$n[0].String,"ps":0},{"n":"schedulingToken","pt":$n[0].String,"ps":1}],"sn":"SetTokens","rt":$n[0].Void,"p":[$n[0].String,$n[0].String]},{"a":2,"n":"UpdateAppointmentAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[0].String,"ps":0},{"n":"appointment","pt":$n[0].Object,"ps":1}],"sn":"UpdateAppointmentAsync","rt":$n[5].Task$1(Object),"p":[$n[0].String,$n[0].Object]},{"a":2,"n":"UpdatePatientAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[0].String,"ps":0},{"n":"patient","pt":Object,"ps":1}],"sn":"UpdatePatientAsync","rt":$n[5].Task$1(Object),"p":[$n[0].String,Object]},{"a":1,"n":"_clinicalBaseUrl","is":true,"t":4,"rt":$n[0].String,"sn":"_clinicalBaseUrl"},{"a":1,"n":"_clinicalToken","is":true,"t":4,"rt":$n[0].String,"sn":"_clinicalToken"},{"a":1,"n":"_icd10BaseUrl","is":true,"t":4,"rt":$n[0].String,"sn":"_icd10BaseUrl"},{"a":1,"n":"_icd10Token","is":true,"t":4,"rt":$n[0].String,"sn":"_icd10Token"},{"a":1,"n":"_schedulingBaseUrl","is":true,"t":4,"rt":$n[0].String,"sn":"_schedulingBaseUrl"},{"a":1,"n":"_schedulingToken","is":true,"t":4,"rt":$n[0].String,"sn":"_schedulingToken"}]}; }, $n);
+        $n = ["Dashboard","System","Dashboard.Api","Dashboard.React","Dashboard.Pages","System.Threading.Tasks","Dashboard.Components"];
+    $m("Dashboard.AppState", function () { return {"att":1048833,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Clone","t":8,"sn":"Clone","rt":$n[0].AppState},{"a":2,"n":"ActiveView","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_ActiveView","t":8,"rt":$n[1].String,"fg":"ActiveView"},"s":{"a":2,"n":"set_ActiveView","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"ActiveView"},"fn":"ActiveView"},{"a":2,"n":"CurrentUser","t":16,"rt":$n[2].AuthUser,"g":{"a":2,"n":"get_CurrentUser","t":8,"rt":$n[2].AuthUser,"fg":"CurrentUser"},"s":{"a":2,"n":"set_CurrentUser","t":8,"p":[$n[2].AuthUser],"rt":$n[1].Void,"fs":"CurrentUser"},"fn":"CurrentUser"},{"a":2,"n":"EditingAppointmentId","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_EditingAppointmentId","t":8,"rt":$n[1].String,"fg":"EditingAppointmentId"},"s":{"a":2,"n":"set_EditingAppointmentId","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"EditingAppointmentId"},"fn":"EditingAppointmentId"},{"a":2,"n":"EditingPatientId","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_EditingPatientId","t":8,"rt":$n[1].String,"fg":"EditingPatientId"},"s":{"a":2,"n":"set_EditingPatientId","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"EditingPatientId"},"fn":"EditingPatientId"},{"a":2,"n":"IsAuthenticated","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_IsAuthenticated","t":8,"rt":$n[1].Boolean,"fg":"IsAuthenticated","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_IsAuthenticated","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"IsAuthenticated"},"fn":"IsAuthenticated"},{"a":2,"n":"NotificationCount","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_NotificationCount","t":8,"rt":$n[1].Int32,"fg":"NotificationCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_NotificationCount","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"NotificationCount"},"fn":"NotificationCount"},{"a":2,"n":"SearchQuery","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_SearchQuery","t":8,"rt":$n[1].String,"fg":"SearchQuery"},"s":{"a":2,"n":"set_SearchQuery","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"SearchQuery"},"fn":"SearchQuery"},{"a":2,"n":"SidebarCollapsed","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_SidebarCollapsed","t":8,"rt":$n[1].Boolean,"fg":"SidebarCollapsed","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_SidebarCollapsed","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"SidebarCollapsed"},"fn":"SidebarCollapsed"},{"a":1,"backing":true,"n":"<ActiveView>k__BackingField","t":4,"rt":$n[1].String,"sn":"ActiveView"},{"a":1,"backing":true,"n":"<CurrentUser>k__BackingField","t":4,"rt":$n[2].AuthUser,"sn":"CurrentUser"},{"a":1,"backing":true,"n":"<EditingAppointmentId>k__BackingField","t":4,"rt":$n[1].String,"sn":"EditingAppointmentId"},{"a":1,"backing":true,"n":"<EditingPatientId>k__BackingField","t":4,"rt":$n[1].String,"sn":"EditingPatientId"},{"a":1,"backing":true,"n":"<IsAuthenticated>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"IsAuthenticated","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<NotificationCount>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"NotificationCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<SearchQuery>k__BackingField","t":4,"rt":$n[1].String,"sn":"SearchQuery"},{"a":1,"backing":true,"n":"<SidebarCollapsed>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"SidebarCollapsed","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}}]}; }, $n);
+    $m("Dashboard.App", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"AsComponent","is":true,"t":8,"pi":[{"n":"render","pt":Function,"ps":0}],"sn":"AsComponent","rt":Object,"p":[Function]},{"a":1,"n":"GetPageTitle","is":true,"t":8,"pi":[{"n":"view","pt":$n[1].String,"ps":0}],"sn":"GetPageTitle","rt":$n[1].String,"p":[$n[1].String]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderPage","is":true,"t":8,"pi":[{"n":"state","pt":$n[0].AppState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderPage","rt":Object,"p":[$n[0].AppState,Function]},{"a":1,"n":"RenderPlaceholderPage","is":true,"t":8,"pi":[{"n":"title","pt":$n[1].String,"ps":0},{"n":"description","pt":$n[1].String,"ps":1}],"sn":"RenderPlaceholderPage","rt":Object,"p":[$n[1].String,$n[1].String]}]}; }, $n);
+    $m("Dashboard.Program", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"GetConfigValue","is":true,"t":8,"pi":[{"n":"key","pt":$n[1].String,"ps":0},{"n":"defaultValue","pt":$n[1].String,"ps":1}],"sn":"GetConfigValue","rt":$n[1].String,"p":[$n[1].String,$n[1].String]},{"a":1,"n":"HideLoadingScreen","is":true,"t":8,"sn":"HideLoadingScreen","rt":$n[1].Void},{"a":1,"n":"Log","is":true,"t":8,"pi":[{"n":"message","pt":$n[1].String,"ps":0}],"sn":"Log","rt":$n[1].Void,"p":[$n[1].String]},{"a":2,"n":"Main","is":true,"t":8,"sn":"Main","rt":$n[1].Void}]}; }, $n);
+    $m("Dashboard.React.Elements", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"A","is":true,"t":8,"pi":[{"n":"href","pt":$n[1].String,"ps":0},{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"target","dv":null,"o":true,"pt":$n[1].String,"ps":2},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":3},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":4}],"sn":"A","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,Function,System.Array.type(Object)]},{"a":2,"n":"Article","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Article","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Aside","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Aside","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Button","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":1},{"n":"disabled","dv":false,"o":true,"pt":$n[1].Boolean,"ps":2},{"n":"type","dv":"button","o":true,"pt":$n[1].String,"ps":3},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":4}],"sn":"Button","rt":Object,"p":[$n[1].String,Function,$n[1].Boolean,$n[1].String,System.Array.type(Object)]},{"a":1,"n":"CreateElement","is":true,"t":8,"pi":[{"n":"tag","pt":$n[1].String,"ps":0},{"n":"className","pt":$n[1].String,"ps":1},{"n":"id","pt":$n[1].String,"ps":2},{"n":"style","pt":$n[1].Object,"ps":3},{"n":"onClick","pt":Function,"ps":4},{"n":"children","pt":System.Array.type(Object),"ps":5}],"sn":"CreateElement","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].Object,Function,System.Array.type(Object)]},{"a":2,"n":"Div","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"id","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"style","dv":null,"o":true,"pt":$n[1].Object,"ps":2},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":3},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":4}],"sn":"Div","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].Object,Function,System.Array.type(Object)]},{"a":2,"n":"Footer","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Footer","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Form","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"onSubmit","dv":null,"o":true,"pt":Function,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Form","rt":Object,"p":[$n[1].String,Function,System.Array.type(Object)]},{"a":2,"n":"Fragment","is":true,"t":8,"pi":[{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":0}],"sn":"Fragment","rt":Object,"p":[System.Array.type(Object)]},{"a":2,"n":"H","is":true,"t":8,"pi":[{"n":"level","pt":$n[1].Int32,"ps":0},{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"H","rt":Object,"p":[$n[1].Int32,$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Header","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Header","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Img","is":true,"t":8,"pi":[{"n":"src","pt":$n[1].String,"ps":0},{"n":"alt","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":2},{"n":"style","dv":null,"o":true,"pt":$n[1].Object,"ps":3}],"sn":"Img","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].Object]},{"a":2,"n":"Input","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"type","dv":"text","o":true,"pt":$n[1].String,"ps":1},{"n":"value","dv":null,"o":true,"pt":$n[1].String,"ps":2},{"n":"placeholder","dv":null,"o":true,"pt":$n[1].String,"ps":3},{"n":"onChange","dv":null,"o":true,"pt":Function,"ps":4},{"n":"onKeyDown","dv":null,"o":true,"pt":Function,"ps":5},{"n":"disabled","dv":false,"o":true,"pt":$n[1].Boolean,"ps":6}],"sn":"Input","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].String,Function,Function,$n[1].Boolean]},{"a":2,"n":"Label","is":true,"t":8,"pi":[{"n":"htmlFor","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Label","rt":Object,"p":[$n[1].String,$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Li","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Li","rt":Object,"p":[$n[1].String,Function,System.Array.type(Object)]},{"a":2,"n":"Main","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Main","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Nav","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Nav","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Option","is":true,"t":8,"pi":[{"n":"value","pt":$n[1].String,"ps":0},{"n":"label","pt":$n[1].String,"ps":1}],"sn":"Option","rt":Object,"p":[$n[1].String,$n[1].String]},{"a":2,"n":"P","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"style","dv":null,"o":true,"pt":$n[1].Object,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"P","rt":Object,"p":[$n[1].String,$n[1].Object,System.Array.type(Object)]},{"a":2,"n":"Path","is":true,"t":8,"pi":[{"n":"d","pt":$n[1].String,"ps":0},{"n":"fill","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"stroke","dv":null,"o":true,"pt":$n[1].String,"ps":2},{"n":"strokeWidth","dv":0,"o":true,"pt":$n[1].Int32,"ps":3}],"sn":"Path","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].Int32]},{"a":2,"n":"Section","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Section","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Select","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"value","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"onChange","dv":null,"o":true,"pt":Function,"ps":2},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":3}],"sn":"Select","rt":Object,"p":[$n[1].String,$n[1].String,Function,System.Array.type(Object)]},{"a":2,"n":"Span","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"id","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"style","dv":null,"o":true,"pt":$n[1].Object,"ps":2},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":3}],"sn":"Span","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].Object,System.Array.type(Object)]},{"a":2,"n":"Svg","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"width","dv":0,"o":true,"pt":$n[1].Int32,"ps":1},{"n":"height","dv":0,"o":true,"pt":$n[1].Int32,"ps":2},{"n":"viewBox","dv":null,"o":true,"pt":$n[1].String,"ps":3},{"n":"fill","dv":null,"o":true,"pt":$n[1].String,"ps":4},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":5}],"sn":"Svg","rt":Object,"p":[$n[1].String,$n[1].Int32,$n[1].Int32,$n[1].String,$n[1].String,System.Array.type(Object)]},{"a":2,"n":"TBody","is":true,"t":8,"pi":[{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":0}],"sn":"TBody","rt":Object,"p":[System.Array.type(Object)]},{"a":2,"n":"THead","is":true,"t":8,"pi":[{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":0}],"sn":"THead","rt":Object,"p":[System.Array.type(Object)]},{"a":2,"n":"Table","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Table","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Td","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Td","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Text","is":true,"t":8,"pi":[{"n":"content","pt":$n[1].String,"ps":0}],"sn":"Text","rt":Object,"p":[$n[1].String]},{"a":2,"n":"TextArea","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"value","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"placeholder","dv":null,"o":true,"pt":$n[1].String,"ps":2},{"n":"rows","dv":0,"o":true,"pt":$n[1].Int32,"ps":3},{"n":"onChange","dv":null,"o":true,"pt":Function,"ps":4}],"sn":"TextArea","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].Int32,Function]},{"a":2,"n":"Th","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Th","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":2,"n":"Tr","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"onClick","dv":null,"o":true,"pt":Function,"ps":1},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":2}],"sn":"Tr","rt":Object,"p":[$n[1].String,Function,System.Array.type(Object)]},{"a":2,"n":"Ul","is":true,"t":8,"pi":[{"n":"className","dv":null,"o":true,"pt":$n[1].String,"ps":0},{"n":"children","ip":true,"pt":System.Array.type(Object),"ps":1}],"sn":"Ul","rt":Object,"p":[$n[1].String,System.Array.type(Object)]}]}; }, $n);
+    $m("Dashboard.React.StateResult$1", function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"SetState","t":16,"rt":Function,"g":{"a":2,"n":"get_SetState","t":8,"rt":Function,"fg":"SetState"},"s":{"a":2,"n":"set_SetState","t":8,"p":[Function],"rt":$n[1].Void,"fs":"SetState"},"fn":"SetState"},{"a":2,"n":"State","t":16,"rt":T,"g":{"a":2,"n":"get_State","t":8,"rt":T,"fg":"State"},"s":{"a":2,"n":"set_State","t":8,"p":[T],"rt":$n[1].Void,"fs":"State"},"fn":"State"},{"a":1,"backing":true,"n":"<SetState>k__BackingField","t":4,"rt":Function,"sn":"SetState"},{"a":1,"backing":true,"n":"<State>k__BackingField","t":4,"rt":T,"sn":"State"}]}; }, $n);
+    $m("Dashboard.React.StateFuncResult$1", function (T) { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"SetState","t":16,"rt":Function,"g":{"a":2,"n":"get_SetState","t":8,"rt":Function,"fg":"SetState"},"s":{"a":2,"n":"set_SetState","t":8,"p":[Function],"rt":$n[1].Void,"fs":"SetState"},"fn":"SetState"},{"a":2,"n":"State","t":16,"rt":T,"g":{"a":2,"n":"get_State","t":8,"rt":T,"fg":"State"},"s":{"a":2,"n":"set_State","t":8,"p":[T],"rt":$n[1].Void,"fs":"State"},"fn":"State"},{"a":1,"backing":true,"n":"<SetState>k__BackingField","t":4,"rt":Function,"sn":"SetState"},{"a":1,"backing":true,"n":"<State>k__BackingField","t":4,"rt":T,"sn":"State"}]}; }, $n);
+    $m("Dashboard.React.Hooks", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"UseCallback","is":true,"t":8,"pi":[{"n":"callback","pt":System.Object,"ps":0},{"n":"deps","pt":$n[1].Array.type(System.Object),"ps":1}],"tpc":1,"tprm":["T"],"sn":"UseCallback","rt":System.Object,"p":[System.Object,$n[1].Array.type(System.Object)]},{"a":2,"n":"UseContext","is":true,"t":8,"pi":[{"n":"context","pt":$n[1].Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseContext","rt":System.Object,"p":[$n[1].Object]},{"a":2,"n":"UseEffect","is":true,"t":8,"pi":[{"n":"effect","pt":Function,"ps":0},{"n":"deps","dv":null,"o":true,"pt":$n[1].Array.type(System.Object),"ps":1}],"sn":"UseEffect$1","rt":$n[1].Void,"p":[Function,$n[1].Array.type(System.Object)]},{"a":2,"n":"UseEffect","is":true,"t":8,"pi":[{"n":"effect","pt":Function,"ps":0},{"n":"cleanup","pt":Function,"ps":1},{"n":"deps","dv":null,"o":true,"pt":$n[1].Array.type(System.Object),"ps":2}],"sn":"UseEffect","rt":$n[1].Void,"p":[Function,Function,$n[1].Array.type(System.Object)]},{"a":2,"n":"UseMemo","is":true,"t":8,"pi":[{"n":"factory","pt":Function,"ps":0},{"n":"deps","pt":$n[1].Array.type(System.Object),"ps":1}],"tpc":1,"tprm":["T"],"sn":"UseMemo","rt":System.Object,"p":[Function,$n[1].Array.type(System.Object)]},{"a":2,"n":"UseRef","is":true,"t":8,"pi":[{"n":"initialValue","dv":null,"o":true,"pt":System.Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseRef","rt":Object(System.Object),"p":[System.Object]},{"a":2,"n":"UseState","is":true,"t":8,"pi":[{"n":"initialValue","pt":System.Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseState","rt":$n[3].StateResult$1(System.Object),"p":[System.Object]},{"a":2,"n":"UseStateFunc","is":true,"t":8,"pi":[{"n":"initialValue","pt":System.Object,"ps":0}],"tpc":1,"tprm":["T"],"sn":"UseStateFunc","rt":$n[3].StateFuncResult$1(System.Object),"p":[System.Object]}]}; }, $n);
+    $m("Dashboard.React.ReactInterop", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"CreateElement","is":true,"t":8,"pi":[{"n":"component","pt":Function,"ps":0},{"n":"props","dv":null,"o":true,"pt":$n[1].Object,"ps":1},{"n":"children","ip":true,"pt":$n[1].Array.type(System.Object),"ps":2}],"sn":"CreateElement","rt":Object,"p":[Function,$n[1].Object,$n[1].Array.type(System.Object)]},{"a":2,"n":"CreateElement","is":true,"t":8,"pi":[{"n":"type","pt":$n[1].String,"ps":0},{"n":"props","dv":null,"o":true,"pt":$n[1].Object,"ps":1},{"n":"children","ip":true,"pt":$n[1].Array.type(System.Object),"ps":2}],"sn":"CreateElement$1","rt":Object,"p":[$n[1].String,$n[1].Object,$n[1].Array.type(System.Object)]},{"a":2,"n":"RenderApp","is":true,"t":8,"pi":[{"n":"element","pt":Object,"ps":0},{"n":"containerId","dv":"root","o":true,"pt":$n[1].String,"ps":1}],"sn":"RenderApp","rt":$n[1].Void,"p":[Object,$n[1].String]}]}; }, $n);
+    $m("Dashboard.Pages.AppointmentsState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Appointments","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Appointments","t":8,"rt":System.Array.type(Object),"fg":"Appointments"},"s":{"a":2,"n":"set_Appointments","t":8,"p":[System.Array.type(Object)],"rt":$n[1].Void,"fs":"Appointments"},"fn":"Appointments"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"StatusFilter","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_StatusFilter","t":8,"rt":$n[1].String,"fg":"StatusFilter"},"s":{"a":2,"n":"set_StatusFilter","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"StatusFilter"},"fn":"StatusFilter"},{"a":1,"backing":true,"n":"<Appointments>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Appointments"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<StatusFilter>k__BackingField","t":4,"rt":$n[1].String,"sn":"StatusFilter"}]}; }, $n);
+    $m("Dashboard.Pages.AppointmentsPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FilterByStatus","is":true,"t":8,"pi":[{"n":"status","pt":$n[1].String,"ps":0},{"n":"currentState","pt":$n[4].AppointmentsState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"FilterByStatus","rt":$n[1].Void,"p":[$n[1].String,$n[4].AppointmentsState,Function]},{"a":1,"n":"FormatReference","is":true,"t":8,"pi":[{"n":"reference","pt":$n[1].String,"ps":0}],"sn":"FormatReference","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"FormatTime","is":true,"t":8,"pi":[{"n":"dateTime","pt":$n[1].String,"ps":0}],"sn":"FormatTime","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"LoadAppointments","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadAppointments","rt":$n[1].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"onEditAppointment","pt":Function,"ps":0}],"sn":"Render","rt":Object,"p":[Function]},{"a":1,"n":"RenderAppointmentCard","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0},{"n":"onEditAppointment","pt":Function,"ps":1}],"sn":"RenderAppointmentCard","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderAppointmentList","is":true,"t":8,"pi":[{"n":"appointments","pt":System.Array.type(Object),"ps":0},{"n":"statusFilter","pt":$n[1].String,"ps":1},{"n":"onEditAppointment","pt":Function,"ps":2}],"sn":"RenderAppointmentList","rt":Object,"p":[System.Array.type(Object),$n[1].String,Function]},{"a":1,"n":"RenderEmpty","is":true,"t":8,"sn":"RenderEmpty","rt":Object},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[1].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderInternal","is":true,"t":8,"pi":[{"n":"onEditAppointment","pt":Function,"ps":0}],"sn":"RenderInternal","rt":Object,"p":[Function]},{"a":1,"n":"RenderLoadingList","is":true,"t":8,"sn":"RenderLoadingList","rt":Object},{"a":1,"n":"RenderPriorityBadge","is":true,"t":8,"pi":[{"n":"priority","pt":$n[1].String,"ps":0}],"sn":"RenderPriorityBadge","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderStatusBadge","is":true,"t":8,"pi":[{"n":"status","pt":$n[1].String,"ps":0}],"sn":"RenderStatusBadge","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderTab","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"status","pt":$n[1].String,"ps":1},{"n":"currentFilter","pt":$n[1].String,"ps":2},{"n":"onSelect","pt":Function,"ps":3}],"sn":"RenderTab","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,Function]}]}; }, $n);
+    $m("Dashboard.Pages.CalendarState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Appointments","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Appointments","t":8,"rt":System.Array.type(Object),"fg":"Appointments"},"s":{"a":2,"n":"set_Appointments","t":8,"p":[System.Array.type(Object)],"rt":$n[1].Void,"fs":"Appointments"},"fn":"Appointments"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Month","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_Month","t":8,"rt":$n[1].Int32,"fg":"Month","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_Month","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"Month"},"fn":"Month"},{"a":2,"n":"SelectedDay","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_SelectedDay","t":8,"rt":$n[1].Int32,"fg":"SelectedDay","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_SelectedDay","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"SelectedDay"},"fn":"SelectedDay"},{"a":2,"n":"Year","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_Year","t":8,"rt":$n[1].Int32,"fg":"Year","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_Year","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"Year"},"fn":"Year"},{"a":1,"backing":true,"n":"<Appointments>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Appointments"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Month>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"Month","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<SelectedDay>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"SelectedDay","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<Year>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"Year","box":function ($v) { return H5.box($v, System.Int32);}}]}; }, $n);
+    $m("Dashboard.Pages.CalendarPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FormatReference","is":true,"t":8,"pi":[{"n":"reference","pt":$n[1].String,"ps":0}],"sn":"FormatReference","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"FormatTime","is":true,"t":8,"pi":[{"n":"dateTime","pt":$n[1].String,"ps":0}],"sn":"FormatTime","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GetAppointmentsForDay","is":true,"t":8,"pi":[{"n":"appointments","pt":System.Array.type(Object),"ps":0},{"n":"year","pt":$n[1].Int32,"ps":1},{"n":"month","pt":$n[1].Int32,"ps":2},{"n":"day","pt":$n[1].Int32,"ps":3}],"sn":"GetAppointmentsForDay","rt":System.Array.type(Object),"p":[System.Array.type(Object),$n[1].Int32,$n[1].Int32,$n[1].Int32]},{"a":1,"n":"GetStatusClass","is":true,"t":8,"pi":[{"n":"status","pt":$n[1].String,"ps":0}],"sn":"GetStatusClass","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GoToToday","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"GoToToday","rt":$n[1].Void,"p":[$n[4].CalendarState,Function]},{"a":1,"n":"LoadAppointments","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0},{"n":"currentState","pt":$n[4].CalendarState,"ps":1}],"sn":"LoadAppointments","rt":$n[1].Void,"p":[Function,$n[4].CalendarState]},{"a":1,"n":"NavigateMonth","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"delta","pt":$n[1].Int32,"ps":2}],"sn":"NavigateMonth","rt":$n[1].Void,"p":[$n[4].CalendarState,Function,$n[1].Int32]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"onEditAppointment","pt":Function,"ps":0}],"sn":"Render","rt":Object,"p":[Function]},{"a":1,"n":"RenderAppointmentDot","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0}],"sn":"RenderAppointmentDot","rt":Object,"p":[Object]},{"a":1,"n":"RenderCalendarContent","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onEditAppointment","pt":Function,"ps":2}],"sn":"RenderCalendarContent","rt":Object,"p":[$n[4].CalendarState,Function,Function]},{"a":1,"n":"RenderCalendarGrid","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderCalendarGrid","rt":Object,"p":[$n[4].CalendarState,Function]},{"a":1,"n":"RenderDayAppointment","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0},{"n":"onEditAppointment","pt":Function,"ps":1}],"sn":"RenderDayAppointment","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderDayDetails","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onEditAppointment","pt":Function,"ps":2}],"sn":"RenderDayDetails","rt":Object,"p":[$n[4].CalendarState,Function,Function]},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[1].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderHeader","rt":Object,"p":[$n[4].CalendarState,Function]},{"a":1,"n":"RenderLoadingState","is":true,"t":8,"sn":"RenderLoadingState","rt":Object},{"a":1,"n":"RenderNoSelection","is":true,"t":8,"sn":"RenderNoSelection","rt":Object},{"a":1,"n":"SelectDay","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].CalendarState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"day","pt":$n[1].Int32,"ps":2}],"sn":"SelectDay","rt":$n[1].Void,"p":[$n[4].CalendarState,Function,$n[1].Int32]},{"a":1,"n":"DayNames","is":true,"t":4,"rt":$n[1].Array.type(System.String),"sn":"DayNames","ro":true},{"a":1,"n":"MonthNames","is":true,"t":4,"rt":$n[1].Array.type(System.String),"sn":"MonthNames","ro":true}]}; }, $n);
+    $m("Dashboard.Pages.ClinicalCodingPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"ClearSelection","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"ClearSelection","rt":$n[1].Void,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"Clone","is":true,"t":8,"pi":[{"n":"s","pt":$n[4].ClinicalCodingState,"ps":0}],"sn":"Clone","rt":$n[4].ClinicalCodingState,"p":[$n[4].ClinicalCodingState]},{"a":1,"n":"CopyCode","is":true,"t":8,"pi":[{"n":"code","pt":$n[1].String,"ps":0},{"n":"state","pt":$n[4].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"CopyCode","rt":$n[1].Void,"p":[$n[1].String,$n[4].ClinicalCodingState,Function]},{"a":1,"n":"DoKeywordSearch","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"DoKeywordSearch","rt":$n[5].Task,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"DoLookup","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"DoLookup","rt":$n[5].Task,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"DoSemanticSearch","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"DoSemanticSearch","rt":$n[5].Task,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"ExecuteSearch","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"ExecuteSearch","rt":$n[1].Void,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"GetEmptyDescription","is":true,"t":8,"pi":[{"n":"mode","pt":$n[1].String,"ps":0}],"sn":"GetEmptyDescription","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GetEmptyTitle","is":true,"t":8,"pi":[{"n":"mode","pt":$n[1].String,"ps":0}],"sn":"GetEmptyTitle","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GetPlaceholder","is":true,"t":8,"pi":[{"n":"mode","pt":$n[1].String,"ps":0}],"sn":"GetPlaceholder","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"InitialState","is":true,"t":8,"sn":"InitialState","rt":$n[4].ClinicalCodingState},{"a":1,"n":"LookupSemanticCode","is":true,"t":8,"pi":[{"n":"code","pt":$n[1].String,"ps":0},{"n":"state","pt":$n[4].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"LookupSemanticCode","rt":$n[1].Void,"p":[$n[1].String,$n[4].ClinicalCodingState,Function]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderCodeDetail","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderCodeDetail","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderContent","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderContent","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderDetailHeader","is":true,"t":8,"pi":[{"n":"code","pt":Object,"ps":0},{"n":"state","pt":$n[4].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"RenderDetailHeader","rt":Object,"p":[Object,$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderDetailItem","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"value","pt":$n[1].String,"ps":1}],"sn":"RenderDetailItem","rt":Object,"p":[$n[1].String,$n[1].String]},{"a":1,"n":"RenderDetailMeta","is":true,"t":8,"pi":[{"n":"code","pt":Object,"ps":0}],"sn":"RenderDetailMeta","rt":Object,"p":[Object]},{"a":1,"n":"RenderDetailSection","is":true,"t":8,"pi":[{"n":"title","pt":$n[1].String,"ps":0},{"n":"content","pt":$n[1].String,"ps":1}],"sn":"RenderDetailSection","rt":Object,"p":[$n[1].String,$n[1].String]},{"a":1,"n":"RenderEmptyState","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0}],"sn":"RenderEmptyState","rt":Object,"p":[$n[4].ClinicalCodingState]},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"error","pt":$n[1].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderHeader","is":true,"t":8,"sn":"RenderHeader","rt":Object},{"a":1,"n":"RenderKeywordCard","is":true,"t":8,"pi":[{"n":"code","pt":Object,"ps":0},{"n":"state","pt":$n[4].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"RenderKeywordCard","rt":Object,"p":[Object,$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderKeywordResults","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderKeywordResults","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderLoading","is":true,"t":8,"sn":"RenderLoading","rt":Object},{"a":1,"n":"RenderNoResults","is":true,"t":8,"pi":[{"n":"query","pt":$n[1].String,"ps":0}],"sn":"RenderNoResults","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderResultsHeader","is":true,"t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0},{"n":"isAi","pt":$n[1].Boolean,"ps":1}],"sn":"RenderResultsHeader","rt":Object,"p":[$n[1].Int32,$n[1].Boolean]},{"a":1,"n":"RenderSearchInput","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchInput","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderSearchOptions","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchOptions","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderSearchSection","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchSection","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderSearchTabs","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSearchTabs","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderSemanticCard","is":true,"t":8,"pi":[{"n":"result","pt":Object,"ps":0},{"n":"state","pt":$n[4].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"RenderSemanticCard","rt":Object,"p":[Object,$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderSemanticResults","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"RenderSemanticResults","rt":Object,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"RenderTab","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"isActive","pt":$n[1].Boolean,"ps":1},{"n":"onClick","pt":Function,"ps":2}],"sn":"RenderTab","rt":Object,"p":[$n[1].String,$n[1].Boolean,Function]},{"a":1,"n":"SelectCode","is":true,"t":8,"pi":[{"n":"code","pt":Object,"ps":0},{"n":"state","pt":$n[4].ClinicalCodingState,"ps":1},{"n":"setState","pt":Function,"ps":2}],"sn":"SelectCode","rt":$n[1].Void,"p":[Object,$n[4].ClinicalCodingState,Function]},{"a":1,"n":"SetSearchMode","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"mode","pt":$n[1].String,"ps":2}],"sn":"SetSearchMode","rt":$n[1].Void,"p":[$n[4].ClinicalCodingState,Function,$n[1].String]},{"a":1,"n":"ToggleAchi","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"ToggleAchi","rt":$n[1].Void,"p":[$n[4].ClinicalCodingState,Function]},{"a":1,"n":"UpdateQuery","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].ClinicalCodingState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"query","pt":$n[1].String,"ps":2}],"sn":"UpdateQuery","rt":$n[1].Void,"p":[$n[4].ClinicalCodingState,Function,$n[1].String]}]}; }, $n);
+    $m("Dashboard.Pages.ClinicalCodingState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"AchiResults","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_AchiResults","t":8,"rt":System.Array.type(Object),"fg":"AchiResults"},"s":{"a":2,"n":"set_AchiResults","t":8,"p":[System.Array.type(Object)],"rt":$n[1].Void,"fs":"AchiResults"},"fn":"AchiResults"},{"a":2,"n":"CopiedCode","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_CopiedCode","t":8,"rt":$n[1].String,"fg":"CopiedCode"},"s":{"a":2,"n":"set_CopiedCode","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"CopiedCode"},"fn":"CopiedCode"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Icd10Results","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Icd10Results","t":8,"rt":System.Array.type(Object),"fg":"Icd10Results"},"s":{"a":2,"n":"set_Icd10Results","t":8,"p":[System.Array.type(Object)],"rt":$n[1].Void,"fs":"Icd10Results"},"fn":"Icd10Results"},{"a":2,"n":"IncludeAchi","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_IncludeAchi","t":8,"rt":$n[1].Boolean,"fg":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_IncludeAchi","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"IncludeAchi"},"fn":"IncludeAchi"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"SearchMode","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_SearchMode","t":8,"rt":$n[1].String,"fg":"SearchMode"},"s":{"a":2,"n":"set_SearchMode","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"SearchMode"},"fn":"SearchMode"},{"a":2,"n":"SearchQuery","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_SearchQuery","t":8,"rt":$n[1].String,"fg":"SearchQuery"},"s":{"a":2,"n":"set_SearchQuery","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"SearchQuery"},"fn":"SearchQuery"},{"a":2,"n":"SelectedCode","t":16,"rt":Object,"g":{"a":2,"n":"get_SelectedCode","t":8,"rt":Object,"fg":"SelectedCode"},"s":{"a":2,"n":"set_SelectedCode","t":8,"p":[Object],"rt":$n[1].Void,"fs":"SelectedCode"},"fn":"SelectedCode"},{"a":2,"n":"SemanticResults","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_SemanticResults","t":8,"rt":System.Array.type(Object),"fg":"SemanticResults"},"s":{"a":2,"n":"set_SemanticResults","t":8,"p":[System.Array.type(Object)],"rt":$n[1].Void,"fs":"SemanticResults"},"fn":"SemanticResults"},{"a":1,"backing":true,"n":"<AchiResults>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"AchiResults"},{"a":1,"backing":true,"n":"<CopiedCode>k__BackingField","t":4,"rt":$n[1].String,"sn":"CopiedCode"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Icd10Results>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Icd10Results"},{"a":1,"backing":true,"n":"<IncludeAchi>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<SearchMode>k__BackingField","t":4,"rt":$n[1].String,"sn":"SearchMode"},{"a":1,"backing":true,"n":"<SearchQuery>k__BackingField","t":4,"rt":$n[1].String,"sn":"SearchQuery"},{"a":1,"backing":true,"n":"<SelectedCode>k__BackingField","t":4,"rt":Object,"sn":"SelectedCode"},{"a":1,"backing":true,"n":"<SemanticResults>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"SemanticResults"}]}; }, $n);
+    $m("Dashboard.Pages.DashboardState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"AppointmentCount","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_AppointmentCount","t":8,"rt":$n[1].Int32,"fg":"AppointmentCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_AppointmentCount","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"AppointmentCount"},"fn":"AppointmentCount"},{"a":2,"n":"EncounterCount","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_EncounterCount","t":8,"rt":$n[1].Int32,"fg":"EncounterCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_EncounterCount","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"EncounterCount"},"fn":"EncounterCount"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"PatientCount","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_PatientCount","t":8,"rt":$n[1].Int32,"fg":"PatientCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_PatientCount","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"PatientCount"},"fn":"PatientCount"},{"a":2,"n":"PractitionerCount","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_PractitionerCount","t":8,"rt":$n[1].Int32,"fg":"PractitionerCount","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_PractitionerCount","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"PractitionerCount"},"fn":"PractitionerCount"},{"a":1,"backing":true,"n":"<AppointmentCount>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"AppointmentCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<EncounterCount>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"EncounterCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<PatientCount>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"PatientCount","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<PractitionerCount>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"PractitionerCount","box":function ($v) { return H5.box($v, System.Int32);}}]}; }, $n);
+    $m("Dashboard.Pages.UpcomingAppointment", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Initials","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Initials","t":8,"rt":$n[1].String,"fg":"Initials"},"s":{"a":2,"n":"set_Initials","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Initials"},"fn":"Initials"},{"a":2,"n":"Meta","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Meta","t":8,"rt":$n[1].String,"fg":"Meta"},"s":{"a":2,"n":"set_Meta","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Meta"},"fn":"Meta"},{"a":2,"n":"Patient","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Patient","t":8,"rt":$n[1].String,"fg":"Patient"},"s":{"a":2,"n":"set_Patient","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Patient"},"fn":"Patient"},{"a":2,"n":"Subtitle","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Subtitle","t":8,"rt":$n[1].String,"fg":"Subtitle"},"s":{"a":2,"n":"set_Subtitle","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Subtitle"},"fn":"Subtitle"},{"a":2,"n":"Time","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Time","t":8,"rt":$n[1].String,"fg":"Time"},"s":{"a":2,"n":"set_Time","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Time"},"fn":"Time"},{"a":1,"backing":true,"n":"<Initials>k__BackingField","t":4,"rt":$n[1].String,"sn":"Initials"},{"a":1,"backing":true,"n":"<Meta>k__BackingField","t":4,"rt":$n[1].String,"sn":"Meta"},{"a":1,"backing":true,"n":"<Patient>k__BackingField","t":4,"rt":$n[1].String,"sn":"Patient"},{"a":1,"backing":true,"n":"<Subtitle>k__BackingField","t":4,"rt":$n[1].String,"sn":"Subtitle"},{"a":1,"backing":true,"n":"<Time>k__BackingField","t":4,"rt":$n[1].String,"sn":"Time"}]}; }, $n);
+    $m("Dashboard.Pages.AppointmentRequest", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Patient","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Patient","t":8,"rt":$n[1].String,"fg":"Patient"},"s":{"a":2,"n":"set_Patient","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Patient"},"fn":"Patient"},{"a":2,"n":"Primary","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Primary","t":8,"rt":$n[1].Boolean,"fg":"Primary","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Primary","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Primary"},"fn":"Primary"},{"a":2,"n":"When","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_When","t":8,"rt":$n[1].String,"fg":"When"},"s":{"a":2,"n":"set_When","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"When"},"fn":"When"},{"a":1,"backing":true,"n":"<Patient>k__BackingField","t":4,"rt":$n[1].String,"sn":"Patient"},{"a":1,"backing":true,"n":"<Primary>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Primary","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<When>k__BackingField","t":4,"rt":$n[1].String,"sn":"When"}]}; }, $n);
+    $m("Dashboard.Pages.DashboardPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"GetAppointmentRequests","is":true,"t":8,"sn":"GetAppointmentRequests","rt":System.Array.type(Dashboard.Pages.AppointmentRequest)},{"a":1,"n":"GetUpcomingAppointments","is":true,"t":8,"sn":"GetUpcomingAppointments","rt":System.Array.type(Dashboard.Pages.UpcomingAppointment)},{"a":1,"n":"LoadData","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadData","rt":$n[1].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderAppointmentRow","is":true,"t":8,"pi":[{"n":"apt","pt":$n[4].UpcomingAppointment,"ps":0}],"sn":"RenderAppointmentRow","rt":Object,"p":[$n[4].UpcomingAppointment]},{"a":1,"n":"RenderAppointmentsList","is":true,"t":8,"sn":"RenderAppointmentsList","rt":Object},{"a":1,"n":"RenderConnectionWarning","is":true,"t":8,"pi":[{"n":"error","pt":$n[1].String,"ps":0}],"sn":"RenderConnectionWarning","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderMainGrid","is":true,"t":8,"sn":"RenderMainGrid","rt":Object},{"a":1,"n":"RenderMetricCard","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"value","pt":$n[1].String,"ps":1},{"n":"trendLabel","pt":$n[1].String,"ps":2},{"n":"icon","pt":Object,"ps":3},{"n":"accent","pt":$n[1].String,"ps":4}],"sn":"RenderMetricCard","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,Object,$n[1].String]},{"a":1,"n":"RenderMetricsRow","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].DashboardState,"ps":0}],"sn":"RenderMetricsRow","rt":Object,"p":[$n[4].DashboardState]},{"a":1,"n":"RenderQuickActionCard","is":true,"t":8,"pi":[{"n":"variant","pt":$n[1].String,"ps":0},{"n":"icon","pt":Object,"ps":1},{"n":"title","pt":$n[1].String,"ps":2},{"n":"description","pt":$n[1].String,"ps":3},{"n":"cta","pt":$n[1].String,"ps":4}],"sn":"RenderQuickActionCard","rt":Object,"p":[$n[1].String,Object,$n[1].String,$n[1].String,$n[1].String]},{"a":1,"n":"RenderQuickActions","is":true,"t":8,"sn":"RenderQuickActions","rt":Object},{"a":1,"n":"RenderRequestCard","is":true,"t":8,"pi":[{"n":"req","pt":$n[4].AppointmentRequest,"ps":0}],"sn":"RenderRequestCard","rt":Object,"p":[$n[4].AppointmentRequest]},{"a":1,"n":"RenderRequestsColumn","is":true,"t":8,"sn":"RenderRequestsColumn","rt":Object},{"a":1,"n":"RenderTopTreatmentCard","is":true,"t":8,"sn":"RenderTopTreatmentCard","rt":Object},{"a":1,"n":"RenderWelcome","is":true,"t":8,"sn":"RenderWelcome","rt":Object}]}; }, $n);
+    $m("Dashboard.Pages.EditAppointmentState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Appointment","t":16,"rt":Object,"g":{"a":2,"n":"get_Appointment","t":8,"rt":Object,"fg":"Appointment"},"s":{"a":2,"n":"set_Appointment","t":8,"p":[Object],"rt":$n[1].Void,"fs":"Appointment"},"fn":"Appointment"},{"a":2,"n":"Comment","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Comment","t":8,"rt":$n[1].String,"fg":"Comment"},"s":{"a":2,"n":"set_Comment","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Comment"},"fn":"Comment"},{"a":2,"n":"Description","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Description","t":8,"rt":$n[1].String,"fg":"Description"},"s":{"a":2,"n":"set_Description","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Description"},"fn":"Description"},{"a":2,"n":"EndDate","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_EndDate","t":8,"rt":$n[1].String,"fg":"EndDate"},"s":{"a":2,"n":"set_EndDate","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"EndDate"},"fn":"EndDate"},{"a":2,"n":"EndTime","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_EndTime","t":8,"rt":$n[1].String,"fg":"EndTime"},"s":{"a":2,"n":"set_EndTime","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"EndTime"},"fn":"EndTime"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"PatientReference","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_PatientReference","t":8,"rt":$n[1].String,"fg":"PatientReference"},"s":{"a":2,"n":"set_PatientReference","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"PatientReference"},"fn":"PatientReference"},{"a":2,"n":"PractitionerReference","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_PractitionerReference","t":8,"rt":$n[1].String,"fg":"PractitionerReference"},"s":{"a":2,"n":"set_PractitionerReference","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"PractitionerReference"},"fn":"PractitionerReference"},{"a":2,"n":"Priority","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Priority","t":8,"rt":$n[1].String,"fg":"Priority"},"s":{"a":2,"n":"set_Priority","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Priority"},"fn":"Priority"},{"a":2,"n":"ReasonCode","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_ReasonCode","t":8,"rt":$n[1].String,"fg":"ReasonCode"},"s":{"a":2,"n":"set_ReasonCode","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"ReasonCode"},"fn":"ReasonCode"},{"a":2,"n":"Saving","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Saving","t":8,"rt":$n[1].Boolean,"fg":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Saving","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Saving"},"fn":"Saving"},{"a":2,"n":"ServiceCategory","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_ServiceCategory","t":8,"rt":$n[1].String,"fg":"ServiceCategory"},"s":{"a":2,"n":"set_ServiceCategory","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"ServiceCategory"},"fn":"ServiceCategory"},{"a":2,"n":"ServiceType","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_ServiceType","t":8,"rt":$n[1].String,"fg":"ServiceType"},"s":{"a":2,"n":"set_ServiceType","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"ServiceType"},"fn":"ServiceType"},{"a":2,"n":"StartDate","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_StartDate","t":8,"rt":$n[1].String,"fg":"StartDate"},"s":{"a":2,"n":"set_StartDate","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"StartDate"},"fn":"StartDate"},{"a":2,"n":"StartTime","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_StartTime","t":8,"rt":$n[1].String,"fg":"StartTime"},"s":{"a":2,"n":"set_StartTime","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"StartTime"},"fn":"StartTime"},{"a":2,"n":"Status","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Status","t":8,"rt":$n[1].String,"fg":"Status"},"s":{"a":2,"n":"set_Status","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Status"},"fn":"Status"},{"a":2,"n":"Success","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Success","t":8,"rt":$n[1].String,"fg":"Success"},"s":{"a":2,"n":"set_Success","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Success"},"fn":"Success"},{"a":1,"backing":true,"n":"<Appointment>k__BackingField","t":4,"rt":Object,"sn":"Appointment"},{"a":1,"backing":true,"n":"<Comment>k__BackingField","t":4,"rt":$n[1].String,"sn":"Comment"},{"a":1,"backing":true,"n":"<Description>k__BackingField","t":4,"rt":$n[1].String,"sn":"Description"},{"a":1,"backing":true,"n":"<EndDate>k__BackingField","t":4,"rt":$n[1].String,"sn":"EndDate"},{"a":1,"backing":true,"n":"<EndTime>k__BackingField","t":4,"rt":$n[1].String,"sn":"EndTime"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<PatientReference>k__BackingField","t":4,"rt":$n[1].String,"sn":"PatientReference"},{"a":1,"backing":true,"n":"<PractitionerReference>k__BackingField","t":4,"rt":$n[1].String,"sn":"PractitionerReference"},{"a":1,"backing":true,"n":"<Priority>k__BackingField","t":4,"rt":$n[1].String,"sn":"Priority"},{"a":1,"backing":true,"n":"<ReasonCode>k__BackingField","t":4,"rt":$n[1].String,"sn":"ReasonCode"},{"a":1,"backing":true,"n":"<Saving>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<ServiceCategory>k__BackingField","t":4,"rt":$n[1].String,"sn":"ServiceCategory"},{"a":1,"backing":true,"n":"<ServiceType>k__BackingField","t":4,"rt":$n[1].String,"sn":"ServiceType"},{"a":1,"backing":true,"n":"<StartDate>k__BackingField","t":4,"rt":$n[1].String,"sn":"StartDate"},{"a":1,"backing":true,"n":"<StartTime>k__BackingField","t":4,"rt":$n[1].String,"sn":"StartTime"},{"a":1,"backing":true,"n":"<Status>k__BackingField","t":4,"rt":$n[1].String,"sn":"Status"},{"a":1,"backing":true,"n":"<Success>k__BackingField","t":4,"rt":$n[1].String,"sn":"Success"}]}; }, $n);
+    $m("Dashboard.Pages.EditAppointmentPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"CombineDateTime","is":true,"t":8,"pi":[{"n":"date","pt":$n[1].String,"ps":0},{"n":"time","pt":$n[1].String,"ps":1}],"sn":"CombineDateTime","rt":$n[1].String,"p":[$n[1].String,$n[1].String]},{"a":1,"n":"LoadAppointment","is":true,"t":8,"pi":[{"n":"appointmentId","pt":$n[1].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"LoadAppointment","rt":$n[1].Void,"p":[$n[1].String,Function]},{"a":1,"n":"ParseDateTime","is":true,"t":8,"pi":[{"n":"isoDateTime","pt":$n[1].String,"ps":0}],"sn":"ParseDateTime","rt":$n[1].ValueTuple$2(System.String,System.String),"p":[$n[1].String]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"appointmentId","pt":$n[1].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"Render","rt":Object,"p":[$n[1].String,Function]},{"a":1,"n":"RenderErrorState","is":true,"t":8,"pi":[{"n":"error","pt":$n[1].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderErrorState","rt":Object,"p":[$n[1].String,Function]},{"a":1,"n":"RenderForm","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditAppointmentState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"RenderForm","rt":Object,"p":[$n[4].EditAppointmentState,Function,Function]},{"a":1,"n":"RenderFormActions","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditAppointmentState,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderFormActions","rt":Object,"p":[$n[4].EditAppointmentState,Function]},{"a":1,"n":"RenderFormSection","is":true,"t":8,"pi":[{"n":"title","pt":$n[1].String,"ps":0},{"n":"fields","pt":System.Array.type(Object),"ps":1}],"sn":"RenderFormSection","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"appointment","pt":Object,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderHeader","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderInputField","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"id","pt":$n[1].String,"ps":1},{"n":"value","pt":$n[1].String,"ps":2},{"n":"placeholder","pt":$n[1].String,"ps":3},{"n":"onChange","pt":Function,"ps":4},{"n":"type","dv":"text","o":true,"pt":$n[1].String,"ps":5}],"sn":"RenderInputField","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].String,Function,$n[1].String]},{"a":1,"n":"RenderLoadingState","is":true,"t":8,"sn":"RenderLoadingState","rt":Object},{"a":1,"n":"RenderSelectField","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"id","pt":$n[1].String,"ps":1},{"n":"value","pt":$n[1].String,"ps":2},{"n":"options","pt":$n[1].Array.type(System.ValueTuple$2(System.String,System.String)),"ps":3},{"n":"onChange","pt":Function,"ps":4}],"sn":"RenderSelectField","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].Array.type(System.ValueTuple$2(System.String,System.String)),Function]},{"a":1,"n":"RenderTextareaField","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"id","pt":$n[1].String,"ps":1},{"n":"value","pt":$n[1].String,"ps":2},{"n":"placeholder","pt":$n[1].String,"ps":3},{"n":"onChange","pt":Function,"ps":4}],"sn":"RenderTextareaField","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].String,Function]},{"a":1,"n":"SaveAppointment","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditAppointmentState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"SaveAppointment","rt":$n[1].Void,"p":[$n[4].EditAppointmentState,Function,Function]},{"a":1,"n":"UpdateField","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditAppointmentState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"field","pt":$n[1].String,"ps":2},{"n":"value","pt":$n[1].String,"ps":3}],"sn":"UpdateField","rt":$n[1].Void,"p":[$n[4].EditAppointmentState,Function,$n[1].String,$n[1].String]}]}; }, $n);
+    $m("Dashboard.Pages.EditPatientState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Active","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Active","t":8,"rt":$n[1].Boolean,"fg":"Active","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Active","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Active"},"fn":"Active"},{"a":2,"n":"AddressLine","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_AddressLine","t":8,"rt":$n[1].String,"fg":"AddressLine"},"s":{"a":2,"n":"set_AddressLine","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"AddressLine"},"fn":"AddressLine"},{"a":2,"n":"BirthDate","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_BirthDate","t":8,"rt":$n[1].String,"fg":"BirthDate"},"s":{"a":2,"n":"set_BirthDate","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"BirthDate"},"fn":"BirthDate"},{"a":2,"n":"City","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_City","t":8,"rt":$n[1].String,"fg":"City"},"s":{"a":2,"n":"set_City","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"City"},"fn":"City"},{"a":2,"n":"Country","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Country","t":8,"rt":$n[1].String,"fg":"Country"},"s":{"a":2,"n":"set_Country","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Country"},"fn":"Country"},{"a":2,"n":"Email","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Email","t":8,"rt":$n[1].String,"fg":"Email"},"s":{"a":2,"n":"set_Email","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Email"},"fn":"Email"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"FamilyName","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_FamilyName","t":8,"rt":$n[1].String,"fg":"FamilyName"},"s":{"a":2,"n":"set_FamilyName","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"FamilyName"},"fn":"FamilyName"},{"a":2,"n":"Gender","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Gender","t":8,"rt":$n[1].String,"fg":"Gender"},"s":{"a":2,"n":"set_Gender","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Gender"},"fn":"Gender"},{"a":2,"n":"GivenName","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_GivenName","t":8,"rt":$n[1].String,"fg":"GivenName"},"s":{"a":2,"n":"set_GivenName","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"GivenName"},"fn":"GivenName"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Patient","t":16,"rt":Object,"g":{"a":2,"n":"get_Patient","t":8,"rt":Object,"fg":"Patient"},"s":{"a":2,"n":"set_Patient","t":8,"p":[Object],"rt":$n[1].Void,"fs":"Patient"},"fn":"Patient"},{"a":2,"n":"Phone","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Phone","t":8,"rt":$n[1].String,"fg":"Phone"},"s":{"a":2,"n":"set_Phone","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Phone"},"fn":"Phone"},{"a":2,"n":"PostalCode","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_PostalCode","t":8,"rt":$n[1].String,"fg":"PostalCode"},"s":{"a":2,"n":"set_PostalCode","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"PostalCode"},"fn":"PostalCode"},{"a":2,"n":"Saving","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Saving","t":8,"rt":$n[1].Boolean,"fg":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Saving","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Saving"},"fn":"Saving"},{"a":2,"n":"State","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_State","t":8,"rt":$n[1].String,"fg":"State"},"s":{"a":2,"n":"set_State","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"State"},"fn":"State"},{"a":2,"n":"Success","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Success","t":8,"rt":$n[1].String,"fg":"Success"},"s":{"a":2,"n":"set_Success","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Success"},"fn":"Success"},{"a":1,"backing":true,"n":"<Active>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Active","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<AddressLine>k__BackingField","t":4,"rt":$n[1].String,"sn":"AddressLine"},{"a":1,"backing":true,"n":"<BirthDate>k__BackingField","t":4,"rt":$n[1].String,"sn":"BirthDate"},{"a":1,"backing":true,"n":"<City>k__BackingField","t":4,"rt":$n[1].String,"sn":"City"},{"a":1,"backing":true,"n":"<Country>k__BackingField","t":4,"rt":$n[1].String,"sn":"Country"},{"a":1,"backing":true,"n":"<Email>k__BackingField","t":4,"rt":$n[1].String,"sn":"Email"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<FamilyName>k__BackingField","t":4,"rt":$n[1].String,"sn":"FamilyName"},{"a":1,"backing":true,"n":"<Gender>k__BackingField","t":4,"rt":$n[1].String,"sn":"Gender"},{"a":1,"backing":true,"n":"<GivenName>k__BackingField","t":4,"rt":$n[1].String,"sn":"GivenName"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Patient>k__BackingField","t":4,"rt":Object,"sn":"Patient"},{"a":1,"backing":true,"n":"<Phone>k__BackingField","t":4,"rt":$n[1].String,"sn":"Phone"},{"a":1,"backing":true,"n":"<PostalCode>k__BackingField","t":4,"rt":$n[1].String,"sn":"PostalCode"},{"a":1,"backing":true,"n":"<Saving>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Saving","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<State>k__BackingField","t":4,"rt":$n[1].String,"sn":"State"},{"a":1,"backing":true,"n":"<Success>k__BackingField","t":4,"rt":$n[1].String,"sn":"Success"}]}; }, $n);
+    $m("Dashboard.Pages.EditPatientPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"LoadPatient","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[1].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"LoadPatient","rt":$n[1].Void,"p":[$n[1].String,Function]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[1].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"Render","rt":Object,"p":[$n[1].String,Function]},{"a":1,"n":"RenderCheckboxField","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"id","pt":$n[1].String,"ps":1},{"n":"value","pt":$n[1].Boolean,"ps":2},{"n":"onChange","pt":Function,"ps":3}],"sn":"RenderCheckboxField","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].Boolean,Function]},{"a":1,"n":"RenderErrorState","is":true,"t":8,"pi":[{"n":"error","pt":$n[1].String,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderErrorState","rt":Object,"p":[$n[1].String,Function]},{"a":1,"n":"RenderForm","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"RenderForm","rt":Object,"p":[$n[4].EditPatientState,Function,Function]},{"a":1,"n":"RenderFormActions","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditPatientState,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderFormActions","rt":Object,"p":[$n[4].EditPatientState,Function]},{"a":1,"n":"RenderFormSection","is":true,"t":8,"pi":[{"n":"title","pt":$n[1].String,"ps":0},{"n":"fields","pt":System.Array.type(Object),"ps":1}],"sn":"RenderFormSection","rt":Object,"p":[$n[1].String,System.Array.type(Object)]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"onBack","pt":Function,"ps":1}],"sn":"RenderHeader","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderInputField","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"id","pt":$n[1].String,"ps":1},{"n":"value","pt":$n[1].String,"ps":2},{"n":"placeholder","pt":$n[1].String,"ps":3},{"n":"onChange","pt":Function,"ps":4},{"n":"type","dv":"text","o":true,"pt":$n[1].String,"ps":5}],"sn":"RenderInputField","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].String,Function,$n[1].String]},{"a":1,"n":"RenderLoadingState","is":true,"t":8,"sn":"RenderLoadingState","rt":Object},{"a":1,"n":"RenderSelectField","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"id","pt":$n[1].String,"ps":1},{"n":"value","pt":$n[1].String,"ps":2},{"n":"options","pt":$n[1].Array.type(System.ValueTuple$2(System.String,System.String)),"ps":3},{"n":"onChange","pt":Function,"ps":4}],"sn":"RenderSelectField","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].Array.type(System.ValueTuple$2(System.String,System.String)),Function]},{"a":1,"n":"SavePatient","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"onBack","pt":Function,"ps":2}],"sn":"SavePatient","rt":$n[1].Void,"p":[$n[4].EditPatientState,Function,Function]},{"a":1,"n":"UpdateActive","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"value","pt":$n[1].Boolean,"ps":2}],"sn":"UpdateActive","rt":$n[1].Void,"p":[$n[4].EditPatientState,Function,$n[1].Boolean]},{"a":1,"n":"UpdateField","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].EditPatientState,"ps":0},{"n":"setState","pt":Function,"ps":1},{"n":"field","pt":$n[1].String,"ps":2},{"n":"value","pt":$n[1].String,"ps":3}],"sn":"UpdateField","rt":$n[1].Void,"p":[$n[4].EditPatientState,Function,$n[1].String,$n[1].String]}]}; }, $n);
+    $m("Dashboard.Pages.LoginState", function () { return {"att":1048833,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"DisplayName","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_DisplayName","t":8,"rt":$n[1].String,"fg":"DisplayName"},"s":{"a":2,"n":"set_DisplayName","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"DisplayName"},"fn":"DisplayName"},{"a":2,"n":"Email","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Email","t":8,"rt":$n[1].String,"fg":"Email"},"s":{"a":2,"n":"set_Email","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Email"},"fn":"Email"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Mode","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Mode","t":8,"rt":$n[1].String,"fg":"Mode"},"s":{"a":2,"n":"set_Mode","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Mode"},"fn":"Mode"},{"a":1,"backing":true,"n":"<DisplayName>k__BackingField","t":4,"rt":$n[1].String,"sn":"DisplayName"},{"a":1,"backing":true,"n":"<Email>k__BackingField","t":4,"rt":$n[1].String,"sn":"Email"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Mode>k__BackingField","t":4,"rt":$n[1].String,"sn":"Mode"}]}; }, $n);
+    $m("Dashboard.Pages.LoginPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"onLogin","pt":Function,"ps":0}],"sn":"Render","rt":Object,"p":[Function]},{"a":1,"n":"RenderCard","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].LoginState,"ps":0},{"n":"mutate","pt":Function,"ps":1},{"n":"onLogin","pt":Function,"ps":2},{"n":"onRegister","pt":Function,"ps":3}],"sn":"RenderCard","rt":Object,"p":[$n[4].LoginState,Function,Function,Function]},{"a":1,"n":"RenderField","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"type","pt":$n[1].String,"ps":1},{"n":"value","pt":$n[1].String,"ps":2},{"n":"disabled","pt":$n[1].Boolean,"ps":3},{"n":"onChange","pt":Function,"ps":4}],"sn":"RenderField","rt":Object,"p":[$n[1].String,$n[1].String,$n[1].String,$n[1].Boolean,Function]},{"a":1,"n":"RenderFooter","is":true,"t":8,"pi":[{"n":"mode","pt":$n[1].String,"ps":0},{"n":"mutate","pt":Function,"ps":1}],"sn":"RenderFooter","rt":Object,"p":[$n[1].String,Function]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"mode","pt":$n[1].String,"ps":0}],"sn":"RenderHeader","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderSubmit","is":true,"t":8,"pi":[{"n":"state","pt":$n[4].LoginState,"ps":0}],"sn":"RenderSubmit","rt":Object,"p":[$n[4].LoginState]}]}; }, $n);
+    $m("Dashboard.Pages.PatientsState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Patients","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Patients","t":8,"rt":System.Array.type(Object),"fg":"Patients"},"s":{"a":2,"n":"set_Patients","t":8,"p":[System.Array.type(Object)],"rt":$n[1].Void,"fs":"Patients"},"fn":"Patients"},{"a":2,"n":"SearchQuery","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_SearchQuery","t":8,"rt":$n[1].String,"fg":"SearchQuery"},"s":{"a":2,"n":"set_SearchQuery","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"SearchQuery"},"fn":"SearchQuery"},{"a":2,"n":"SelectedPatient","t":16,"rt":Object,"g":{"a":2,"n":"get_SelectedPatient","t":8,"rt":Object,"fg":"SelectedPatient"},"s":{"a":2,"n":"set_SelectedPatient","t":8,"p":[Object],"rt":$n[1].Void,"fs":"SelectedPatient"},"fn":"SelectedPatient"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Patients>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Patients"},{"a":1,"backing":true,"n":"<SearchQuery>k__BackingField","t":4,"rt":$n[1].String,"sn":"SearchQuery"},{"a":1,"backing":true,"n":"<SelectedPatient>k__BackingField","t":4,"rt":Object,"sn":"SelectedPatient"}]}; }, $n);
+    $m("Dashboard.Pages.PatientsPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FirstChar","is":true,"t":8,"pi":[{"n":"s","pt":$n[1].String,"ps":0}],"sn":"FirstChar","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GenderBadgeClass","is":true,"t":8,"pi":[{"n":"gender","pt":$n[1].String,"ps":0}],"sn":"GenderBadgeClass","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GetInitials","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"GetInitials","rt":$n[1].String,"p":[Object]},{"a":1,"n":"HandleSearch","is":true,"t":8,"pi":[{"n":"query","pt":$n[1].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"HandleSearch","rt":$n[1].Void,"p":[$n[1].String,Function]},{"a":1,"n":"LoadPatients","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadPatients","rt":$n[1].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"onEditPatient","dv":null,"o":true,"pt":Function,"ps":0}],"sn":"Render","rt":Object,"p":[Function]},{"a":1,"n":"RenderActions","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"onSelect","pt":Function,"ps":1}],"sn":"RenderActions","rt":Object,"p":[Object,Function]},{"a":1,"n":"RenderCell","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"key","pt":$n[1].String,"ps":1},{"n":"onSelect","pt":Function,"ps":2}],"sn":"RenderCell","rt":Object,"p":[Object,$n[1].String,Function]},{"a":1,"n":"RenderContact","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"RenderContact","rt":Object,"p":[Object]},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[1].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderGender","is":true,"t":8,"pi":[{"n":"gender","pt":$n[1].String,"ps":0}],"sn":"RenderGender","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderPatientName","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"RenderPatientName","rt":Object,"p":[Object]},{"a":1,"n":"RenderPatientTable","is":true,"t":8,"pi":[{"n":"patients","pt":System.Array.type(Object),"ps":0},{"n":"onSelect","pt":Function,"ps":1}],"sn":"RenderPatientTable","rt":Object,"p":[System.Array.type(Object),Function]},{"a":1,"n":"RenderStatus","is":true,"t":8,"pi":[{"n":"active","pt":$n[1].Boolean,"ps":0}],"sn":"RenderStatus","rt":Object,"p":[$n[1].Boolean]},{"a":1,"n":"SelectPatient","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"SelectPatient","rt":$n[1].Void,"p":[Object,Function]},{"a":1,"n":"_onEditPatient","is":true,"t":4,"rt":Function,"sn":"_onEditPatient"}]}; }, $n);
+    $m("Dashboard.Pages.PractitionersState", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Error","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Error","t":8,"rt":$n[1].String,"fg":"Error"},"s":{"a":2,"n":"set_Error","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Error"},"fn":"Error"},{"a":2,"n":"Loading","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_Loading","t":8,"rt":$n[1].Boolean,"fg":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_Loading","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"Loading"},"fn":"Loading"},{"a":2,"n":"Practitioners","t":16,"rt":System.Array.type(Object),"g":{"a":2,"n":"get_Practitioners","t":8,"rt":System.Array.type(Object),"fg":"Practitioners"},"s":{"a":2,"n":"set_Practitioners","t":8,"p":[System.Array.type(Object)],"rt":$n[1].Void,"fs":"Practitioners"},"fn":"Practitioners"},{"a":2,"n":"SpecialtyFilter","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_SpecialtyFilter","t":8,"rt":$n[1].String,"fg":"SpecialtyFilter"},"s":{"a":2,"n":"set_SpecialtyFilter","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"SpecialtyFilter"},"fn":"SpecialtyFilter"},{"a":1,"backing":true,"n":"<Error>k__BackingField","t":4,"rt":$n[1].String,"sn":"Error"},{"a":1,"backing":true,"n":"<Loading>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"Loading","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Practitioners>k__BackingField","t":4,"rt":System.Array.type(Object),"sn":"Practitioners"},{"a":1,"backing":true,"n":"<SpecialtyFilter>k__BackingField","t":4,"rt":$n[1].String,"sn":"SpecialtyFilter"}]}; }, $n);
+    $m("Dashboard.Pages.PractitionersPage", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"FilterBySpecialty","is":true,"t":8,"pi":[{"n":"specialty","pt":$n[1].String,"ps":0},{"n":"setState","pt":Function,"ps":1}],"sn":"FilterBySpecialty","rt":$n[1].Void,"p":[$n[1].String,Function]},{"a":1,"n":"FirstChar","is":true,"t":8,"pi":[{"n":"s","pt":$n[1].String,"ps":0}],"sn":"FirstChar","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GetInitials","is":true,"t":8,"pi":[{"n":"p","pt":Object,"ps":0}],"sn":"GetInitials","rt":$n[1].String,"p":[Object]},{"a":1,"n":"LoadPractitioners","is":true,"t":8,"pi":[{"n":"setState","pt":Function,"ps":0}],"sn":"LoadPractitioners","rt":$n[1].Void,"p":[Function]},{"a":2,"n":"Render","is":true,"t":8,"sn":"Render","rt":Object},{"a":1,"n":"RenderDetail","is":true,"t":8,"pi":[{"n":"label","pt":$n[1].String,"ps":0},{"n":"value","pt":$n[1].String,"ps":1}],"sn":"RenderDetail","rt":Object,"p":[$n[1].String,$n[1].String]},{"a":1,"n":"RenderEmpty","is":true,"t":8,"sn":"RenderEmpty","rt":Object},{"a":1,"n":"RenderError","is":true,"t":8,"pi":[{"n":"message","pt":$n[1].String,"ps":0}],"sn":"RenderError","rt":Object,"p":[$n[1].String]},{"a":1,"n":"RenderLoadingGrid","is":true,"t":8,"sn":"RenderLoadingGrid","rt":Object},{"a":1,"n":"RenderPractitionerCard","is":true,"t":8,"pi":[{"n":"practitioner","pt":Object,"ps":0}],"sn":"RenderPractitionerCard","rt":Object,"p":[Object]},{"a":1,"n":"RenderPractitionerGrid","is":true,"t":8,"pi":[{"n":"practitioners","pt":System.Array.type(Object),"ps":0}],"sn":"RenderPractitionerGrid","rt":Object,"p":[System.Array.type(Object)]}]}; }, $n);
+    $m("Dashboard.Models.SemanticSearchRequest", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"IncludeAchi","t":16,"rt":$n[1].Boolean,"g":{"a":2,"n":"get_IncludeAchi","t":8,"rt":$n[1].Boolean,"fg":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},"s":{"a":2,"n":"set_IncludeAchi","t":8,"p":[$n[1].Boolean],"rt":$n[1].Void,"fs":"IncludeAchi"},"fn":"IncludeAchi"},{"a":2,"n":"Limit","t":16,"rt":$n[1].Int32,"g":{"a":2,"n":"get_Limit","t":8,"rt":$n[1].Int32,"fg":"Limit","box":function ($v) { return H5.box($v, System.Int32);}},"s":{"a":2,"n":"set_Limit","t":8,"p":[$n[1].Int32],"rt":$n[1].Void,"fs":"Limit"},"fn":"Limit"},{"a":2,"n":"Query","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Query","t":8,"rt":$n[1].String,"fg":"Query"},"s":{"a":2,"n":"set_Query","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Query"},"fn":"Query"},{"a":1,"backing":true,"n":"<IncludeAchi>k__BackingField","t":4,"rt":$n[1].Boolean,"sn":"IncludeAchi","box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":1,"backing":true,"n":"<Limit>k__BackingField","t":4,"rt":$n[1].Int32,"sn":"Limit","box":function ($v) { return H5.box($v, System.Int32);}},{"a":1,"backing":true,"n":"<Query>k__BackingField","t":4,"rt":$n[1].String,"sn":"Query"}]}; }, $n);
+    $m("Dashboard.Components.Column", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"ClassName","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_ClassName","t":8,"rt":$n[1].String,"fg":"ClassName"},"s":{"a":2,"n":"set_ClassName","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"ClassName"},"fn":"ClassName"},{"a":2,"n":"Header","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Header","t":8,"rt":$n[1].String,"fg":"Header"},"s":{"a":2,"n":"set_Header","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Header"},"fn":"Header"},{"a":2,"n":"Key","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Key","t":8,"rt":$n[1].String,"fg":"Key"},"s":{"a":2,"n":"set_Key","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Key"},"fn":"Key"},{"a":1,"backing":true,"n":"<ClassName>k__BackingField","t":4,"rt":$n[1].String,"sn":"ClassName"},{"a":1,"backing":true,"n":"<Header>k__BackingField","t":4,"rt":$n[1].String,"sn":"Header"},{"a":1,"backing":true,"n":"<Key>k__BackingField","t":4,"rt":$n[1].String,"sn":"Key"}]}; }, $n);
+    $m("Dashboard.Components.DataTable", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"columns","pt":System.Array.type(Dashboard.Components.Column),"ps":0},{"n":"data","pt":System.Array.type(System.Object),"ps":1},{"n":"getKey","pt":Function,"ps":2},{"n":"renderCell","pt":Function,"ps":3},{"n":"onRowClick","dv":null,"o":true,"pt":Function,"ps":4}],"tpc":1,"tprm":["T"],"sn":"Render","rt":Object,"p":[System.Array.type(Dashboard.Components.Column),System.Array.type(System.Object),Function,Function,Function]},{"a":2,"n":"RenderEmpty","is":true,"t":8,"pi":[{"n":"message","dv":"No data available","o":true,"pt":$n[1].String,"ps":0}],"sn":"RenderEmpty","rt":Object,"p":[$n[1].String]},{"a":2,"n":"RenderLoading","is":true,"t":8,"pi":[{"n":"rows","dv":5,"o":true,"pt":$n[1].Int32,"ps":0},{"n":"columns","dv":4,"o":true,"pt":$n[1].Int32,"ps":1}],"sn":"RenderLoading","rt":Object,"p":[$n[1].Int32,$n[1].Int32]}]}; }, $n);
+    $m("Dashboard.Components.Header", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"title","pt":$n[1].String,"ps":0},{"n":"searchQuery","dv":null,"o":true,"pt":$n[1].String,"ps":1},{"n":"onSearchChange","dv":null,"o":true,"pt":Function,"ps":2},{"n":"notificationCount","dv":0,"o":true,"pt":$n[1].Int32,"ps":3}],"sn":"Render","rt":Object,"p":[$n[1].String,$n[1].String,Function,$n[1].Int32]},{"a":1,"n":"RenderNotificationButton","is":true,"t":8,"pi":[{"n":"count","pt":$n[1].Int32,"ps":0}],"sn":"RenderNotificationButton","rt":Object,"p":[$n[1].Int32]},{"a":1,"n":"RenderUserAvatar","is":true,"t":8,"sn":"RenderUserAvatar","rt":Object}]}; }, $n);
+    $m("Dashboard.Components.Icons", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Activity","is":true,"t":8,"sn":"Activity","rt":Object},{"a":2,"n":"Bell","is":true,"t":8,"sn":"Bell","rt":Object},{"a":2,"n":"Calendar","is":true,"t":8,"sn":"Calendar","rt":Object},{"a":2,"n":"Check","is":true,"t":8,"sn":"Check","rt":Object},{"a":2,"n":"ChevronLeft","is":true,"t":8,"sn":"ChevronLeft","rt":Object},{"a":2,"n":"ChevronRight","is":true,"t":8,"sn":"ChevronRight","rt":Object},{"a":2,"n":"Clipboard","is":true,"t":8,"sn":"Clipboard","rt":Object},{"a":2,"n":"Code","is":true,"t":8,"sn":"Code","rt":Object},{"a":2,"n":"Copy","is":true,"t":8,"sn":"Copy","rt":Object},{"a":2,"n":"Edit","is":true,"t":8,"sn":"Edit","rt":Object},{"a":2,"n":"Eye","is":true,"t":8,"sn":"Eye","rt":Object},{"a":2,"n":"FileText","is":true,"t":8,"sn":"FileText","rt":Object},{"a":2,"n":"Heart","is":true,"t":8,"sn":"Heart","rt":Object},{"a":2,"n":"Home","is":true,"t":8,"sn":"Home","rt":Object},{"a":2,"n":"LogOut","is":true,"t":8,"sn":"LogOut","rt":Object},{"a":2,"n":"Menu","is":true,"t":8,"sn":"Menu","rt":Object},{"a":2,"n":"Pill","is":true,"t":8,"sn":"Pill","rt":Object},{"a":2,"n":"Plus","is":true,"t":8,"sn":"Plus","rt":Object},{"a":2,"n":"Refresh","is":true,"t":8,"sn":"Refresh","rt":Object},{"a":2,"n":"Search","is":true,"t":8,"sn":"Search","rt":Object},{"a":2,"n":"Settings","is":true,"t":8,"sn":"Settings","rt":Object},{"a":2,"n":"Sparkles","is":true,"t":8,"sn":"Sparkles","rt":Object},{"a":2,"n":"Trash","is":true,"t":8,"sn":"Trash","rt":Object},{"a":2,"n":"TrendDown","is":true,"t":8,"sn":"TrendDown","rt":Object},{"a":2,"n":"TrendUp","is":true,"t":8,"sn":"TrendUp","rt":Object},{"a":2,"n":"UserDoctor","is":true,"t":8,"sn":"UserDoctor","rt":Object},{"a":2,"n":"Users","is":true,"t":8,"sn":"Users","rt":Object},{"a":2,"n":"X","is":true,"t":8,"sn":"X","rt":Object}]}; }, $n);
+    $m("Dashboard.Components.TrendDirection", function () { return {"att":257,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Down","is":true,"t":4,"rt":$n[6].TrendDirection,"sn":"Down","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},{"a":2,"n":"Neutral","is":true,"t":4,"rt":$n[6].TrendDirection,"sn":"Neutral","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},{"a":2,"n":"Up","is":true,"t":4,"rt":$n[6].TrendDirection,"sn":"Up","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}}]}; }, $n);
+    $m("Dashboard.Components.MetricCardProps", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Icon","t":16,"rt":Function,"g":{"a":2,"n":"get_Icon","t":8,"rt":Function,"fg":"Icon"},"s":{"a":2,"n":"set_Icon","t":8,"p":[Function],"rt":$n[1].Void,"fs":"Icon"},"fn":"Icon"},{"a":2,"n":"IconColor","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_IconColor","t":8,"rt":$n[1].String,"fg":"IconColor"},"s":{"a":2,"n":"set_IconColor","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"IconColor"},"fn":"IconColor"},{"a":2,"n":"Label","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Label","t":8,"rt":$n[1].String,"fg":"Label"},"s":{"a":2,"n":"set_Label","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Label"},"fn":"Label"},{"a":2,"n":"Trend","t":16,"rt":$n[6].TrendDirection,"g":{"a":2,"n":"get_Trend","t":8,"rt":$n[6].TrendDirection,"fg":"Trend","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},"s":{"a":2,"n":"set_Trend","t":8,"p":[$n[6].TrendDirection],"rt":$n[1].Void,"fs":"Trend"},"fn":"Trend"},{"a":2,"n":"TrendValue","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_TrendValue","t":8,"rt":$n[1].String,"fg":"TrendValue"},"s":{"a":2,"n":"set_TrendValue","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"TrendValue"},"fn":"TrendValue"},{"a":2,"n":"Value","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Value","t":8,"rt":$n[1].String,"fg":"Value"},"s":{"a":2,"n":"set_Value","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Value"},"fn":"Value"},{"a":1,"backing":true,"n":"<Icon>k__BackingField","t":4,"rt":Function,"sn":"Icon"},{"a":1,"backing":true,"n":"<IconColor>k__BackingField","t":4,"rt":$n[1].String,"sn":"IconColor"},{"a":1,"backing":true,"n":"<Label>k__BackingField","t":4,"rt":$n[1].String,"sn":"Label"},{"a":1,"backing":true,"n":"<Trend>k__BackingField","t":4,"rt":$n[6].TrendDirection,"sn":"Trend","box":function ($v) { return H5.box($v, Dashboard.Components.TrendDirection, System.Enum.toStringFn(Dashboard.Components.TrendDirection));}},{"a":1,"backing":true,"n":"<TrendValue>k__BackingField","t":4,"rt":$n[1].String,"sn":"TrendValue"},{"a":1,"backing":true,"n":"<Value>k__BackingField","t":4,"rt":$n[1].String,"sn":"Value"}]}; }, $n);
+    $m("Dashboard.Components.MetricCard", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"props","pt":$n[6].MetricCardProps,"ps":0}],"sn":"Render","rt":Object,"p":[$n[6].MetricCardProps]},{"a":1,"n":"TrendClass","is":true,"t":8,"pi":[{"n":"trend","pt":$n[6].TrendDirection,"ps":0}],"sn":"TrendClass","rt":$n[1].String,"p":[$n[6].TrendDirection]},{"a":1,"n":"TrendIcon","is":true,"t":8,"pi":[{"n":"trend","pt":$n[6].TrendDirection,"ps":0}],"sn":"TrendIcon","rt":Object,"p":[$n[6].TrendDirection]}]}; }, $n);
+    $m("Dashboard.Components.NavItem", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Badge","t":16,"rt":$n[1].Nullable$1(System.Int32),"g":{"a":2,"n":"get_Badge","t":8,"rt":$n[1].Nullable$1(System.Int32),"fg":"Badge","box":function ($v) { return H5.box($v, System.Int32, System.Nullable.toString, System.Nullable.getHashCode);}},"s":{"a":2,"n":"set_Badge","t":8,"p":[$n[1].Nullable$1(System.Int32)],"rt":$n[1].Void,"fs":"Badge"},"fn":"Badge"},{"a":2,"n":"Icon","t":16,"rt":Function,"g":{"a":2,"n":"get_Icon","t":8,"rt":Function,"fg":"Icon"},"s":{"a":2,"n":"set_Icon","t":8,"p":[Function],"rt":$n[1].Void,"fs":"Icon"},"fn":"Icon"},{"a":2,"n":"Id","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Id","t":8,"rt":$n[1].String,"fg":"Id"},"s":{"a":2,"n":"set_Id","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Id"},"fn":"Id"},{"a":2,"n":"Label","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Label","t":8,"rt":$n[1].String,"fg":"Label"},"s":{"a":2,"n":"set_Label","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Label"},"fn":"Label"},{"a":1,"backing":true,"n":"<Badge>k__BackingField","t":4,"rt":$n[1].Nullable$1(System.Int32),"sn":"Badge","box":function ($v) { return H5.box($v, System.Int32, System.Nullable.toString, System.Nullable.getHashCode);}},{"a":1,"backing":true,"n":"<Icon>k__BackingField","t":4,"rt":Function,"sn":"Icon"},{"a":1,"backing":true,"n":"<Id>k__BackingField","t":4,"rt":$n[1].String,"sn":"Id"},{"a":1,"backing":true,"n":"<Label>k__BackingField","t":4,"rt":$n[1].String,"sn":"Label"}]}; }, $n);
+    $m("Dashboard.Components.NavSection", function () { return {"att":1048577,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"Items","t":16,"rt":System.Array.type(Dashboard.Components.NavItem),"g":{"a":2,"n":"get_Items","t":8,"rt":System.Array.type(Dashboard.Components.NavItem),"fg":"Items"},"s":{"a":2,"n":"set_Items","t":8,"p":[System.Array.type(Dashboard.Components.NavItem)],"rt":$n[1].Void,"fs":"Items"},"fn":"Items"},{"a":2,"n":"Title","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Title","t":8,"rt":$n[1].String,"fg":"Title"},"s":{"a":2,"n":"set_Title","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Title"},"fn":"Title"},{"a":1,"backing":true,"n":"<Items>k__BackingField","t":4,"rt":System.Array.type(Dashboard.Components.NavItem),"sn":"Items"},{"a":1,"backing":true,"n":"<Title>k__BackingField","t":4,"rt":$n[1].String,"sn":"Title"}]}; }, $n);
+    $m("Dashboard.Components.Sidebar", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":1,"n":"GetInitials","is":true,"t":8,"pi":[{"n":"name","pt":$n[1].String,"ps":0}],"sn":"GetInitials","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"GetNavSections","is":true,"t":8,"sn":"GetNavSections","rt":System.Array.type(Dashboard.Components.NavSection)},{"a":2,"n":"Render","is":true,"t":8,"pi":[{"n":"activeView","pt":$n[1].String,"ps":0},{"n":"onNavigate","pt":Function,"ps":1},{"n":"collapsed","pt":$n[1].Boolean,"ps":2},{"n":"onToggle","pt":Function,"ps":3},{"n":"currentUser","dv":null,"o":true,"pt":$n[2].AuthUser,"ps":4},{"n":"onLogout","dv":null,"o":true,"pt":Function,"ps":5}],"sn":"Render","rt":Object,"p":[$n[1].String,Function,$n[1].Boolean,Function,$n[2].AuthUser,Function]},{"a":1,"n":"RenderFooter","is":true,"t":8,"pi":[{"n":"currentUser","pt":$n[2].AuthUser,"ps":0},{"n":"onLogout","pt":Function,"ps":1}],"sn":"RenderFooter","rt":Object,"p":[$n[2].AuthUser,Function]},{"a":1,"n":"RenderHeader","is":true,"t":8,"pi":[{"n":"collapsed","pt":$n[1].Boolean,"ps":0}],"sn":"RenderHeader","rt":Object,"p":[$n[1].Boolean]},{"a":1,"n":"RenderNavItem","is":true,"t":8,"pi":[{"n":"item","pt":$n[6].NavItem,"ps":0},{"n":"activeView","pt":$n[1].String,"ps":1},{"n":"onNavigate","pt":Function,"ps":2}],"sn":"RenderNavItem","rt":Object,"p":[$n[6].NavItem,$n[1].String,Function]},{"a":1,"n":"RenderSection","is":true,"t":8,"pi":[{"n":"section","pt":$n[6].NavSection,"ps":0},{"n":"activeView","pt":$n[1].String,"ps":1},{"n":"onNavigate","pt":Function,"ps":2}],"sn":"RenderSection","rt":Object,"p":[$n[6].NavSection,$n[1].String,Function]}]}; }, $n);
+    $m("Dashboard.Api.ApiClient", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Configure","is":true,"t":8,"pi":[{"n":"clinicalUrl","pt":$n[1].String,"ps":0},{"n":"schedulingUrl","pt":$n[1].String,"ps":1}],"sn":"Configure","rt":$n[1].Void,"p":[$n[1].String,$n[1].String]},{"a":2,"n":"ConfigureGatekeeper","is":true,"t":8,"pi":[{"n":"gatekeeperUrl","pt":$n[1].String,"ps":0}],"sn":"ConfigureGatekeeper","rt":$n[1].Void,"p":[$n[1].String]},{"a":2,"n":"ConfigureIcd10","is":true,"t":8,"pi":[{"n":"icd10Url","pt":$n[1].String,"ps":0}],"sn":"ConfigureIcd10","rt":$n[1].Void,"p":[$n[1].String]},{"a":2,"n":"CreatePatientAsync","is":true,"t":8,"pi":[{"n":"patient","pt":Object,"ps":0}],"sn":"CreatePatientAsync","rt":$n[5].Task$1(Object),"p":[Object]},{"a":1,"n":"EncodeUri","is":true,"t":8,"pi":[{"n":"value","pt":$n[1].String,"ps":0}],"sn":"EncodeUri","rt":$n[1].String,"p":[$n[1].String]},{"a":1,"n":"FetchClinicalAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[1].String,"ps":0}],"sn":"FetchClinicalAsync","rt":$n[5].Task$1(System.String),"p":[$n[1].String]},{"a":1,"n":"FetchIcd10Async","is":true,"t":8,"pi":[{"n":"url","pt":$n[1].String,"ps":0}],"sn":"FetchIcd10Async","rt":$n[5].Task$1(System.String),"p":[$n[1].String]},{"a":1,"n":"FetchSchedulingAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[1].String,"ps":0}],"sn":"FetchSchedulingAsync","rt":$n[5].Task$1(System.String),"p":[$n[1].String]},{"a":2,"n":"GetAppointmentAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[1].String,"ps":0}],"sn":"GetAppointmentAsync","rt":$n[5].Task$1(Object),"p":[$n[1].String]},{"a":2,"n":"GetAppointmentsAsync","is":true,"t":8,"sn":"GetAppointmentsAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":2,"n":"GetConditionsAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[1].String,"ps":0}],"sn":"GetConditionsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetEncountersAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[1].String,"ps":0}],"sn":"GetEncountersAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetIcd10BlocksAsync","is":true,"t":8,"pi":[{"n":"chapterId","pt":$n[1].String,"ps":0}],"sn":"GetIcd10BlocksAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetIcd10CategoriesAsync","is":true,"t":8,"pi":[{"n":"blockId","pt":$n[1].String,"ps":0}],"sn":"GetIcd10CategoriesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetIcd10ChaptersAsync","is":true,"t":8,"sn":"GetIcd10ChaptersAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":2,"n":"GetIcd10CodeAsync","is":true,"t":8,"pi":[{"n":"code","pt":$n[1].String,"ps":0}],"sn":"GetIcd10CodeAsync","rt":$n[5].Task$1(Object),"p":[$n[1].String]},{"a":2,"n":"GetIcd10CodesAsync","is":true,"t":8,"pi":[{"n":"categoryId","pt":$n[1].String,"ps":0}],"sn":"GetIcd10CodesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetMedicationsAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[1].String,"ps":0}],"sn":"GetMedicationsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetPatientAppointmentsAsync","is":true,"t":8,"pi":[{"n":"patientId","pt":$n[1].String,"ps":0}],"sn":"GetPatientAppointmentsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetPatientAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[1].String,"ps":0}],"sn":"GetPatientAsync","rt":$n[5].Task$1(Object),"p":[$n[1].String]},{"a":2,"n":"GetPatientsAsync","is":true,"t":8,"sn":"GetPatientsAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":2,"n":"GetPractitionerAppointmentsAsync","is":true,"t":8,"pi":[{"n":"practitionerId","pt":$n[1].String,"ps":0}],"sn":"GetPractitionerAppointmentsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"GetPractitionerAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[1].String,"ps":0}],"sn":"GetPractitionerAsync","rt":$n[5].Task$1(Object),"p":[$n[1].String]},{"a":2,"n":"GetPractitionersAsync","is":true,"t":8,"sn":"GetPractitionersAsync","rt":$n[5].Task$1(System.Array.type(Object))},{"a":1,"n":"ParseJson","is":true,"t":8,"pi":[{"n":"json","pt":$n[1].String,"ps":0}],"tpc":1,"tprm":["T"],"sn":"ParseJson","rt":System.Object,"p":[$n[1].String]},{"a":1,"n":"PostClinicalAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[1].String,"ps":0},{"n":"data","pt":$n[1].Object,"ps":1}],"sn":"PostClinicalAsync","rt":$n[5].Task$1(System.String),"p":[$n[1].String,$n[1].Object]},{"a":1,"n":"PostIcd10Async","is":true,"t":8,"pi":[{"n":"url","pt":$n[1].String,"ps":0},{"n":"data","pt":$n[1].Object,"ps":1}],"sn":"PostIcd10Async","rt":$n[5].Task$1(System.String),"p":[$n[1].String,$n[1].Object]},{"a":1,"n":"PutClinicalAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[1].String,"ps":0},{"n":"data","pt":$n[1].Object,"ps":1}],"sn":"PutClinicalAsync","rt":$n[5].Task$1(System.String),"p":[$n[1].String,$n[1].Object]},{"a":1,"n":"PutSchedulingAsync","is":true,"t":8,"pi":[{"n":"url","pt":$n[1].String,"ps":0},{"n":"data","pt":$n[1].Object,"ps":1}],"sn":"PutSchedulingAsync","rt":$n[5].Task$1(System.String),"p":[$n[1].String,$n[1].Object]},{"a":2,"n":"SearchAchiCodesAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[1].String,"ps":0},{"n":"limit","dv":20,"o":true,"pt":$n[1].Int32,"ps":1}],"sn":"SearchAchiCodesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String,$n[1].Int32]},{"a":2,"n":"SearchIcd10CodesAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[1].String,"ps":0},{"n":"limit","dv":20,"o":true,"pt":$n[1].Int32,"ps":1}],"sn":"SearchIcd10CodesAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String,$n[1].Int32]},{"a":2,"n":"SearchPatientsAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[1].String,"ps":0}],"sn":"SearchPatientsAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"SearchPractitionersAsync","is":true,"t":8,"pi":[{"n":"specialty","pt":$n[1].String,"ps":0}],"sn":"SearchPractitionersAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String]},{"a":2,"n":"SemanticSearchAsync","is":true,"t":8,"pi":[{"n":"query","pt":$n[1].String,"ps":0},{"n":"limit","dv":10,"o":true,"pt":$n[1].Int32,"ps":1},{"n":"includeAchi","dv":false,"o":true,"pt":$n[1].Boolean,"ps":2}],"sn":"SemanticSearchAsync","rt":$n[5].Task$1(System.Array.type(Object)),"p":[$n[1].String,$n[1].Int32,$n[1].Boolean]},{"a":2,"n":"UpdateAppointmentAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[1].String,"ps":0},{"n":"appointment","pt":$n[1].Object,"ps":1}],"sn":"UpdateAppointmentAsync","rt":$n[5].Task$1(Object),"p":[$n[1].String,$n[1].Object]},{"a":2,"n":"UpdatePatientAsync","is":true,"t":8,"pi":[{"n":"id","pt":$n[1].String,"ps":0},{"n":"patient","pt":Object,"ps":1}],"sn":"UpdatePatientAsync","rt":$n[5].Task$1(Object),"p":[$n[1].String,Object]},{"a":2,"n":"GatekeeperBaseUrl","is":true,"t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_GatekeeperBaseUrl","t":8,"rt":$n[1].String,"fg":"GatekeeperBaseUrl","is":true},"fn":"GatekeeperBaseUrl"},{"a":1,"n":"Token","is":true,"t":16,"rt":$n[1].String,"g":{"a":1,"n":"get_Token","t":8,"rt":$n[1].String,"fg":"Token","is":true},"fn":"Token"},{"a":1,"n":"_clinicalBaseUrl","is":true,"t":4,"rt":$n[1].String,"sn":"_clinicalBaseUrl"},{"a":1,"n":"_gatekeeperBaseUrl","is":true,"t":4,"rt":$n[1].String,"sn":"_gatekeeperBaseUrl"},{"a":1,"n":"_icd10BaseUrl","is":true,"t":4,"rt":$n[1].String,"sn":"_icd10BaseUrl"},{"a":1,"n":"_schedulingBaseUrl","is":true,"t":4,"rt":$n[1].String,"sn":"_schedulingBaseUrl"}]}; }, $n);
+    $m("Dashboard.Api.AuthUser", function () { return {"att":1048833,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"DisplayName","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_DisplayName","t":8,"rt":$n[1].String,"fg":"DisplayName"},"s":{"a":2,"n":"set_DisplayName","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"DisplayName"},"fn":"DisplayName"},{"a":2,"n":"Email","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Email","t":8,"rt":$n[1].String,"fg":"Email"},"s":{"a":2,"n":"set_Email","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Email"},"fn":"Email"},{"a":2,"n":"UserId","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_UserId","t":8,"rt":$n[1].String,"fg":"UserId"},"s":{"a":2,"n":"set_UserId","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"UserId"},"fn":"UserId"},{"a":1,"backing":true,"n":"<DisplayName>k__BackingField","t":4,"rt":$n[1].String,"sn":"DisplayName"},{"a":1,"backing":true,"n":"<Email>k__BackingField","t":4,"rt":$n[1].String,"sn":"Email"},{"a":1,"backing":true,"n":"<UserId>k__BackingField","t":4,"rt":$n[1].String,"sn":"UserId"}]}; }, $n);
+    $m("Dashboard.Api.Auth", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"Clear","is":true,"t":8,"sn":"Clear","rt":$n[1].Void},{"a":2,"n":"GetToken","is":true,"t":8,"sn":"GetToken","rt":$n[1].String},{"a":2,"n":"GetUser","is":true,"t":8,"sn":"GetUser","rt":$n[2].AuthUser},{"a":2,"n":"IsAuthenticated","is":true,"t":8,"sn":"IsAuthenticated","rt":$n[1].Boolean,"box":function ($v) { return H5.box($v, System.Boolean, System.Boolean.toString);}},{"a":2,"n":"SetToken","is":true,"t":8,"pi":[{"n":"token","pt":$n[1].String,"ps":0}],"sn":"SetToken","rt":$n[1].Void,"p":[$n[1].String]},{"a":2,"n":"SetUser","is":true,"t":8,"pi":[{"n":"user","pt":$n[2].AuthUser,"ps":0}],"sn":"SetUser","rt":$n[1].Void,"p":[$n[2].AuthUser]},{"a":1,"n":"TokenKey","is":true,"t":4,"rt":$n[1].String,"sn":"TokenKey"},{"a":1,"n":"UserKey","is":true,"t":4,"rt":$n[1].String,"sn":"UserKey"}]}; }, $n);
+    $m("Dashboard.Api.PasskeyAuthResult", function () { return {"att":1048833,"a":2,"m":[{"a":2,"isSynthetic":true,"n":".ctor","t":1,"sn":"ctor"},{"a":2,"n":"DisplayName","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_DisplayName","t":8,"rt":$n[1].String,"fg":"DisplayName"},"s":{"a":2,"n":"set_DisplayName","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"DisplayName"},"fn":"DisplayName"},{"a":2,"n":"Email","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Email","t":8,"rt":$n[1].String,"fg":"Email"},"s":{"a":2,"n":"set_Email","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Email"},"fn":"Email"},{"a":2,"n":"Token","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_Token","t":8,"rt":$n[1].String,"fg":"Token"},"s":{"a":2,"n":"set_Token","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"Token"},"fn":"Token"},{"a":2,"n":"UserId","t":16,"rt":$n[1].String,"g":{"a":2,"n":"get_UserId","t":8,"rt":$n[1].String,"fg":"UserId"},"s":{"a":2,"n":"set_UserId","t":8,"p":[$n[1].String],"rt":$n[1].Void,"fs":"UserId"},"fn":"UserId"},{"a":1,"backing":true,"n":"<DisplayName>k__BackingField","t":4,"rt":$n[1].String,"sn":"DisplayName"},{"a":1,"backing":true,"n":"<Email>k__BackingField","t":4,"rt":$n[1].String,"sn":"Email"},{"a":1,"backing":true,"n":"<Token>k__BackingField","t":4,"rt":$n[1].String,"sn":"Token"},{"a":1,"backing":true,"n":"<UserId>k__BackingField","t":4,"rt":$n[1].String,"sn":"UserId"}]}; }, $n);
+    $m("Dashboard.Api.GatekeeperClient", function () { return {"att":1048961,"a":2,"s":true,"m":[{"a":2,"n":"LoginAsync","is":true,"t":8,"sn":"LoginAsync","rt":$n[5].Task$1(Dashboard.Api.PasskeyAuthResult)},{"a":2,"n":"LogoutAsync","is":true,"t":8,"sn":"LogoutAsync","rt":$n[5].Task},{"a":1,"n":"ParseAndPersist","is":true,"t":8,"pi":[{"n":"json","pt":$n[1].String,"ps":0}],"sn":"ParseAndPersist","rt":$n[2].PasskeyAuthResult,"p":[$n[1].String]},{"a":2,"n":"RegisterAsync","is":true,"t":8,"pi":[{"n":"email","pt":$n[1].String,"ps":0},{"n":"displayName","pt":$n[1].String,"ps":1}],"sn":"RegisterAsync","rt":$n[5].Task$1(Dashboard.Api.PasskeyAuthResult),"p":[$n[1].String,$n[1].String]}]}; }, $n);
 });

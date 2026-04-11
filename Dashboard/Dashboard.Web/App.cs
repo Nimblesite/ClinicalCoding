@@ -1,15 +1,19 @@
+using System;
+using Dashboard.Api;
 using Dashboard.Components;
 using Dashboard.Pages;
 using Dashboard.React;
+using H5;
 using static Dashboard.React.Elements;
 using static Dashboard.React.Hooks;
 
 namespace Dashboard
 {
     /// <summary>
-    /// Application state class.
+    /// Application state. Plain mutable class for H5 compatibility — records
+    /// with init setters depend on IsExternalInit which H5 may not ship.
     /// </summary>
-    public class AppState
+    public sealed class AppState
     {
         /// <summary>Active view identifier.</summary>
         public string ActiveView { get; set; }
@@ -28,6 +32,26 @@ namespace Dashboard
 
         /// <summary>Appointment ID being edited (null if not editing).</summary>
         public string EditingAppointmentId { get; set; }
+
+        /// <summary>Whether the user has a valid Gatekeeper token.</summary>
+        public bool IsAuthenticated { get; set; }
+
+        /// <summary>Authenticated user, or null when signed out.</summary>
+        public AuthUser CurrentUser { get; set; }
+
+        /// <summary>Returns a shallow copy of this state, suitable as the
+        /// base for setState mutations.</summary>
+        public AppState Clone() => new AppState
+        {
+            ActiveView = ActiveView,
+            SidebarCollapsed = SidebarCollapsed,
+            SearchQuery = SearchQuery,
+            NotificationCount = NotificationCount,
+            EditingPatientId = EditingPatientId,
+            EditingAppointmentId = EditingAppointmentId,
+            IsAuthenticated = IsAuthenticated,
+            CurrentUser = CurrentUser,
+        };
     }
 
     /// <summary>
@@ -49,11 +73,37 @@ namespace Dashboard
                     NotificationCount = 3,
                     EditingPatientId = null,
                     EditingAppointmentId = null,
+                    IsAuthenticated = Auth.IsAuthenticated(),
+                    CurrentUser = Auth.GetUser(),
                 }
             );
 
             var state = stateResult.State;
             var setState = stateResult.SetState;
+
+            if (!state.IsAuthenticated)
+            {
+                return AsComponent(() => LoginPage.Render(user =>
+                {
+                    var next = state.Clone();
+                    next.IsAuthenticated = true;
+                    next.CurrentUser = user;
+                    next.ActiveView = "dashboard";
+                    setState(next);
+                }));
+            }
+
+            async void HandleLogout()
+            {
+                await GatekeeperClient.LogoutAsync();
+                var next = state.Clone();
+                next.IsAuthenticated = false;
+                next.CurrentUser = null;
+                next.ActiveView = "dashboard";
+                next.EditingPatientId = null;
+                next.EditingAppointmentId = null;
+                setState(next);
+            }
 
             return Div(
                 className: "app",
@@ -64,31 +114,21 @@ namespace Dashboard
                         activeView: state.ActiveView,
                         onNavigate: view =>
                         {
-                            var newState = new AppState
-                            {
-                                ActiveView = view,
-                                SidebarCollapsed = state.SidebarCollapsed,
-                                SearchQuery = state.SearchQuery,
-                                NotificationCount = state.NotificationCount,
-                                EditingPatientId = null,
-                                EditingAppointmentId = null,
-                            };
+                            var newState = state.Clone();
+                            newState.ActiveView = view;
+                            newState.EditingPatientId = null;
+                            newState.EditingAppointmentId = null;
                             setState(newState);
                         },
                         collapsed: state.SidebarCollapsed,
                         onToggle: () =>
                         {
-                            var newState = new AppState
-                            {
-                                ActiveView = state.ActiveView,
-                                SidebarCollapsed = !state.SidebarCollapsed,
-                                SearchQuery = state.SearchQuery,
-                                NotificationCount = state.NotificationCount,
-                                EditingPatientId = state.EditingPatientId,
-                                EditingAppointmentId = state.EditingAppointmentId,
-                            };
+                            var newState = state.Clone();
+                            newState.SidebarCollapsed = !state.SidebarCollapsed;
                             setState(newState);
-                        }
+                        },
+                        currentUser: state.CurrentUser,
+                        onLogout: HandleLogout
                     ),
                     // Main content wrapper
                     Div(
@@ -101,15 +141,8 @@ namespace Dashboard
                                 searchQuery: state.SearchQuery,
                                 onSearchChange: query =>
                                 {
-                                    var newState = new AppState
-                                    {
-                                        ActiveView = state.ActiveView,
-                                        SidebarCollapsed = state.SidebarCollapsed,
-                                        SearchQuery = query,
-                                        NotificationCount = state.NotificationCount,
-                                        EditingPatientId = state.EditingPatientId,
-                                        EditingAppointmentId = state.EditingAppointmentId,
-                                    };
+                                    var newState = state.Clone();
+                                    newState.SearchQuery = query;
                                     setState(newState);
                                 },
                                 notificationCount: state.NotificationCount
@@ -150,29 +183,37 @@ namespace Dashboard
             return "Clinical Coding";
         }
 
-        private static ReactElement RenderPage(AppState state, System.Action<AppState> setState)
+        /// <summary>
+        /// Wraps a parameterless render delegate as a React function component element.
+        /// Hooks (UseState, UseEffect) require a render-phase context — eagerly invoking
+        /// page Render() methods violates the rules of hooks.
+        /// </summary>
+        private static ReactElement AsComponent(Func<ReactElement> render) =>
+            (ReactElement)Script.Call<object>(
+                "React.createElement",
+                render
+            );
+
+        private static ReactElement RenderPage(AppState state, Action<AppState> setState)
         {
             var view = state.ActiveView;
 
             // Handle editing patient
             if (view == "patients" && state.EditingPatientId != null)
             {
-                return EditPatientPage.Render(
-                    state.EditingPatientId,
+                var editingId = state.EditingPatientId;
+                var snapshot = state;
+                return AsComponent(() => EditPatientPage.Render(
+                    editingId,
                     () =>
                     {
-                        var newState = new AppState
-                        {
-                            ActiveView = "patients",
-                            SidebarCollapsed = state.SidebarCollapsed,
-                            SearchQuery = state.SearchQuery,
-                            NotificationCount = state.NotificationCount,
-                            EditingPatientId = null,
-                            EditingAppointmentId = null,
-                        };
-                        setState(newState);
+                        var next = snapshot.Clone();
+                        next.ActiveView = "patients";
+                        next.EditingPatientId = null;
+                        next.EditingAppointmentId = null;
+                        setState(next);
                     }
-                );
+                ));
             }
 
             // Handle editing appointment
@@ -181,77 +222,63 @@ namespace Dashboard
                 && state.EditingAppointmentId != null
             )
             {
-                return EditAppointmentPage.Render(
-                    state.EditingAppointmentId,
+                var editingId = state.EditingAppointmentId;
+                var snapshot = state;
+                var returnView = view;
+                return AsComponent(() => EditAppointmentPage.Render(
+                    editingId,
                     () =>
                     {
-                        var newState = new AppState
-                        {
-                            ActiveView = view,
-                            SidebarCollapsed = state.SidebarCollapsed,
-                            SearchQuery = state.SearchQuery,
-                            NotificationCount = state.NotificationCount,
-                            EditingPatientId = null,
-                            EditingAppointmentId = null,
-                        };
-                        setState(newState);
+                        var next = snapshot.Clone();
+                        next.ActiveView = returnView;
+                        next.EditingPatientId = null;
+                        next.EditingAppointmentId = null;
+                        setState(next);
                     }
-                );
+                ));
             }
 
             if (view == "dashboard")
-                return DashboardPage.Render();
+                return AsComponent(DashboardPage.Render);
             if (view == "clinical-coding")
-                return ClinicalCodingPage.Render();
+                return AsComponent(ClinicalCodingPage.Render);
             if (view == "patients")
             {
-                return PatientsPage.Render(patientId =>
+                var snapshot = state;
+                return AsComponent(() => PatientsPage.Render(patientId =>
                 {
-                    var newState = new AppState
-                    {
-                        ActiveView = "patients",
-                        SidebarCollapsed = state.SidebarCollapsed,
-                        SearchQuery = state.SearchQuery,
-                        NotificationCount = state.NotificationCount,
-                        EditingPatientId = patientId,
-                        EditingAppointmentId = null,
-                    };
-                    setState(newState);
-                });
+                    var next = snapshot.Clone();
+                    next.ActiveView = "patients";
+                    next.EditingPatientId = patientId;
+                    next.EditingAppointmentId = null;
+                    setState(next);
+                }));
             }
             if (view == "practitioners")
-                return PractitionersPage.Render();
+                return AsComponent(PractitionersPage.Render);
             if (view == "appointments")
             {
-                return AppointmentsPage.Render(appointmentId =>
+                var snapshot = state;
+                return AsComponent(() => AppointmentsPage.Render(appointmentId =>
                 {
-                    var newState = new AppState
-                    {
-                        ActiveView = "appointments",
-                        SidebarCollapsed = state.SidebarCollapsed,
-                        SearchQuery = state.SearchQuery,
-                        NotificationCount = state.NotificationCount,
-                        EditingPatientId = null,
-                        EditingAppointmentId = appointmentId,
-                    };
-                    setState(newState);
-                });
+                    var next = snapshot.Clone();
+                    next.ActiveView = "appointments";
+                    next.EditingPatientId = null;
+                    next.EditingAppointmentId = appointmentId;
+                    setState(next);
+                }));
             }
             if (view == "calendar")
             {
-                return CalendarPage.Render(appointmentId =>
+                var snapshot = state;
+                return AsComponent(() => CalendarPage.Render(appointmentId =>
                 {
-                    var newState = new AppState
-                    {
-                        ActiveView = "calendar",
-                        SidebarCollapsed = state.SidebarCollapsed,
-                        SearchQuery = state.SearchQuery,
-                        NotificationCount = state.NotificationCount,
-                        EditingPatientId = null,
-                        EditingAppointmentId = appointmentId,
-                    };
-                    setState(newState);
-                });
+                    var next = snapshot.Clone();
+                    next.ActiveView = "calendar";
+                    next.EditingPatientId = null;
+                    next.EditingAppointmentId = appointmentId;
+                    setState(next);
+                }));
             }
             if (view == "encounters")
                 return RenderPlaceholderPage("Encounters", "Manage patient encounters and visits");

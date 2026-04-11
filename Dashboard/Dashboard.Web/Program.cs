@@ -1,3 +1,4 @@
+using System;
 using Dashboard.Api;
 using Dashboard.React;
 using H5;
@@ -25,26 +26,31 @@ namespace Dashboard
             var icd10Url = GetConfigValue("ICD10_API_URL", "http://localhost:5090");
             ApiClient.ConfigureIcd10(icd10Url);
 
-            // Set authentication token - single token with both clinician and scheduler roles
-            // Token is inlined to avoid H5 static initialization timing issues
-            // All-zeros signing key, expires 2035
-            var authToken = GetConfigValue(
-                "AUTH_TOKEN",
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkYXNoYm9hcmQtdXNlciIsImp0aSI6IjE1MTMwYTg0LTY4NTktNGNmMy05MjA3LTMyMGJhYWRiNzhjNSIsInJvbGVzIjpbImNsaW5pY2lhbiIsInNjaGVkdWxlciJdLCJleHAiOjIwODE5MjIxMDQsImlhdCI6MTc2NjM4OTMwNH0.mk66XyKaLWukzZOmGNwss74lSlXobt6Em0NoEbXRdKU"
-            );
-            ApiClient.SetTokens(authToken, authToken);
+            // Configure Gatekeeper (auth) endpoint. Tokens are minted by
+            // Gatekeeper after a successful passkey ceremony and stored in
+            // localStorage by Auth — there is no hardcoded dev JWT.
+            var gatekeeperUrl = GetConfigValue("GATEKEEPER_API_URL", "http://localhost:5002");
+            ApiClient.ConfigureGatekeeper(gatekeeperUrl);
 
             // Log startup
             Log("Nimblesite Clinical Coding Platform starting...");
             Log("Clinical API: " + clinicalUrl);
             Log("Scheduling API: " + schedulingUrl);
             Log("ICD-10 API: " + icd10Url);
+            Log("Gatekeeper API: " + gatekeeperUrl);
 
             // Hide loading screen
             HideLoadingScreen();
 
-            // Render the React application
-            ReactInterop.RenderApp(App.Render());
+            // Render the React application.
+            // IMPORTANT: hooks (UseState etc.) must run inside a React render phase,
+            // so pass App.Render as a function component to React.createElement rather
+            // than invoking it eagerly.
+            var appComponent = Script.Call<object>(
+                "React.createElement",
+                (Func<ReactElement>)App.Render
+            );
+            ReactInterop.RenderApp((ReactElement)appComponent);
 
             Log("Dashboard initialized successfully!");
         }

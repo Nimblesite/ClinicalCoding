@@ -455,7 +455,17 @@ namespace Dashboard.React
                 style = style,
                 onClick = clickHandler,
             };
-            return Script.Call<ReactElement>("React.createElement", tag, props, children);
+            // Spread children as positional arguments via apply() so React assigns
+            // implicit positional keys, avoiding the "unique key prop" warning cascade.
+            var childCount = children == null ? 0 : children.Length;
+            var args = new object[childCount + 2];
+            args[0] = tag;
+            args[1] = props;
+            for (var i = 0; i < childCount; i++)
+            {
+                args[i + 2] = children[i];
+            }
+            return Script.Write<ReactElement>("React.createElement.apply(React, args)");
         }
     }
 }

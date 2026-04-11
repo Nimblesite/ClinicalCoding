@@ -99,3 +99,5 @@ project.lock.json
 
 *.nupkg
 *.generated.sql
+
+/*.png
