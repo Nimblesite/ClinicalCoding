@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker nuke _reclaim-ports
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -114,6 +114,22 @@ else
 	$(RM) TestResults
 endif
 
+## nuke: Absolute zero -- destroy both docker stacks, their volumes, their images,
+##        AND all local build artifacts. Next `make start-docker` rebuilds from scratch.
+nuke: clean
+	@echo "==> NUKE: full docker stack + db-only stack + volumes + images"
+	-cd docker && docker compose down -v --rmi all --remove-orphans 2>/dev/null
+	-docker compose -f $(DB_COMPOSE_FILE) down -v --rmi all --remove-orphans 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=healthcaresamples") 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=docker-app") 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=docker-dashboard") 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=docker-db") 2>/dev/null
+	-docker volume rm -f docker_db-data 2>/dev/null
+	-docker volume rm -f healthcaresamples_db-data 2>/dev/null
+	-docker image rm -f docker-app docker-dashboard 2>/dev/null
+	$(RM) docker/dashboard-build
+	@echo "==> Nuked. Run 'make start-docker' for a cold start."
+
 ## ci: lint + test + build (full CI simulation -- test includes coverage checks)
 ci: lint test build
 
@@ -174,15 +190,36 @@ db-migrate: db-up
 # RUN THE STACK
 # =============================================================================
 
+# Ports the stack binds on the host. Used by _reclaim-ports to forcibly
+# evict any stale containers or host processes holding them before we bring
+# the compose stack up.
+STACK_PORTS := 5002 5080 5001 5090 8000 5173 5432
+
+## _reclaim-ports: Kill anything (docker containers or host procs) bound to STACK_PORTS
+_reclaim-ports:
+	@echo "==> Reclaiming stack ports: $(STACK_PORTS)"
+	@for port in $(STACK_PORTS); do \
+	  cids=$$(docker ps -aq --filter "publish=$$port" 2>/dev/null); \
+	  if [ -n "$$cids" ]; then \
+	    echo "  [:$$port] killing containers: $$cids"; \
+	    docker rm -f $$cids >/dev/null 2>&1 || true; \
+	  fi; \
+	  pids=$$(lsof -nP -iTCP:$$port -sTCP:LISTEN -t 2>/dev/null || true); \
+	  if [ -n "$$pids" ]; then \
+	    echo "  [:$$port] killing host PIDs: $$pids"; \
+	    kill -9 $$pids 2>/dev/null || true; \
+	  fi; \
+	done
+
 ## start-docker: Build the dashboard locally then start the full docker compose stack
-##   Usage: make start-docker [BUILD=1]
-##     BUILD=1   force image rebuild (passes --build to docker compose up)
-start-docker:
+##   Always rebuilds images so Dockerfile / start-services.sh changes can't be masked
+##   by a stale cached image.
+start-docker: _reclaim-ports
 	@echo "==> Building Dashboard locally (H5 requires native build)..."
 	cd Dashboard/Dashboard.Web && \
 	  dotnet publish -c Release -o ../../docker/dashboard-build --nologo -v q
-	@echo "==> Starting docker stack..."
-	cd docker && docker compose up $(if $(BUILD),--build,)
+	@echo "==> Starting docker stack (forced rebuild)..."
+	cd docker && docker compose up --build
 
 # Embedded runner for the local dev stack. Inlined as a `define` block so the
 # orchestration (background processes, trap-based cleanup, log prefixing) runs

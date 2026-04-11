@@ -17,8 +17,8 @@ services:
 
   app:
     build:
-      context: ../..
-      dockerfile: Samples/docker/Dockerfile.app
+      context: ..
+      dockerfile: docker/Dockerfile.app
     environment:
       ConnectionStrings__Postgres: Host=db;Database=gatekeeper;Username=gatekeeper;Password=${DB_PASSWORD:-changeme}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
@@ -47,8 +47,8 @@ services:
 
   dashboard:
     build:
-      context: ../..
-      dockerfile: Samples/docker/Dockerfile.dashboard
+      context: ..
+      dockerfile: docker/Dockerfile.dashboard
     ports:
       - "5173:80"
     depends_on:
