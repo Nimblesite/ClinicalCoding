@@ -1,40 +1,74 @@
-import { createHashRouter, type RouteObject } from 'react-router-dom';
-import { AuthGate } from './components/auth-gate';
+import { type ReactElement } from 'react';
+import { useAuth } from './auth/use-auth';
 import { AppShell } from './components/app-shell';
+import { useRoute } from './router/hash-router';
 import { AppointmentsPage } from './pages/appointments-page';
 import { CalendarPage } from './pages/calendar-page';
 import { ClinicalCodingPage } from './pages/clinical-coding-page';
 import { DashboardPage } from './pages/dashboard-page';
 import { EditAppointmentPage } from './pages/edit-appointment-page';
 import { EditPatientPage } from './pages/edit-patient-page';
+import { EditPractitionerPage } from './pages/edit-practitioner-page';
 import { LoginPage } from './pages/login-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { PatientsPage } from './pages/patients-page';
 import { PractitionersPage } from './pages/practitioners-page';
+import { SyncPage } from './pages/sync-page';
 
-const routes: RouteObject[] = [
-  { path: '/login', element: <LoginPage /> },
-  {
-    path: '/',
-    element: (
-      <AuthGate>
-        <AppShell />
-      </AuthGate>
-    ),
-    children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'patients', element: <PatientsPage /> },
-      { path: 'patients/new', element: <EditPatientPage /> },
-      { path: 'patients/edit/:id', element: <EditPatientPage /> },
-      { path: 'practitioners', element: <PractitionersPage /> },
-      { path: 'appointments', element: <AppointmentsPage /> },
-      { path: 'appointments/new', element: <EditAppointmentPage /> },
-      { path: 'appointments/edit/:id', element: <EditAppointmentPage /> },
-      { path: 'calendar', element: <CalendarPage /> },
-      { path: 'coding', element: <ClinicalCodingPage /> },
-    ],
-  },
-  { path: '*', element: <NotFoundPage /> },
-];
+const renderPage = (name: string, params: ReadonlyArray<string>): ReactElement => {
+  switch (name) {
+    case '':
+    case 'dashboard': {
+      return <DashboardPage />;
+    }
+    case 'patients': {
+      if (params[0] === 'edit' && params[1] !== undefined) {
+        return <EditPatientPage id={params[1]} />;
+      }
+      if (params[0] === 'new') {
+        return <EditPatientPage />;
+      }
+      return <PatientsPage />;
+    }
+    case 'practitioners': {
+      if (params[0] === 'edit' && params[1] !== undefined) {
+        return <EditPractitionerPage id={params[1]} />;
+      }
+      return <PractitionersPage />;
+    }
+    case 'appointments': {
+      if (params[0] === 'edit' && params[1] !== undefined) {
+        return <EditAppointmentPage id={params[1]} />;
+      }
+      if (params[0] === 'new') {
+        return <EditAppointmentPage />;
+      }
+      return <AppointmentsPage />;
+    }
+    case 'calendar': {
+      return <CalendarPage />;
+    }
+    case 'clinical-coding':
+    case 'coding': {
+      return <ClinicalCodingPage />;
+    }
+    case 'sync': {
+      return <SyncPage />;
+    }
+    default: {
+      return <NotFoundPage />;
+    }
+  }
+};
 
-export const router = createHashRouter(routes);
+export const Routes = (): ReactElement => {
+  const { isAuthenticated } = useAuth();
+  const route = useRoute();
+  if (!isAuthenticated || route.name === 'login') {
+    if (isAuthenticated && route.name === 'login') {
+      globalThis.location.hash = 'dashboard';
+    }
+    return <LoginPage />;
+  }
+  return <AppShell>{renderPage(route.name, route.params)}</AppShell>;
+};

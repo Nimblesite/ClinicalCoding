@@ -1,22 +1,28 @@
-import type { ReactElement } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import type { ReactElement, ReactNode } from 'react';
 import { useAuth } from '../auth/use-auth';
+import { useRoute } from '../router/hash-router';
 import { Header } from './header';
 import { Sidebar } from './sidebar';
 
 const TITLES: Readonly<Record<string, string>> = {
-  '/': 'Dashboard',
-  '/patients': 'Patients',
-  '/practitioners': 'Practitioners',
-  '/appointments': 'Appointments',
-  '/calendar': 'Calendar',
-  '/coding': 'Clinical Coding',
+  dashboard: 'Dashboard',
+  patients: 'Patients',
+  practitioners: 'Practitioners',
+  appointments: 'Appointments',
+  calendar: 'Calendar',
+  coding: 'Clinical Coding',
+  'clinical-coding': 'Clinical Coding',
+  sync: 'Sync Dashboard',
 };
 
-export const AppShell = (): ReactElement => {
+interface AppShellProps {
+  readonly children: ReactNode;
+}
+
+export const AppShell = ({ children }: AppShellProps): ReactElement => {
   const { logout } = useAuth();
-  const location = useLocation();
-  const title = TITLES[location.pathname] ?? 'Nimblesite';
+  const route = useRoute();
+  const title = TITLES[route.name] ?? 'Nimblesite';
   return (
     <div className="app">
       <Sidebar
@@ -26,9 +32,7 @@ export const AppShell = (): ReactElement => {
       />
       <div className="app-main">
         <Header title={title} />
-        <div className="app-content">
-          <Outlet />
-        </div>
+        <div className="app-content">{children}</div>
       </div>
     </div>
   );

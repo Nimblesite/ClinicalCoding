@@ -1,22 +1,24 @@
-import type { ReactElement } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, type ReactElement } from 'react';
 import { PatientForm } from '../forms/patient-form';
 import type { PatientFormValues } from '../forms/schemas';
 import { usePatient } from '../hooks/use-patients';
 import { useSavePatient } from '../hooks/use-update-patient';
+import { navigate } from '../router/hash-router';
 
-export const EditPatientPage = (): ReactElement => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+interface EditPatientPageProps {
+  readonly id?: string;
+}
+
+export const EditPatientPage = ({ id }: EditPatientPageProps): ReactElement => {
   const { data, isLoading } = usePatient(id);
   const save = useSavePatient();
+  const [success, setSuccess] = useState(false);
 
   if (isLoading) return <div className="page">Loading patient…</div>;
 
   const handleSubmit = (values: PatientFormValues): void => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- IIFE handles the async mutation
-    ;(async (): Promise<void> => {
-      await save.mutateAsync({
+    save
+      .mutateAsync({
         id,
         patient: {
           GivenName: values.GivenName,
@@ -27,17 +29,24 @@ export const EditPatientPage = (): ReactElement => {
             ? { BirthDate: values.BirthDate }
             : {}),
         },
-      });
-      navigate('/patients');
-    })();
+      })
+      .then(() => {
+        setSuccess(true);
+        globalThis.setTimeout(() => {
+          navigate('patients');
+        }, 250);
+      })
+      .catch(() => undefined);
   };
 
   return (
-    <section className="page">
+    <section className="page" data-testid="edit-patient-page">
       <h2>{id === undefined ? 'Add patient' : 'Edit patient'}</h2>
-      {/* eslint-disable-next-line react/jsx-no-leaked-render, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- save.error check prevents leaked render */}
-      {save.isError && save.error && (
-        <div className="alert alert-error">{save.error.message}</div>
+      {save.isError && <div className="alert alert-error">{save.error.message}</div>}
+      {success && (
+        <div className="alert alert-success" data-testid="edit-success">
+          Patient updated successfully
+        </div>
       )}
       <PatientForm
         {...(data !== undefined ? { initial: data } : {})}

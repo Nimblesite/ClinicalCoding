@@ -39,13 +39,23 @@ export const PatientForm = ({ initial, onSubmit, submitLabel }: PatientFormProps
       <label className="input-label" htmlFor="given">
         Given Name
       </label>
-      <input id="given" className="input" {...register('GivenName')} />
+      <input
+        id="given"
+        data-testid="edit-given-name"
+        className="input"
+        {...register('GivenName')}
+      />
       {errors.GivenName !== undefined && <p className="form-error">{errors.GivenName.message}</p>}
 
       <label className="input-label" htmlFor="family">
         Family Name
       </label>
-      <input id="family" className="input" {...register('FamilyName')} />
+      <input
+        id="family"
+        data-testid="edit-family-name"
+        className="input"
+        {...register('FamilyName')}
+      />
       {errors.FamilyName !== undefined && <p className="form-error">{errors.FamilyName.message}</p>}
 
       <label className="input-label" htmlFor="gender">
@@ -61,7 +71,12 @@ export const PatientForm = ({ initial, onSubmit, submitLabel }: PatientFormProps
         <input type="checkbox" {...register('Active')} /> Active
       </label>
 
-      <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+      <button
+        type="submit"
+        data-testid="save-patient"
+        className="btn btn-primary"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? 'Saving…' : submitLabel}
       </button>
     </form>

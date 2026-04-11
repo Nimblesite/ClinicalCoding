@@ -1,6 +1,6 @@
-import type { ReactElement } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useState, type ReactElement } from 'react';
 import { useAuth } from '../auth/use-auth';
+import { useRoute } from '../router/hash-router';
 
 interface SidebarProps {
   readonly onLogout: () => void;
@@ -11,16 +11,19 @@ const NAV_ITEMS: ReadonlyArray<{
   readonly label: string;
   readonly icon: string;
 }> = [
-  { to: '/', label: 'Dashboard', icon: 'event_note' },
-  { to: '/patients', label: 'Patients', icon: 'group' },
-  { to: '/practitioners', label: 'Practitioners', icon: 'medical_services' },
-  { to: '/appointments', label: 'Appointments', icon: 'calendar_today' },
-  { to: '/calendar', label: 'Calendar', icon: 'event' },
-  { to: '/coding', label: 'Clinical Coding', icon: 'terminal' },
+  { to: 'dashboard', label: 'Dashboard', icon: 'event_note' },
+  { to: 'patients', label: 'Patients', icon: 'group' },
+  { to: 'practitioners', label: 'Practitioners', icon: 'medical_services' },
+  { to: 'appointments', label: 'Appointments', icon: 'calendar_today' },
+  { to: 'calendar', label: 'Schedule', icon: 'event' },
+  { to: 'clinical-coding', label: 'Clinical Coding', icon: 'terminal' },
+  { to: 'sync', label: 'Sync', icon: 'sync' },
 ];
 
 export const Sidebar = ({ onLogout }: SidebarProps): ReactElement => {
   const { currentUser } = useAuth();
+  const route = useRoute();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -33,30 +36,53 @@ export const Sidebar = ({ onLogout }: SidebarProps): ReactElement => {
         </div>
       </div>
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-          >
-            <span className="material-symbols-outlined">{item.icon}</span>
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const active =
+            route.name === item.to ||
+            (item.to === 'clinical-coding' && route.name === 'coding') ||
+            (item.to === 'dashboard' && route.name === '');
+          return (
+            <a
+              key={item.to}
+              className={`sidebar-link${active ? ' active' : ''}`}
+              href={`#${item.to}`}
+            >
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span>{item.label}</span>
+            </a>
+          );
+        })}
       </nav>
       <div className="sidebar-footer">
-        <div className="sidebar-user">
+        <button
+          className="sidebar-user-menu"
+          data-testid="user-menu-button"
+          type="button"
+          onClick={() => {
+            setMenuOpen((o) => !o);
+          }}
+        >
           <div className="avatar">{currentUser?.displayName.slice(0, 1) ?? '?'}</div>
           <div>
             <p className="sidebar-user-name">{currentUser?.displayName ?? 'Unknown'}</p>
             <p className="sidebar-user-email">{currentUser?.email ?? ''}</p>
           </div>
-        </div>
-        <button type="button" className="btn btn-secondary" onClick={onLogout}>
-          <span className="material-symbols-outlined">logout</span>
-          Sign out
         </button>
+        {menuOpen && (
+          <div className="user-dropdown" data-testid="user-dropdown">
+            <p className="user-dropdown-name">{currentUser?.displayName ?? ''}</p>
+            <p className="user-dropdown-email">{currentUser?.email ?? ''}</p>
+            <button
+              className="btn btn-secondary"
+              data-testid="logout-button"
+              type="button"
+              onClick={onLogout}
+            >
+              <span className="material-symbols-outlined">logout</span>
+              Sign out
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

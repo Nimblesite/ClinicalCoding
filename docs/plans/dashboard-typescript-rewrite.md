@@ -13,36 +13,10 @@ remain in the .sln. The TypeScript rewrite lives at a parallel path
 `Dashboard/dashboard-ts/`. The two coexist until the user explicitly
 green-lights the legacy delete (post-parity).
 
-## [DASH-TS-PLAN-TODO] Live TODO checklist
+## [DASH-TS-PLAN-TODO] (moved)
 
-User answers to open questions (locked in): cognitive complexity 15,
-**TS path is `Dashboard/dashboard-ts/`** (NOT `Dashboard.Web`),
-`functional/no-let` ON, `no-default-export` ON with entry-point override,
-`Dashboard.Integration.Tests/` PRESERVED.
-
-- [x] **Phase 0** — Coexistence wiring (NO deletes)
-  - [x] Create `Dashboard/dashboard-ts/` (Cline scaffolded)
-  - [x] Add Makefile targets `dashboard-ts-build/dev/test` alongside legacy
-  - [x] Update `.gitignore` for `Dashboard/dashboard-ts/{node_modules,dist,coverage}`
-  - [x] Update `CLAUDE.md` repo structure to mention both
-  - [ ] Commit `feat(dashboard): scaffold parallel TS rewrite`
-- [x] **Phase 1** — Scaffold Vite+TS+React, typecheck + build GREEN
-- [x] **Phase 2** — Foundation: api/{client,config,clinical,scheduling,icd10,gatekeeper}, auth/{storage,context,webauthn}, lib/{logger,error-handlers}, types/{auth,fhir,icd10}, 12 unit tests GREEN
-- [x] **Phase 3** — Shell: AuthProvider, hash router, LoginPage (passkey), Sidebar, Header, AppShell, route guard
-- [x] **Phase 4** — Read-only pages: dashboard, patients, practitioners, appointments, calendar + use-* hooks
-- [x] **Phase 5** — Edit pages: edit-patient, edit-appointment with RHF + Zod + mutations
-- [x] **Phase 6** — Clinical Coding: 3-mode search (AI/keyword/lookup), ACHI toggle, result list, detail panel, copy button
-- [ ] **Phase 7** — Final `pnpm check` + parity + commit
-- [ ] **Phase 1** — Scaffold Vite+TS+React, lints clean on Hello world
-- [ ] **Phase 2** — Foundation: api/auth/lib/types + 100% unit coverage
-- [ ] **Phase 3** — Shell: routing + auth gate + real passkey login
-- [ ] **Phase 4** — Read-only pages (dashboard, patients, practitioners, appts, calendar)
-- [ ] **Phase 5** — Edit pages (patient, appointment) with RHF+Zod
-- [ ] **Phase 6** — Clinical Coding screen (semantic, keyword, lookup)
-- [ ] **Phase 7** — Parity check + cleanup + final commit
-
-Cline ticks boxes as work lands. Director reviews ticks against
-verification gates before unlocking the next phase.
+See the authoritative live TODO at the **bottom** of this document:
+`[DASH-TS-PLAN-LIVE-TODO]`. All checkpoints, tests, and rules live there.
 
 This plan executes the spec top to bottom. Each phase ends in a green
 state (typecheck + lint + tests + build all pass). No phase is "skipped
@@ -466,7 +440,14 @@ via TMC. No stopping until every box is checked.
 - [x] Phase 4 — Read-only pages (dashboard, patients, practitioners, appts, calendar)
 - [x] Phase 5 — Edit pages (patient, appointment) with RHF+Zod
 - [x] Phase 6 — Clinical Coding 3-mode search + ACHI + detail panel + copy
-- [ ] Phase 7 — Parity + tests + final commit (IN PROGRESS)
+- [x] Phase 7a — Custom bare-hash router (`#dashboard` not `#/dashboard`) to match tests
+- [x] Phase 7b — AddPatient / AddPractitioner / AddAppointment modal components
+- [ ] Phase 7c — data-testid parity with Dashboard.Integration.Tests (114 tests)
+- [ ] Phase 7d — Sync page + edit-practitioner page
+- [ ] Phase 7e — Convert design HTML Tailwind → plain CSS (delegated to cline)
+- [ ] Phase 7f — ALL 114 Dashboard.Integration.Tests GREEN
+- [ ] Phase 7g — ALL backend suites GREEN (Clinical/Scheduling/Gatekeeper/ICD10)
+- [ ] Phase 7h — Final commit
 
 ### [DASH-TS-PLAN-LIVE-TODO-DESIGN] Pixel-perfect design parity
 

@@ -1,22 +1,24 @@
-import type { ReactElement } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, type ReactElement } from 'react';
 import { AppointmentForm } from '../forms/appointment-form';
 import type { AppointmentFormValues } from '../forms/schemas';
 import { useAppointment } from '../hooks/use-appointments';
 import { useSaveAppointment } from '../hooks/use-update-appointment';
+import { navigate } from '../router/hash-router';
 
-export const EditAppointmentPage = (): ReactElement => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+interface EditAppointmentPageProps {
+  readonly id?: string;
+}
+
+export const EditAppointmentPage = ({ id }: EditAppointmentPageProps): ReactElement => {
   const { data, isLoading } = useAppointment(id);
   const save = useSaveAppointment();
+  const [success, setSuccess] = useState(false);
 
   if (isLoading) return <div className="page">Loading appointment…</div>;
 
   const handleSubmit = (values: AppointmentFormValues): void => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises -- IIFE handles the async mutation
-    ;(async (): Promise<void> => {
-      await save.mutateAsync({
+    save
+      .mutateAsync({
         id,
         appointment: {
           ServiceCategory: values.ServiceCategory,
@@ -27,22 +29,29 @@ export const EditAppointmentPage = (): ReactElement => {
           Start: values.Start,
           End: values.End,
         },
-      });
-      navigate('/appointments');
-    })();
+      })
+      .then(() => {
+        setSuccess(true);
+        globalThis.setTimeout(() => {
+          navigate('appointments');
+        }, 250);
+      })
+      .catch(() => undefined);
   };
 
   return (
-    <section className="page">
-      <h2>{id === undefined ? 'Add appointment' : 'Edit appointment'}</h2>
-      {/* eslint-disable-next-line react/jsx-no-leaked-render, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions -- save.error check prevents leaked render */}
-      {save.isError && save.error && (
-        <div className="alert alert-error">{save.error.message}</div>
+    <section className="page" data-testid="edit-appointment-page">
+      <h2>{id === undefined ? 'Add appointment' : 'Edit Appointment'}</h2>
+      {save.isError && <div className="alert alert-error">{save.error.message}</div>}
+      {success && (
+        <div className="alert alert-success" data-testid="edit-success">
+          Appointment updated successfully
+        </div>
       )}
       <AppointmentForm
         {...(data !== undefined ? { initial: data } : {})}
         onSubmit={handleSubmit}
-        submitLabel={id === undefined ? 'Create' : 'Save'}
+        submitLabel={id === undefined ? 'Create' : 'Save Changes'}
       />
     </section>
   );
