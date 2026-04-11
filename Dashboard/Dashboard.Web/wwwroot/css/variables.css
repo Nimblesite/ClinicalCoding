@@ -1,8 +1,6 @@
 /* Medical Dashboard Design System - Premium CSS Variables */
 /* Inspired by Wellmetrix & CareIQ - Modern Healthcare Aesthetic */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 :root {
   /* === PRIMARY COLORS - Rich Blue Palette === */
   --primary-blue-dark: #1e40af;
@@ -131,8 +129,8 @@
   --radius-3xl: 32px;
   --radius-full: 9999px;
 
-  /* === TYPOGRAPHY - Inter Font === */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* === TYPOGRAPHY - System Font Stack === */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
 
   --font-size-2xs: 0.625rem;  /* 10px */
