@@ -101,3 +101,11 @@ project.lock.json
 *.generated.sql
 
 /*.png
+
+# Dashboard TypeScript rewrite (Dashboard/dashboard-ts/)
+Dashboard/dashboard-ts/node_modules/
+Dashboard/dashboard-ts/dist/
+Dashboard/dashboard-ts/.vite/
+Dashboard/dashboard-ts/coverage/
+Dashboard/dashboard-ts/playwright-report/
+Dashboard/dashboard-ts/test-results/

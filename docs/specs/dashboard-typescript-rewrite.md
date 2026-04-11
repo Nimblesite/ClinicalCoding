@@ -5,6 +5,10 @@
 **Owner:** Dashboard team
 **Section ID prefix:** `[DASH-TS-*]`
 
+⚠️ Much of the original functionality is tucked away in raw JS ([text](../../Dashboard/Dashboard.Web/wwwroot/index.html)) instead of C# code. You need to use this as the main reference instead of the C# React code ⚠️
+
+⚠️ DO NOT DELETE ORIGINAL UNTIL AFTER COMPLETION ⚠️
+
 ## [DASH-TS-OVERVIEW]
 
 The existing `Dashboard/Dashboard.Web/` project is a C# codebase transpiled

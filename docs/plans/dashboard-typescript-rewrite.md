@@ -1,8 +1,41 @@
 # Dashboard.Web — TypeScript Rewrite Implementation Plan
 
-**Status:** Draft — awaiting sign-off
+**Status:** EXECUTING — Director driving, Cline as research-only
 **Spec:** `docs/specs/dashboard-typescript-rewrite.md`
 **Section ID prefix:** `[DASH-TS-PLAN-*]`
+
+## [DASH-TS-PLAN-COEXIST] PIVOT — coexistence mode
+
+User instruction (overrides original Phase 0): **DO NOT delete the C#
+code.** The legacy `Dashboard/Dashboard.Web/` (H5) and
+`Dashboard/Dashboard.Integration.Tests/` projects stay on disk and
+remain in the .sln. The TypeScript rewrite lives at a parallel path
+`Dashboard/dashboard-ts/`. The two coexist until the user explicitly
+green-lights the legacy delete (post-parity).
+
+## [DASH-TS-PLAN-TODO] Live TODO checklist
+
+User answers to open questions (locked in): cognitive complexity 15,
+**TS path is `Dashboard/dashboard-ts/`** (NOT `Dashboard.Web`),
+`functional/no-let` ON, `no-default-export` ON with entry-point override,
+`Dashboard.Integration.Tests/` PRESERVED.
+
+- [x] **Phase 0** — Coexistence wiring (NO deletes)
+  - [x] Create `Dashboard/dashboard-ts/` (Cline scaffolded)
+  - [ ] Add Makefile targets `dashboard-ts-build/dev/test` alongside legacy
+  - [ ] Update `.gitignore` for `Dashboard/dashboard-ts/{node_modules,dist,coverage}`
+  - [ ] Update `CLAUDE.md` repo structure to mention both
+  - [ ] Commit `feat(dashboard): scaffold parallel TS rewrite`
+- [ ] **Phase 1** — Scaffold Vite+TS+React, lints clean on Hello world
+- [ ] **Phase 2** — Foundation: api/auth/lib/types + 100% unit coverage
+- [ ] **Phase 3** — Shell: routing + auth gate + real passkey login
+- [ ] **Phase 4** — Read-only pages (dashboard, patients, practitioners, appts, calendar)
+- [ ] **Phase 5** — Edit pages (patient, appointment) with RHF+Zod
+- [ ] **Phase 6** — Clinical Coding screen (semantic, keyword, lookup)
+- [ ] **Phase 7** — Parity check + cleanup + final commit
+
+Cline ticks boxes as work lands. Director reviews ticks against
+verification gates before unlocking the next phase.
 
 This plan executes the spec top to bottom. Each phase ends in a green
 state (typecheck + lint + tests + build all pass). No phase is "skipped
