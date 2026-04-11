@@ -147,7 +147,7 @@ namespace Dashboard
                 return "Schedule";
             if (view == "settings")
                 return "Settings";
-            return "Healthcare";
+            return "Clinical Coding";
         }
 
         private static ReactElement RenderPage(AppState state, System.Action<AppState> setState)

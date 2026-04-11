@@ -36,7 +36,7 @@ public sealed class AuthE2ETests
         );
 
         var pageContent = await page.ContentAsync();
-        Assert.Contains("Healthcare Dashboard", pageContent);
+        Assert.Contains("Nimblesite Clinical Coding Platform", pageContent);
         Assert.Contains("Sign in with your passkey", pageContent);
 
         var emailInputVisible = await page.IsVisibleAsync("input[type='email']");

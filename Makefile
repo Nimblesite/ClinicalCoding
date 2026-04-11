@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker nuke _reclaim-ports
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard nuke _reclaim-ports
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -210,6 +210,24 @@ _reclaim-ports:
 	    kill -9 $$pids 2>/dev/null || true; \
 	  fi; \
 	done
+
+## resume-docker: Start the existing docker stack without rebuilding or reclaiming ports.
+##   Use this to bring containers back up after they were stopped. No builds, no
+##   port-killing, no data loss -- just `docker compose up -d` on whatever is there.
+resume-docker:
+	@echo "==> Resuming docker stack (no rebuild)..."
+	cd docker && docker compose up -d
+
+## deploy-dashboard: Rebuild ONLY the dashboard image and restart ONLY the dashboard
+##   container. Leaves db/app containers untouched. Use this for CSS/HTML/JS changes
+##   when the full stack is already running.
+deploy-dashboard:
+	@echo "==> Publishing Dashboard..."
+	cd Dashboard/Dashboard.Web && \
+	  dotnet publish -c Release -o ../../docker/dashboard-build --nologo -v q
+	@echo "==> Rebuilding and restarting dashboard container only..."
+	cd docker && docker compose up -d --build --no-deps dashboard
+	@echo "==> Dashboard redeployed at http://localhost:5173"
 
 ## start-docker: Build the dashboard locally then start the full docker compose stack
 ##   Always rebuilds images so Dockerfile / start-services.sh changes can't be masked

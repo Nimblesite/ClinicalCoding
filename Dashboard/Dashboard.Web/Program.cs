@@ -35,7 +35,7 @@ namespace Dashboard
             ApiClient.SetTokens(authToken, authToken);
 
             // Log startup
-            Log("Healthcare Dashboard starting...");
+            Log("Nimblesite Clinical Coding Platform starting...");
             Log("Clinical API: " + clinicalUrl);
             Log("Scheduling API: " + schedulingUrl);
             Log("ICD-10 API: " + icd10Url);

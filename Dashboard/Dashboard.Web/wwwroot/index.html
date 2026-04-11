@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Healthcare Dashboard - Clinical and Scheduling Management">
-  <title>Healthcare Dashboard</title>
+  <meta name="description" content="Nimblesite Clinical Coding Platform - Agentic clinical coding with FHIR R5 microservices">
+  <title>Nimblesite Clinical Coding Platform</title>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%232ca3fa' width='100' height='100' rx='20'/%3E%3Cpath fill='white' d='M50 20v60M20 50h60' stroke='white' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/webp" href="img/favicon.webp">
 
   <!-- CSS -->
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/layout.css">
 
   <!-- Google Charts -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -41,21 +40,11 @@
       visibility: hidden;
     }
 
-    .loading-logo {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--teal-bold) 100%);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .loading-logo-img {
+      height: 64px;
+      width: auto;
       margin-bottom: 24px;
       animation: pulse 2s ease-in-out infinite;
-    }
-
-    .loading-logo svg {
-      width: 48px;
-      height: 48px;
     }
 
     .loading-text {
@@ -78,12 +67,8 @@
 <body>
   <!-- Loading Screen -->
   <div class="loading-screen" id="loading-screen">
-    <div class="loading-logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-      </svg>
-    </div>
-    <div class="loading-text">Healthcare Dashboard</div>
+    <img src="img/nimblesite-logo.webp" alt="Nimblesite" class="loading-logo-img">
+    <div class="loading-text">Nimblesite Clinical Coding Platform</div>
     <div class="loading-spinner"></div>
   </div>
 
@@ -987,7 +972,7 @@
         )
       );
 
-      // Dashboard Page - Professional Healthcare Design
+      // Dashboard Page - Nimblesite Clinical Coding Design
       const DashboardPage = ({ onNavigate }) => {
         const patients = useFetch(`${CLINICAL_API}/fhir/Patient`);
         const practitioners = useFetch(`${SCHEDULING_API}/Practitioner`);
@@ -2673,8 +2658,8 @@
         return React.createElement('div', { className: 'login-page', 'data-testid': 'login-page' },
           React.createElement('div', { className: 'login-card' },
             React.createElement('div', { className: 'login-header' },
-              React.createElement('div', { className: 'login-logo' }, React.createElement(Icons.Activity)),
-              React.createElement('h1', null, 'Healthcare Dashboard'),
+              React.createElement('img', { src: 'img/nimblesite-logo.webp', alt: 'Nimblesite', className: 'login-logo-img' }),
+              React.createElement('h1', null, 'Nimblesite Clinical Coding Platform'),
               React.createElement('p', null, mode === 'login' ? 'Sign in with your passkey' : 'Create your account')
             ),
             error && React.createElement('div', { className: 'login-error' }, error),
@@ -2734,10 +2719,8 @@
         return React.createElement('aside', { className: `sidebar ${collapsed ? 'collapsed' : ''}` },
           React.createElement('div', { className: 'sidebar-header' },
             React.createElement('a', { className: 'sidebar-logo', href: '#' },
-              React.createElement('div', { className: 'sidebar-logo-icon' },
-                React.createElement(Icons.Activity)
-              ),
-              React.createElement('span', { className: 'sidebar-logo-text' }, 'Healthcare')
+              React.createElement('img', { src: 'img/nimblesite-logo.webp', alt: 'Nimblesite', className: 'sidebar-logo-img' }),
+              React.createElement('span', { className: 'sidebar-logo-text' }, 'Nimblesite')
             )
           ),
           React.createElement('nav', { className: 'sidebar-nav' },
@@ -3517,7 +3500,7 @@
             calendar: 'Schedule',
             sync: 'Sync Dashboard',
             settings: 'Settings'
-          }[activeView] || 'Healthcare';
+          }[activeView] || 'Clinical Coding';
         };
 
         const handleEditPatient = (patientId) => {

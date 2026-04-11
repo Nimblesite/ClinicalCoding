@@ -19,6 +19,7 @@ NuGet packages use the `Nimblesite.` prefix (e.g., Nimblesite.DataProvider.Core,
 ## Hard Rules
 
 - **DO NOT use git commands.** CI and GitHub Actions handle git.
+- **TOTALL CSS MUST < 1K LOC** - CSS is cancer and you are the cure for it
 - **MIGRATING ANY DB WITH ANYTHING OTHER THAN DataProvider Migrations is COMPLETELY ILLEGAL**
 - **ZERO DUPLICATION.** Search the codebase before writing. Move code, don't copy it.
 - **NO THROWING EXCEPTIONS.** Return `Result<T,E>` or `Option<T>`. Exceptions are only for unrecoverable bugs.

@@ -53370,7 +53370,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
                     if (H5.referenceEquals(view, "settings")) {
                         return "Settings";
                     }
-                    return "Healthcare";
+                    return "Clinical Coding";
                 },
                 RenderPage: function (state, setState) {
                     var view = state.ActiveView;
@@ -56807,7 +56807,7 @@ H5.assembly("Dashboard.Web", function ($asm, globals) {
             var authToken = Dashboard.Program.GetConfigValue("AUTH_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkYXNoYm9hcmQtdXNlciIsImp0aSI6IjE1MTMwYTg0LTY4NTktNGNmMy05MjA3LTMyMGJhYWRiNzhjNSIsInJvbGVzIjpbImNsaW5pY2lhbiIsInNjaGVkdWxlciJdLCJleHAiOjIwODE5MjIxMDQsImlhdCI6MTc2NjM4OTMwNH0.mk66XyKaLWukzZOmGNwss74lSlXobt6Em0NoEbXRdKU");
             Dashboard.Api.ApiClient.SetTokens(authToken, authToken);
 
-            Dashboard.Program.Log("Healthcare Dashboard starting...");
+            Dashboard.Program.Log("Nimblesite Clinical Coding Platform starting...");
             Dashboard.Program.Log("Clinical API: " + (clinicalUrl || ""));
             Dashboard.Program.Log("Scheduling API: " + (schedulingUrl || ""));
             Dashboard.Program.Log("ICD-10 API: " + (icd10Url || ""));

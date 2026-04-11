@@ -1541,7 +1541,7 @@ public sealed class DashboardE2ETests
 
         // Verify login page is shown
         var pageContent = await page.ContentAsync();
-        Assert.Contains("Healthcare Dashboard", pageContent);
+        Assert.Contains("Nimblesite Clinical Coding Platform", pageContent);
         Assert.Contains("Sign in with your passkey", pageContent);
 
         // CRITICAL: Login mode should NOT have email input field
