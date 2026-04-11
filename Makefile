@@ -218,6 +218,21 @@ resume-docker:
 	@echo "==> Resuming docker stack (no rebuild)..."
 	cd docker && docker compose up -d
 
+## dashboard-ts-dev: Run the new TypeScript dashboard dev server (vite)
+dashboard-ts-dev:
+	cd Dashboard/dashboard-ts && pnpm install --silent && pnpm dev
+
+## dashboard-ts-build: Build the new TypeScript dashboard SPA (vite)
+dashboard-ts-build:
+	cd Dashboard/dashboard-ts && pnpm install --silent && pnpm build
+
+## dashboard-ts-test: Typecheck + lint + test + build for the new TypeScript dashboard
+dashboard-ts-test:
+	cd Dashboard/dashboard-ts && pnpm install --silent && pnpm check
+
+## dashboard-ts: Alias for dashboard-ts-test
+dashboard-ts: dashboard-ts-test
+
 ## deploy-dashboard: Rebuild ONLY the dashboard image and restart ONLY the dashboard
 ##   container. Leaves db/app containers untouched. Use this for CSS/HTML/JS changes
 ##   when the full stack is already running.

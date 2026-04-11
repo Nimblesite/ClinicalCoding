@@ -110,8 +110,9 @@ Gatekeeper/
   Gatekeeper.Api/           # Passkey auth, RBAC authorization
   Gatekeeper.Api.Tests/
 Dashboard/
-  Dashboard.Web/            # React UI (H5 transpiler C# -> JS)
-  Dashboard.Integration.Tests/
+  Dashboard.Web/            # Legacy React UI (H5 transpiler C# -> JS) — preserved during TS rewrite
+  Dashboard.Integration.Tests/   # Legacy E2E for the H5 dashboard
+  dashboard-ts/             # NEW TypeScript + React + Vite dashboard rewrite (in progress)
 Shared/
   Authorization/            # Shared authorization library
 docker/                     # Docker compose and configuration

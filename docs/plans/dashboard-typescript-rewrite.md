@@ -22,10 +22,17 @@ User answers to open questions (locked in): cognitive complexity 15,
 
 - [x] **Phase 0** — Coexistence wiring (NO deletes)
   - [x] Create `Dashboard/dashboard-ts/` (Cline scaffolded)
-  - [ ] Add Makefile targets `dashboard-ts-build/dev/test` alongside legacy
-  - [ ] Update `.gitignore` for `Dashboard/dashboard-ts/{node_modules,dist,coverage}`
-  - [ ] Update `CLAUDE.md` repo structure to mention both
+  - [x] Add Makefile targets `dashboard-ts-build/dev/test` alongside legacy
+  - [x] Update `.gitignore` for `Dashboard/dashboard-ts/{node_modules,dist,coverage}`
+  - [x] Update `CLAUDE.md` repo structure to mention both
   - [ ] Commit `feat(dashboard): scaffold parallel TS rewrite`
+- [x] **Phase 1** — Scaffold Vite+TS+React, typecheck + build GREEN
+- [x] **Phase 2** — Foundation: api/{client,config,clinical,scheduling,icd10,gatekeeper}, auth/{storage,context,webauthn}, lib/{logger,error-handlers}, types/{auth,fhir,icd10}, 12 unit tests GREEN
+- [x] **Phase 3** — Shell: AuthProvider, hash router, LoginPage (passkey), Sidebar, Header, AppShell, route guard
+- [x] **Phase 4** — Read-only pages: dashboard, patients, practitioners, appointments, calendar + use-* hooks
+- [x] **Phase 5** — Edit pages: edit-patient, edit-appointment with RHF + Zod + mutations
+- [x] **Phase 6** — Clinical Coding: 3-mode search (AI/keyword/lookup), ACHI toggle, result list, detail panel, copy button
+- [ ] **Phase 7** — Final `pnpm check` + parity + commit
 - [ ] **Phase 1** — Scaffold Vite+TS+React, lints clean on Hello world
 - [ ] **Phase 2** — Foundation: api/auth/lib/types + 100% unit coverage
 - [ ] **Phase 3** — Shell: routing + auth gate + real passkey login
