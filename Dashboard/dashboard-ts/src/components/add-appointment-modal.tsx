@@ -35,8 +35,8 @@ export const AddAppointmentModal = ({ open, onClose }: AddAppointmentModalProps)
       Priority: 'routine',
       PatientReference: patientRef,
       PractitionerReference: practitionerRef,
-      Start: new Date(start).toISOString(),
-      End: new Date(endVal).toISOString(),
+      StartTime: new Date(start).toISOString(),
+      EndTime: new Date(endVal).toISOString(),
     });
   };
 

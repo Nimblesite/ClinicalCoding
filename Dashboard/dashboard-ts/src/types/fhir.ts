@@ -20,14 +20,18 @@ export interface Practitioner {
 
 export interface Appointment {
   readonly Id?: string;
+  readonly Status?: string;
   readonly ServiceCategory: string;
   readonly ServiceType: string;
+  readonly ReasonCode?: string;
   readonly Priority: 'routine' | 'urgent' | 'asap' | 'stat';
+  readonly Description?: string;
+  readonly StartTime: string;
+  readonly EndTime: string;
+  readonly MinutesDuration?: number;
   readonly PatientReference: string;
   readonly PractitionerReference: string;
-  readonly Start: string;
-  readonly End: string;
-  readonly Status?: string;
+  readonly Comment?: string;
 }
 
 export interface Encounter {

@@ -37,14 +37,14 @@ export const AppointmentsPage = (): ReactElement => {
           <tbody>
             {(data ?? []).map((a) => (
               <tr
-                key={a.Id ?? `${a.Start}-${a.PatientReference}`}
+                key={a.Id ?? `${a.StartTime}-${a.PatientReference}`}
                 className="appointment-row"
                 data-testid="appointment-row"
               >
                 <td>{a.ServiceType}</td>
                 <td>{a.PatientReference}</td>
                 <td>{a.PractitionerReference}</td>
-                <td>{new Date(a.Start).toLocaleString()}</td>
+                <td>{new Date(a.StartTime).toLocaleString()}</td>
                 <td>{a.Priority}</td>
                 <td>
                   {a.Id !== undefined && (

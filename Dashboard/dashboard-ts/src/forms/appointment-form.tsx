@@ -34,8 +34,8 @@ export const AppointmentForm = ({
       Priority: initial?.Priority ?? 'routine',
       PatientReference: initial?.PatientReference ?? 'Patient/1',
       PractitionerReference: initial?.PractitionerReference ?? 'Practitioner/1',
-      Start: toLocalInputValue(initial?.Start ?? ''),
-      End: toLocalInputValue(initial?.End ?? ''),
+      StartTime: toLocalInputValue(initial?.StartTime ?? ''),
+      EndTime: toLocalInputValue(initial?.EndTime ?? ''),
     },
   });
 
@@ -75,12 +75,12 @@ export const AppointmentForm = ({
       <label className="input-label" htmlFor="start">
         Start
       </label>
-      <input id="start" type="datetime-local" className="input" {...register('Start')} />
+      <input id="start" type="datetime-local" className="input" {...register('StartTime')} />
 
       <label className="input-label" htmlFor="end">
         End
       </label>
-      <input id="end" type="datetime-local" className="input" {...register('End')} />
+      <input id="end" type="datetime-local" className="input" {...register('EndTime')} />
 
       <label className="input-label" htmlFor="priority">
         Priority

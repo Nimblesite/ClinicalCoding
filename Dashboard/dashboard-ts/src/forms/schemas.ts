@@ -15,7 +15,7 @@ export const appointmentSchema = z.object({
   Priority: z.enum(['routine', 'urgent', 'asap', 'stat']),
   PatientReference: z.string().min(1, 'Patient required'),
   PractitionerReference: z.string().min(1, 'Practitioner required'),
-  Start: z.string().min(1, 'Start required'),
-  End: z.string().min(1, 'End required'),
+  StartTime: z.string().min(1, 'Start required'),
+  EndTime: z.string().min(1, 'End required'),
 });
 export type AppointmentFormValues = z.infer<typeof appointmentSchema>;

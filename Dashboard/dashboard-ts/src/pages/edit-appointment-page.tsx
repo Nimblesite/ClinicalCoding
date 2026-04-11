@@ -8,18 +8,18 @@ interface EditAppointmentPageProps {
   readonly id?: string;
 }
 
+const toIso = (local: string): string => {
+  if (local === '') return new Date().toISOString();
+  const parsed = new Date(local);
+  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
 export const EditAppointmentPage = ({ id }: EditAppointmentPageProps): ReactElement => {
   const { data, isLoading } = useAppointment(id);
   const save = useSaveAppointment();
   const [success, setSuccess] = useState(false);
 
   if (isLoading) return <div className="page">Loading appointment…</div>;
-
-  const toIso = (local: string): string => {
-    if (local === '') return new Date().toISOString();
-    const parsed = new Date(local);
-    return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
-  };
 
   const handleSubmit = (values: AppointmentFormValues): void => {
     save
@@ -31,8 +31,8 @@ export const EditAppointmentPage = ({ id }: EditAppointmentPageProps): ReactElem
           Priority: values.Priority,
           PatientReference: values.PatientReference,
           PractitionerReference: values.PractitionerReference,
-          Start: toIso(values.Start),
-          End: toIso(values.End),
+          StartTime: toIso(values.StartTime),
+          EndTime: toIso(values.EndTime),
         },
       })
       .then(() => {

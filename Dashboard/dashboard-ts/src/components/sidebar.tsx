@@ -58,16 +58,22 @@ export const Sidebar = ({ onLogout }: SidebarProps): ReactElement => {
           className="sidebar-user-menu"
           data-testid="user-menu-button"
           type="button"
+          aria-label={currentUser?.displayName ?? 'User menu'}
           onClick={() => {
             setMenuOpen((o) => !o);
           }}
         >
-          <div className="avatar">{currentUser?.displayName.slice(0, 1) ?? '?'}</div>
-          <div>
-            <p className="sidebar-user-name">{currentUser?.displayName ?? 'Unknown'}</p>
-            <p className="sidebar-user-email">{currentUser?.email ?? ''}</p>
-          </div>
+          {(currentUser?.displayName ?? '?')
+            .split(/\s+/)
+            .filter((w) => w.length > 0)
+            .slice(0, 2)
+            .map((w) => w[0]?.toUpperCase() ?? '')
+            .join('')}
         </button>
+        <div className="sidebar-user-info">
+          <p className="sidebar-user-name">{currentUser?.displayName ?? 'Unknown'}</p>
+          <p className="sidebar-user-email">{currentUser?.email ?? ''}</p>
+        </div>
         {menuOpen ? (
           <div className="user-dropdown" data-testid="user-dropdown">
             <p className="user-dropdown-name">{currentUser?.displayName ?? ''}</p>

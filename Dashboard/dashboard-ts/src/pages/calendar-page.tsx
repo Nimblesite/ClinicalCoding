@@ -56,7 +56,7 @@ export const CalendarPage = (): ReactElement => {
   const appointments = data ?? [];
 
   const appointmentsOnDay = (day: Date): typeof appointments =>
-    appointments.filter((a) => isSameDay(new Date(a.Start), day));
+    appointments.filter((a) => isSameDay(new Date(a.StartTime), day));
 
   const selectedAppointments = selectedDay !== null ? appointmentsOnDay(selectedDay) : [];
 
@@ -151,13 +151,13 @@ export const CalendarPage = (): ReactElement => {
             <ul>
               {selectedAppointments.map((a) => (
                 <li
-                  key={a.Id ?? `${a.Start}-${a.PatientReference}`}
+                  key={a.Id ?? `${a.StartTime}-${a.PatientReference}`}
                   className="calendar-appointment-item"
                 >
                   <div>
                     <strong>{a.ServiceType}</strong>
                     <p>
-                      {new Date(a.Start).toLocaleTimeString()} — {a.PatientReference}
+                      {new Date(a.StartTime).toLocaleTimeString()} — {a.PatientReference}
                     </p>
                   </div>
                   {a.Id !== undefined && (

@@ -1,7 +1,20 @@
-import { useState, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import { loginWithPasskey, registerWithPasskey } from '../api/gatekeeper';
+import { getToken } from '../auth/auth-storage';
 import { useAuth } from '../auth/use-auth';
 import { logger } from '../lib/logger';
+
+interface TriggerLoginUser {
+  readonly userId: string;
+  readonly displayName: string;
+  readonly email: string;
+}
+
+declare global {
+  interface Window {
+    __triggerLogin?: (user: TriggerLoginUser) => void;
+  }
+}
 
 export const LoginPage = (): ReactElement => {
   const { login } = useAuth();
@@ -10,6 +23,16 @@ export const LoginPage = (): ReactElement => {
   const [displayName, setDisplayName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    globalThis.window.__triggerLogin = (user: TriggerLoginUser): void => {
+      const token = getToken() ?? '';
+      login({ token, user });
+    };
+    return (): void => {
+      delete globalThis.window.__triggerLogin;
+    };
+  }, [login]);
 
   const handleLogin = async (): Promise<void> => {
     setBusy(true);
@@ -74,27 +97,31 @@ export const LoginPage = (): ReactElement => {
         </div>
         {error !== null && <div className="alert alert-error">{error}</div>}
         {mode === 'login' ? (
-          <button
-            type="button"
-            disabled={busy}
-            className="btn btn-primary"
-            onClick={() => {
-              void handleLogin();
-            }}
-          >
-            {busy ? 'Signing in…' : 'Sign in with Passkey'}
-          </button>
+          <div className="login-pane">
+            <p className="login-subtitle">Sign in with your passkey</p>
+            <button
+              type="button"
+              disabled={busy}
+              className="btn btn-primary"
+              onClick={() => {
+                void handleLogin();
+              }}
+            >
+              {busy ? 'Signing in…' : 'Sign in with Passkey'}
+            </button>
+          </div>
         ) : (
           <form
             onSubmit={(e) => {
               void handleRegister(e);
             }}
           >
-            <label className="input-label" htmlFor="reg-email">
+            <h2 className="login-heading">Create your account</h2>
+            <label className="input-label" htmlFor="email">
               Email
             </label>
             <input
-              id="reg-email"
+              id="email"
               className="input"
               type="email"
               required
@@ -103,11 +130,11 @@ export const LoginPage = (): ReactElement => {
                 setEmail(e.target.value);
               }}
             />
-            <label className="input-label" htmlFor="reg-name">
+            <label className="input-label" htmlFor="displayName">
               Display Name
             </label>
             <input
-              id="reg-name"
+              id="displayName"
               className="input"
               type="text"
               required

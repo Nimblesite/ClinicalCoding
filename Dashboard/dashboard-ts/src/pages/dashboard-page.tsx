@@ -10,7 +10,7 @@ export const DashboardPage = (): ReactElement => {
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
   const todayAppointments = (appointments.data ?? []).filter((a) => {
-    const start = new Date(a.Start);
+    const start = new Date(a.StartTime);
     return start >= todayStart && start < tomorrowStart;
   });
   return (
@@ -70,8 +70,8 @@ export const DashboardPage = (): ReactElement => {
           ) : (
             <ul>
               {todayAppointments.slice(0, 5).map((a) => (
-                <li key={a.Id ?? `${a.Start}-${a.PatientReference}`}>
-                  <strong>{new Date(a.Start).toLocaleTimeString()}</strong> {a.ServiceType}
+                <li key={a.Id ?? `${a.StartTime}-${a.PatientReference}`}>
+                  <strong>{new Date(a.StartTime).toLocaleTimeString()}</strong> {a.ServiceType}
                   {' — '}
                   {a.PatientReference}
                 </li>
