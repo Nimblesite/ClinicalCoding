@@ -92,10 +92,10 @@ const config: Linter.Config[] = [
       'import-x': importX,
     },
     rules: {
-      'import-x/no-cycle': 'off',
-      'import-x/no-self-import': 'off',
-      'import-x/no-useless-path-segments': 'off',
-      'import-x/no-default-export': 'off',
+      'import-x/no-cycle': 'error',
+      'import-x/no-self-import': 'error',
+      'import-x/no-useless-path-segments': 'error',
+      'import-x/no-default-export': 'error',
       'import-x/no-extraneous-dependencies': 'off',
     },
   },
@@ -107,7 +107,7 @@ const config: Linter.Config[] = [
     },
     rules: {
       ...unicorn.configs.recommended.rules,
-      'unicorn/filename-case': 'off',
+      'unicorn/filename-case': ['error', { case: 'kebabCase' }],
       'unicorn/prefer-node-protocol': 'error',
       'unicorn/no-array-for-each': 'off',
       'unicorn/prefer-module': 'error',
@@ -299,11 +299,20 @@ const config: Linter.Config[] = [
       'prefer-template': 'error',
     },
   },
-  // Override for files that need default exports (Vite entry points, route components)
+  // Override for files that need default exports (Vite entry points, route components, build configs, ambient .d.ts)
   {
-    files: ['src/main.tsx', 'src/App.tsx'],
+    files: [
+      'src/main.tsx',
+      'src/App.tsx',
+      'src/app.tsx',
+      'src/types/*.d.ts',
+      'vite.config.ts',
+      'vitest.config.ts',
+      'playwright.config.ts',
+    ],
     rules: {
       'import-x/no-default-export': 'off',
+      'unicorn/filename-case': 'off',
     },
   },
   // Vitest test files

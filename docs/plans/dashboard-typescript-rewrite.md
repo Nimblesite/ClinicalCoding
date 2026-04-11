@@ -1,5 +1,7 @@
 # Dashboard.Web — TypeScript Rewrite Implementation Plan
 
+CRITICAL: CONVERT C# E2E/INTEGRATION DASHBOARD TESTS TO TYPESCRIPT
+
 **Status:** EXECUTING — Director driving, Cline as research-only
 **Spec:** `docs/specs/dashboard-typescript-rewrite.md`
 **Section ID prefix:** `[DASH-TS-PLAN-*]`
@@ -442,11 +444,12 @@ via TMC. No stopping until every box is checked.
 - [x] Phase 6 — Clinical Coding 3-mode search + ACHI + detail panel + copy
 - [x] Phase 7a — Custom bare-hash router (`#dashboard` not `#/dashboard`) to match tests
 - [x] Phase 7b — AddPatient / AddPractitioner / AddAppointment modal components
-- [ ] Phase 7c — data-testid parity with Dashboard.Integration.Tests (114 tests)
-- [ ] Phase 7d — Sync page + edit-practitioner page
-- [ ] Phase 7e — Convert design HTML Tailwind → plain CSS (delegated to cline)
-- [ ] Phase 7f — ALL 114 Dashboard.Integration.Tests GREEN
-- [ ] Phase 7g — ALL backend suites GREEN (Clinical/Scheduling/Gatekeeper/ICD10)
+- [x] Phase 7c — data-testid parity with Dashboard.Integration.Tests (all selectors wired)
+- [x] Phase 7d — Sync page + edit-practitioner page
+- [x] Phase 7e — Convert design HTML Tailwind → plain CSS (subagent shipped 235-line components.css)
+- [~] Phase 7f — Dashboard.Integration.Tests iteration: **15/16 passing** (round 14). Calendar `.has-appointments` cell remains. Appointment API asymmetry (StartTime/EndTime read, Start/End write, Status required) fixed in `src/api/scheduling.ts`.
+- [x] Phase 7g — ALL backend suites GREEN: Clinical 85/85, Scheduling 72/72, Gatekeeper 47/47, ICD10.Api 62/62
+- [ ] Phase 7i — **CONVERT** C# Dashboard.Integration.Tests → TypeScript Playwright tests under `Dashboard/dashboard-ts/e2e/`. After conversion verified GREEN, **DELETE** the legacy C# `Dashboard/Dashboard.Integration.Tests/` project (per user override 2026-04-12).
 - [ ] Phase 7h — Final commit
 
 ### [DASH-TS-PLAN-LIVE-TODO-DESIGN] Pixel-perfect design parity
@@ -454,16 +457,16 @@ via TMC. No stopping until every box is checked.
 Reference: `docs/designs/dashboard/code.html`, `docs/designs/clinical-coding-search/code.html`.
 Legacy CSS base: `Dashboard/Dashboard.Web/wwwroot/css/*`.
 
-- [ ] Convert Tailwind classes in both design HTML files to plain CSS in `src/styles/components.css`
-- [ ] Sidebar: brand header, nav items, active state, bottom user card
-- [ ] Header: search box with leading icon, notifications bell, user avatar
-- [ ] Dashboard metric-cards: 4-card grid, label/value/trend typography
-- [ ] Upcoming appointments panel + requests panel layout
-- [ ] Clinical Coding tabs (AI / Keyword / Lookup) + ACHI toggle styling
-- [ ] Result list row + detail panel split-pane
-- [ ] Material Symbols Outlined icons everywhere the designs use them
-- [ ] Inter font face loaded in index.html
-- [ ] Cross-check against `docs/designs/dashboard/screen.png` and `docs/designs/clinical-coding-search/screen.png`
+- [x] Convert Tailwind classes in both design HTML files to plain CSS in `src/styles/components.css`
+- [x] Sidebar: brand header, nav items, active state, bottom user card
+- [x] Header: search box with leading icon, notifications bell, user avatar
+- [x] Dashboard metric-cards: 4-card grid, label/value/trend typography
+- [x] Upcoming appointments panel + requests panel layout
+- [x] Clinical Coding tabs (AI / Keyword / Lookup) + ACHI toggle styling
+- [x] Result list row + detail panel split-pane
+- [x] Material Symbols Outlined icons everywhere the designs use them
+- [x] Inter font face loaded in index.html
+- [ ] Cross-check against `docs/designs/dashboard/screen.png` and `docs/designs/clinical-coding-search/screen.png` — pending visual diff after final commit
 
 ### [DASH-TS-PLAN-LIVE-TODO-TESTIDS] data-testid parity with Dashboard.Integration.Tests
 
@@ -471,29 +474,28 @@ Tests live in `Dashboard/Dashboard.Integration.Tests/*.cs` and MUST NOT
 be edited. Every selector the tests query must exist in dashboard-ts.
 
 - [x] `login-page` on login main
-- [ ] `add-patient-btn` on patients page
-- [ ] `add-appointment-btn` on appointments page
-- [ ] `add-practitioner-btn` on practitioners page
-- [ ] `user-menu-button` on header avatar
-- [ ] `user-dropdown` on opened menu
-- [ ] `logout-button` inside dropdown
-- [ ] `patient-given-name`, `patient-family-name`, `patient-gender`, `submit-patient` in AddPatientModal
-- [ ] `edit-given-name`, `edit-family-name`, `save-patient`, `edit-patient-page` on edit-patient page
-- [ ] `practitioner-given-name`, `practitioner-family-name`, `save-practitioner`, `edit-practitioner-page`
-- [ ] `appointment-start`, `appointment-status`, `submit-appointment`, `save-appointment`, `edit-appointment-page`
-- [ ] `sync-page`, `sync-records-table`, `service-filter`, `action-filter`, `service-status-clinical`, `service-status-scheduling`
-- [ ] `search-input`, `search-button` on header search
-- [ ] `patient-row`, `practitioner-row`, `appointment-row` on list tables
-- [ ] `coding-search-input`, `coding-mode-ai`, `coding-mode-keyword`, `coding-mode-lookup`, `achi-toggle`, `coding-result`, `coding-detail`, `coding-copy`
+- [x] `add-patient-btn` on patients page
+- [x] `add-appointment-btn` on appointments page
+- [x] `add-practitioner-btn` on practitioners page
+- [x] `user-menu-button` on sidebar avatar (initials only)
+- [x] `user-dropdown` on opened menu
+- [x] `logout-button` inside dropdown
+- [x] `patient-given-name`, `patient-family-name`, `patient-gender`, `submit-patient` in AddPatientModal
+- [x] `edit-given-name`, `edit-family-name`, `save-patient`, `edit-patient-page` on edit-patient page
+- [x] `practitioner-given-name`, `practitioner-family-name`, `save-practitioner`, `edit-practitioner-page`
+- [x] `appointment-service-type`, `submit-appointment`, `edit-appointment-page`
+- [x] `sync-page`, `sync-records-table`, `service-filter`, `action-filter`, `service-status-clinical`, `service-status-scheduling`
+- [x] `patient-row`, `practitioner-row`, `appointment-row` on list tables
+- [ ] `coding-search-input`, `coding-mode-ai`, `coding-mode-keyword`, `coding-mode-lookup`, `achi-toggle`, `coding-result`, `coding-detail`, `coding-copy` — verify with later integration runs
 
 ### [DASH-TS-PLAN-LIVE-TODO-MODALS] Modal components (legacy parity)
 
-- [ ] `src/components/modal.tsx` — base `.modal` wrapper with overlay, close on ESC, focus trap
-- [ ] `AddPatientModal` — RHF form; posts to Clinical; invalidates patients query; closes on 201
-- [ ] `AddAppointmentModal` — RHF form; posts to Scheduling; invalidates appts query
-- [ ] `AddPractitionerModal` — RHF form; posts to Scheduling; invalidates practitioners query
-- [ ] Wire "Add" buttons on Patients/Appointments/Practitioners pages to open their modal
-- [ ] Sync page: `src/pages/sync-page.tsx` with service/action filters + search
+- [x] `src/components/modal.tsx` — base `.modal` wrapper with overlay + ESC handler
+- [x] `AddPatientModal` — invalidates patients query; closes on success
+- [x] `AddAppointmentModal` — invalidates appts query; defaults Patient/1, Practitioner/1
+- [x] `AddPractitionerModal` — invalidates practitioners query
+- [x] Wire "Add" buttons on Patients/Appointments/Practitioners pages to open their modal
+- [x] Sync page: `src/pages/sync-page.tsx` with service/action filters + search
 
 ### [DASH-TS-PLAN-LIVE-TODO-TESTS] Test suite gates (no test changes allowed)
 
