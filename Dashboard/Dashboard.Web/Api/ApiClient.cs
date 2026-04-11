@@ -315,182 +315,60 @@ namespace Dashboard.Api
         }
 
         // === HELPER METHODS ===
+        // Headers must be built via Script.Write so the literal 'Content-Type'
+        // key (with hyphen) survives — C# anonymous-property names like
+        // ContentType get emitted as ContentType in JS, which the server then
+        // ignores, defaulting the request to text/plain and returning 415.
 
-        private static async Task<string> FetchIcd10Async(string url)
+        private static async Task<string> GetAsync(string url)
         {
-            var response = await Script.Call<Task<Response>>(
-                "fetch",
-                url,
-                new
-                {
-                    method = "GET",
-                    headers = new
-                    {
-                        Accept = "application/json",
-                        Authorization = "Bearer " + Token,
-                    },
-                }
-            );
-
+            var token = Token;
+            var response = await Script.Write<Task<Response>>(@"
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+            ");
             if (!response.Ok)
             {
                 throw new Exception("HTTP " + response.Status);
             }
-
             return await response.Text();
         }
 
-        private static async Task<string> PostIcd10Async(string url, object data)
+        private static async Task<string> SendJsonAsync(string url, string method, object data)
         {
-            var response = await Script.Call<Task<Response>>(
-                "fetch",
-                url,
-                new
-                {
-                    method = "POST",
-                    headers = new
-                    {
-                        Accept = "application/json",
-                        ContentType = "application/json",
-                        Authorization = "Bearer " + Token,
+            var token = Token;
+            var body = Script.Call<string>("JSON.stringify", data);
+            var response = await Script.Write<Task<Response>>(@"
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
                     },
-                    body = Script.Call<string>("JSON.stringify", data),
-                }
-            );
-
+                    body: body
+                })
+            ");
             if (!response.Ok)
             {
                 throw new Exception("HTTP " + response.Status);
             }
-
             return await response.Text();
         }
 
-        private static async Task<string> FetchClinicalAsync(string url)
-        {
-            var response = await Script.Call<Task<Response>>(
-                "fetch",
-                url,
-                new
-                {
-                    method = "GET",
-                    headers = new
-                    {
-                        Accept = "application/json",
-                        Authorization = "Bearer " + Token,
-                    },
-                }
-            );
-
-            if (!response.Ok)
-            {
-                throw new Exception("HTTP " + response.Status);
-            }
-
-            return await response.Text();
-        }
-
-        private static async Task<string> FetchSchedulingAsync(string url)
-        {
-            var response = await Script.Call<Task<Response>>(
-                "fetch",
-                url,
-                new
-                {
-                    method = "GET",
-                    headers = new
-                    {
-                        Accept = "application/json",
-                        Authorization = "Bearer " + Token,
-                    },
-                }
-            );
-
-            if (!response.Ok)
-            {
-                throw new Exception("HTTP " + response.Status);
-            }
-
-            return await response.Text();
-        }
-
-        private static async Task<string> PostClinicalAsync(string url, object data)
-        {
-            var response = await Script.Call<Task<Response>>(
-                "fetch",
-                url,
-                new
-                {
-                    method = "POST",
-                    headers = new
-                    {
-                        Accept = "application/json",
-                        ContentType = "application/json",
-                        Authorization = "Bearer " + Token,
-                    },
-                    body = Script.Call<string>("JSON.stringify", data),
-                }
-            );
-
-            if (!response.Ok)
-            {
-                throw new Exception("HTTP " + response.Status);
-            }
-
-            return await response.Text();
-        }
-
-        private static async Task<string> PutClinicalAsync(string url, object data)
-        {
-            var response = await Script.Call<Task<Response>>(
-                "fetch",
-                url,
-                new
-                {
-                    method = "PUT",
-                    headers = new
-                    {
-                        Accept = "application/json",
-                        ContentType = "application/json",
-                        Authorization = "Bearer " + Token,
-                    },
-                    body = Script.Call<string>("JSON.stringify", data),
-                }
-            );
-
-            if (!response.Ok)
-            {
-                throw new Exception("HTTP " + response.Status);
-            }
-
-            return await response.Text();
-        }
-
-        private static async Task<string> PutSchedulingAsync(string url, object data)
-        {
-            var response = await Script.Call<Task<Response>>(
-                "fetch",
-                url,
-                new
-                {
-                    method = "PUT",
-                    headers = new
-                    {
-                        Accept = "application/json",
-                        ContentType = "application/json",
-                        Authorization = "Bearer " + Token,
-                    },
-                    body = Script.Call<string>("JSON.stringify", data),
-                }
-            );
-
-            if (!response.Ok)
-            {
-                throw new Exception("HTTP " + response.Status);
-            }
-
-            return await response.Text();
-        }
+        // Backwards-compatible thin shims so the existing call sites stay readable.
+        private static Task<string> FetchIcd10Async(string url) => GetAsync(url);
+        private static Task<string> FetchClinicalAsync(string url) => GetAsync(url);
+        private static Task<string> FetchSchedulingAsync(string url) => GetAsync(url);
+        private static Task<string> PostIcd10Async(string url, object data) => SendJsonAsync(url, "POST", data);
+        private static Task<string> PostClinicalAsync(string url, object data) => SendJsonAsync(url, "POST", data);
+        private static Task<string> PutClinicalAsync(string url, object data) => SendJsonAsync(url, "PUT", data);
+        private static Task<string> PutSchedulingAsync(string url, object data) => SendJsonAsync(url, "PUT", data);
 
         private static T ParseJson<T>(string json) => Script.Call<T>("JSON.parse", json);
 
