@@ -10,7 +10,7 @@ interface ResultRow {
   readonly code: string;
   readonly title: string;
   readonly description: string;
-  readonly source: string;
+  readonly source: 'ICD-10-AM' | 'ACHI' | string;
   readonly score?: number;
 }
 
@@ -31,15 +31,12 @@ const toRowsFromSemantic = (results: SemanticSearchResult[]): ResultRow[] =>
     score: r.score,
   }));
 
-const copyToClipboard = async (value: string): Promise<void> => {
-  await navigator.clipboard.writeText(value);
-};
-
 export const ClinicalCodingPage = (): ReactElement => {
   const [mode, setMode] = useState<Mode>('semantic');
   const [query, setQuery] = useState('');
   const [includeAchi, setIncludeAchi] = useState(false);
-  const [selected, setSelected] = useState<ResultRow | null>(null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const keyword = useKeywordSearch(mode === 'keyword' ? query : '');
   const lookup = useIcd10Lookup(mode === 'lookup' ? query : '');
@@ -55,25 +52,52 @@ export const ClinicalCodingPage = (): ReactElement => {
     return lookup.data !== undefined ? toRowsFromIcd10([lookup.data]) : [];
   })();
 
-  const handleRun = (): void => {
+  const isBusy =
+    (mode === 'semantic' && semantic.isPending) ||
+    (mode === 'keyword' && keyword.isFetching) ||
+    (mode === 'lookup' && lookup.isFetching);
+
+  const runSearch = (): void => {
+    if (query.trim() === '') return;
     if (mode === 'semantic') {
       semantic.mutate({ text: query, includeAchi });
     }
   };
+
+  const handleCopy = (key: string, code: string): void => {
+    void navigator.clipboard.writeText(code).then(() => {
+      setCopiedKey(key);
+      setTimeout(() => {
+        setCopiedKey((current) => (current === key ? null : current));
+      }, 1500);
+    });
+  };
+
+  const toggleExpanded = (key: string): void => {
+    setExpandedKey((current) => (current === key ? null : key));
+  };
+
+  const resultCount = rows.length;
+  const resultLabel = mode === 'lookup' ? 'Result' : 'Results';
 
   return (
     <section className="page clinical-coding">
       <div className="page-header">
         <div>
           <h2 className="welcome-title">Diagnostic Coding Search</h2>
-          <p className="page-description">Map clinical documentation to precise codes.</p>
+          <p className="page-description">
+            Map clinical documentation to ICD-10-AM and ACHI codes.
+          </p>
         </div>
       </div>
 
       <div className="coding-console">
-        <div className="mode-tabs">
+        <div className="mode-tabs" role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={mode === 'semantic'}
+            data-testid="coding-mode-ai"
             className={mode === 'semantic' ? 'active' : ''}
             onClick={() => {
               setMode('semantic');
@@ -83,6 +107,9 @@ export const ClinicalCodingPage = (): ReactElement => {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={mode === 'keyword'}
+            data-testid="coding-mode-keyword"
             className={mode === 'keyword' ? 'active' : ''}
             onClick={() => {
               setMode('keyword');
@@ -92,6 +119,9 @@ export const ClinicalCodingPage = (): ReactElement => {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={mode === 'lookup'}
+            data-testid="coding-mode-lookup"
             className={mode === 'lookup' ? 'active' : ''}
             onClick={() => {
               setMode('lookup');
@@ -101,89 +131,190 @@ export const ClinicalCodingPage = (): ReactElement => {
           </button>
         </div>
 
-        <div className="search-input-row">
+        <div className="search-shell">
           {mode === 'semantic' ? (
             <textarea
-              className="input"
+              data-testid="coding-search-input"
+              className="search-field"
               rows={3}
-              placeholder="Describe symptoms or diagnosis…"
+              placeholder="Describe symptoms or diagnosis, e.g. 'acute myocardial infarction of anterior wall'"
               value={query}
+              disabled={isBusy}
               onChange={(e) => {
                 setQuery(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  runSearch();
+                }
               }}
             />
           ) : (
             <input
-              className="input"
+              data-testid="coding-search-input"
+              className="search-field"
               type="text"
               placeholder={mode === 'keyword' ? 'e.g. chest pain' : 'e.g. R07.4'}
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') runSearch();
+              }}
             />
           )}
           {mode === 'semantic' && (
-            <button type="button" className="btn btn-primary" onClick={handleRun}>
-              Analyze
+            <button
+              type="button"
+              className="search-submit"
+              onClick={runSearch}
+              disabled={isBusy || query.trim() === ''}
+            >
+              {isBusy ? (
+                <>
+                  <span className="spinner" aria-hidden="true" /> Searching
+                </>
+              ) : (
+                'Search'
+              )}
             </button>
           )}
         </div>
 
-        <label className="input-label">
+        <label className="achi-toggle">
           <input
             type="checkbox"
+            data-testid="achi-toggle"
             checked={includeAchi}
             onChange={(e) => {
               setIncludeAchi(e.target.checked);
             }}
-          />{' '}
-          Include ACHI procedure codes
+          />
+          <span>Include ACHI procedure codes</span>
         </label>
       </div>
 
       <div className="coding-results">
-        <h3>
-          {rows.length} {mode} results
-        </h3>
-        <ul className="results-list">
-          {rows.map((r) => (
-            <li
-              key={`${r.source}-${r.code}`}
-              className={selected?.code === r.code ? 'selected' : ''}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setSelected(r);
-                }}
-              >
-                <span className="result-code">{r.code}</span>
-                <span className="result-title">{r.title}</span>
-                {r.score !== undefined && (
-                  <span className="result-score">{Math.round(r.score * 100)}%</span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="coding-results-header">
+          <h2>
+            {isBusy ? 'Searching' : `${resultCount} ${resultLabel}`}
+          </h2>
+        </div>
 
-        {selected !== null && (
-          <aside className="code-detail-panel">
-            <h4>{selected.code}</h4>
-            <p className="detail-title">{selected.title}</p>
-            <p className="detail-source">{selected.source}</p>
-            <p>{selected.description}</p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                void copyToClipboard(selected.code);
-              }}
-            >
-              Copy code
-            </button>
-          </aside>
+        {isBusy && (
+          <div className="coding-loading">
+            <span className="spinner spinner-lg" aria-hidden="true" />
+            <p>Searching the ICD-10-AM index…</p>
+          </div>
+        )}
+
+        {!isBusy && resultCount === 0 && (
+          <div className="coding-empty">
+            Enter a clinical description and press Search to see matching codes.
+          </div>
+        )}
+
+        {!isBusy && resultCount > 0 && (
+          <div className="results-list">
+            {rows.map((r) => {
+              const key = `${r.source}-${r.code}`;
+              const expanded = expandedKey === key;
+              const copied = copiedKey === key;
+              const pct = r.score !== undefined ? Math.round(r.score * 100) : undefined;
+              return (
+                <article
+                  key={key}
+                  className={`result-card${expanded ? ' expanded' : ''}`}
+                  data-testid="coding-result"
+                >
+                  <div className="coding-result-content">
+                    <div className="coding-result-code-section">
+                      <span className={`code-badge${r.source === 'ACHI' ? ' secondary' : ''}`}>
+                        {r.code}
+                      </span>
+                      <span className="code-type-label">{r.source}</span>
+                    </div>
+
+                    <div className="coding-result-body">
+                      <h3 className="coding-result-title">{r.title}</h3>
+                      {r.description !== '' && r.description !== r.title && (
+                        <p className="coding-result-description">{r.description}</p>
+                      )}
+                    </div>
+
+                    <div className="coding-result-actions">
+                      {pct !== undefined && (
+                        <div className="ai-match-score">
+                          <div className="ai-match-row">
+                            <span className="ai-match-label">Match</span>
+                            <span className="ai-match-value">{pct}%</span>
+                          </div>
+                          <div className="ai-match-bar">
+                            <div className="ai-match-fill" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="coding-result-buttons">
+                        <button
+                          type="button"
+                          className="btn-outline"
+                          onClick={() => {
+                            toggleExpanded(key);
+                          }}
+                          aria-expanded={expanded}
+                        >
+                          {expanded ? 'Hide' : 'Details'}
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn-outline${copied ? ' copied' : ''}`}
+                          data-testid="coding-copy"
+                          onClick={() => {
+                            handleCopy(key, r.code);
+                          }}
+                        >
+                          {copied ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {expanded && (
+                    <div className="coding-result-details" data-testid="coding-detail">
+                      <dl>
+                        <div>
+                          <dt>Code</dt>
+                          <dd>{r.code}</dd>
+                        </div>
+                        <div>
+                          <dt>Classification</dt>
+                          <dd>{r.source}</dd>
+                        </div>
+                        <div>
+                          <dt>Title</dt>
+                          <dd>{r.title}</dd>
+                        </div>
+                        {r.description !== '' && r.description !== r.title && (
+                          <div>
+                            <dt>Description</dt>
+                            <dd>{r.description}</dd>
+                          </div>
+                        )}
+                        {pct !== undefined && (
+                          <div>
+                            <dt>Match score</dt>
+                            <dd>{pct}%</dd>
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
         )}
       </div>
     </section>

@@ -8,6 +8,13 @@ interface RagSearchResponseItem {
   readonly LongDescription?: string;
   readonly Confidence: number;
   readonly CodeType: string;
+  readonly Chapter?: string;
+  readonly ChapterTitle?: string;
+  readonly Category?: string;
+  readonly InclusionTerms?: string;
+  readonly ExclusionTerms?: string;
+  readonly CodeAlso?: string;
+  readonly CodeFirst?: string;
 }
 
 interface RagSearchResponse {
@@ -34,13 +41,23 @@ export const semanticSearch = async (
     method: 'POST',
     body: { Query: text, Limit: 20, IncludeAchi: includeAchi },
   });
-  return response.Results.map(
-    (r): SemanticSearchResult => ({
+  return response.Results.map((r): SemanticSearchResult => {
+    const parts: string[] = [];
+    if (r.ChapterTitle !== undefined && r.ChapterTitle !== '') {
+      parts.push(`Chapter ${r.Chapter ?? '?'}: ${r.ChapterTitle}`);
+    }
+    if (r.InclusionTerms !== undefined && r.InclusionTerms !== '') {
+      parts.push(`Includes: ${r.InclusionTerms}`);
+    }
+    if (r.ExclusionTerms !== undefined && r.ExclusionTerms !== '') {
+      parts.push(`Excludes: ${r.ExclusionTerms}`);
+    }
+    return {
       code: r.Code,
       title: r.Description,
-      description: r.LongDescription ?? r.Description,
+      description: parts.join(' · '),
       score: r.Confidence,
       source: r.CodeType === 'ACHI' ? 'ACHI' : 'ICD-10-AM',
-    }),
-  );
+    };
+  });
 };
