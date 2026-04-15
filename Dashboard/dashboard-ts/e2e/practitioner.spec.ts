@@ -3,8 +3,8 @@
  * Ported from PractitionerE2ETests.cs
  */
 
-import { test, expect, Page } from './fixture';
-import { SchedulingUrl } from './fixture';
+import { test, expect, Page } from './support/fixture';
+import { SchedulingUrl } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL

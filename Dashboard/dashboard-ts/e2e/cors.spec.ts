@@ -3,8 +3,8 @@
  * Ported from DashboardApiCorsTests.cs
  */
 
-import { test, expect } from './fixture';
-import { ClinicalUrl, SchedulingUrl, GatekeeperUrl, DashboardUrl } from './fixture';
+import { test, expect } from './support/fixture';
+import { ClinicalUrl, SchedulingUrl, GatekeeperUrl, DashboardUrl } from './support/fixture';
 
 test.describe('Dashboard API CORS Tests', () => {
   // Dashboard origin - this is where the frontend runs

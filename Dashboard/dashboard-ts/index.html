@@ -15,6 +15,11 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Runtime config injection point. nginx/docker can replace this block
+      // (or serve a /config.js file) to override API URLs without rebuilding.
+      window.dashboardConfig = window.dashboardConfig || {};
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

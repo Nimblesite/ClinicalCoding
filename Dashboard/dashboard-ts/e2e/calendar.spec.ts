@@ -3,8 +3,8 @@
  * Ported from CalendarE2ETests.cs
  */
 
-import { test, expect, Page } from './fixture';
-import { SchedulingUrl, DashboardUrl } from './fixture';
+import { test, expect, Page } from './support/fixture';
+import { SchedulingUrl, DashboardUrl } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL

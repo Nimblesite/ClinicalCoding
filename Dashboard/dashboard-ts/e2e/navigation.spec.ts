@@ -3,8 +3,8 @@
  * Ported from NavigationE2ETests.cs
  */
 
-import { test, expect, Page } from './fixture';
-import { ClinicalUrl, DashboardUrl } from './fixture';
+import { test, expect, Page } from './support/fixture';
+import { ClinicalUrl, DashboardUrl } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL

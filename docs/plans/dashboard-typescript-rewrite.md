@@ -449,7 +449,8 @@ via TMC. No stopping until every box is checked.
 - [x] Phase 7e — Convert design HTML Tailwind → plain CSS (subagent shipped 235-line components.css)
 - [~] Phase 7f — Dashboard.Integration.Tests iteration: **15/16 passing** (round 14). Calendar `.has-appointments` cell remains. Appointment API asymmetry (StartTime/EndTime read, Start/End write, Status required) fixed in `src/api/scheduling.ts`.
 - [x] Phase 7g — ALL backend suites GREEN: Clinical 85/85, Scheduling 72/72, Gatekeeper 47/47, ICD10.Api 62/62
-- [ ] Phase 7i — **CONVERT** C# Dashboard.Integration.Tests → TypeScript Playwright tests under `Dashboard/dashboard-ts/e2e/`. After conversion verified GREEN, **DELETE** the legacy C# `Dashboard/Dashboard.Integration.Tests/` project (per user override 2026-04-12).
+- [x] Phase 7g.1 — Spin-up unblock (2026-04-15): `.env.local` + `VITE_*` env in `src/api/config.ts`; `window.dashboardConfig` bootstrap in `index.html`; split build tsconfig (src-only) from `tsconfig.e2e.json` so WIP e2e specs no longer fail `pnpm build`; `vitest.config.ts` now scopes to `src/**` and excludes `e2e/`. `pnpm dev` + `pnpm build` + `pnpm test` + `pnpm typecheck` all green. Login page renders at http://localhost:5175/ (5173 squatted by unrelated process — vite auto-picks next port).
+- [ ] Phase 7i — **CONVERT** C# Dashboard.Integration.Tests → TypeScript Playwright tests under `Dashboard/dashboard-ts/e2e/`. Spec files now import `./support/fixture` (paths fixed 2026-04-15), but several still have remaining issues: `Page` not exported from fixture, `getByTestId(...).click` misuse (missing `()` call), `setupAuth`/`generateTestToken` exports missing. These are tracked under `tsconfig.e2e.json` and do not block the main build. After conversion verified GREEN, **DELETE** the legacy C# `Dashboard/Dashboard.Integration.Tests/` project (per user override 2026-04-12).
 - [ ] Phase 7h — Final commit
 
 ### [DASH-TS-PLAN-LIVE-TODO-DESIGN] Pixel-perfect design parity
@@ -507,7 +508,7 @@ All must be green before final commit. Command run from repo root.
 - [x] `ICD10.Cli.Tests` — 57/57 baseline green
 - [ ] `ICD10.Api.Tests` — 1 failure (`Search_IncludesModelInfo_InResponse`) because embedding service must run; docker app container already runs it
 - [ ] `Dashboard.Integration.Tests` — 114 tests; must run GREEN against dashboard-ts on `localhost:5173` (`E2E_USE_LOCAL=true`)
-- [ ] `Dashboard/dashboard-ts` vitest — every unit test still green
+- [x] `Dashboard/dashboard-ts` vitest — 12/12 green (e2e specs excluded via `include`/`exclude` in `vitest.config.ts`)
 - [ ] `pnpm check` (tsc + eslint + prettier + vitest + build) — ZERO warnings
 - [ ] `pnpm exec playwright test` — full E2E suite against a live stack
 
@@ -527,8 +528,8 @@ All must be green before final commit. Command run from repo root.
 - [x] `.NET Playwright Chromium` installed (`playwright.ps1 install chromium`)
 - [x] Docker stack: `docker-db-1` + `docker-app-1` (all APIs) healthy
 - [x] Vite dev server on `localhost:5173`
-- [ ] `.env.local` for dashboard-ts with API URLs (Clinical 5080, Scheduling 5001, Gatekeeper 5002, ICD10 5090)
-- [ ] `window.dashboardConfig` injection verified at runtime
+- [x] `.env.local` for dashboard-ts with API URLs (Clinical 5080, Scheduling 5001, Gatekeeper 5002, ICD10 5090)
+- [x] `window.dashboardConfig` injection verified at runtime (bootstrap block in `index.html`, `src/api/config.ts` reads runtime → VITE env → default in that order)
 - [ ] README badge row updated
 - [ ] `Makefile` target `make dashboard-ts-check` runs `pnpm check` then `dotnet test Dashboard/Dashboard.Integration.Tests -e E2E_USE_LOCAL=true`
 

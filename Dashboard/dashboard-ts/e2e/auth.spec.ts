@@ -4,7 +4,7 @@
  */
 
 import { test, expect, Page, APIRequestContext } from '@playwright/test';
-import { DashboardUrl, GatekeeperUrl, setupAuth, generateTestToken } from './fixture';
+import { DashboardUrl, GatekeeperUrl, setupAuth, generateTestToken } from './support/fixture';
 
 test.describe('Auth E2E Tests', () => {
   /**

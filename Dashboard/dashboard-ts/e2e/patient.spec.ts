@@ -9,7 +9,7 @@ import {
   ClinicalUrl,
   setupAuth,
   generateTestToken,
-} from './fixture';
+} from './support/fixture';
 
 test.describe('Patient E2E Tests', () => {
   /**
