@@ -4,6 +4,7 @@ import { App } from './App';
 import { installErrorHandlers } from './lib/install-error-handlers';
 import './styles/base.css';
 import './styles/components.css';
+import './styles/dashboard.css';
 import './styles/login.css';
 import './styles/variables.css';
 

@@ -25,6 +25,7 @@ services:
       Fido2__ServerName: Nimblesite Clinical Coding Platform
       Fido2__ServerDomain: localhost
       Fido2__Origins__0: http://localhost:5173
+      Fido2__Origin: ${FIDO2_ORIGIN:-http://localhost:5173}
       ConnectionStrings__Postgres_Clinical: Host=db;Database=clinical;Username=clinical;Password=${DB_PASSWORD:-changeme}
       ConnectionStrings__Postgres_Scheduling: Host=db;Database=scheduling;Username=scheduling;Password=${DB_PASSWORD:-changeme}
       ConnectionStrings__Postgres_ICD10: Host=db;Database=icd10;Username=icd10;Password=${DB_PASSWORD:-changeme}
