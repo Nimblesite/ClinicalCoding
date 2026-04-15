@@ -136,7 +136,7 @@ export const ClinicalCodingPage = (): ReactElement => {
             <textarea
               data-testid="coding-search-input"
               className="search-field"
-              rows={3}
+              rows={12}
               placeholder="Describe symptoms or diagnosis, e.g. 'acute myocardial infarction of anterior wall'"
               value={query}
               disabled={isBusy}
