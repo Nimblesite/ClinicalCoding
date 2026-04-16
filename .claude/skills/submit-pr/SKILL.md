@@ -3,7 +3,7 @@ name: submit-pr
 description: Creates a pull request with a well-structured description after verifying CI passes. Use when the user asks to submit, create, or open a pull request.
 disable-model-invocation: true
 ---
-<!-- agent-pmo:6647c8e -->
+<!-- agent-pmo:2efd847 -->
 
 # Submit PR
 
