@@ -1,4 +1,4 @@
-# agent-pmo:6647c8e
+# agent-pmo:2efd847
 # =============================================================================
 # Makefile — HealthcareSamples
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
@@ -91,17 +91,20 @@ test: db-migrate
 	  fi; \
 	done
 
-## lint: Run all linters (fails on any warning). Format check runs FIRST.
+## lint: Run all linters/analyzers (read-only). Does NOT format.
 lint: db-migrate
-	@echo "==> Checking format..."
-	dotnet csharpier check .
 	@echo "==> Linting..."
 	dotnet build HealthcareSamples.sln --configuration Release
 
-## fmt: Format all code in-place
+## fmt: Format all code in-place. Pass CHECK=1 for read-only verify (CI use).
 fmt:
+ifdef CHECK
+	@echo "==> Checking format..."
+	dotnet csharpier check .
+else
 	@echo "==> Formatting..."
 	dotnet csharpier format .
+endif
 
 ## clean: Remove all build artifacts
 clean:
@@ -130,8 +133,12 @@ nuke: clean
 	$(RM) docker/dashboard-build
 	@echo "==> Nuked. Run 'make start-docker' for a cold start."
 
-## ci: lint + test + build (full CI simulation -- test includes coverage checks)
-ci: lint test build
+## ci: fmt-check + lint + test + build (full CI simulation)
+ci:
+	$(MAKE) fmt CHECK=1
+	$(MAKE) lint
+	$(MAKE) test
+	$(MAKE) build
 
 ## setup: Post-create dev environment setup
 setup:

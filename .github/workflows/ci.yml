@@ -1,4 +1,4 @@
-# agent-pmo:6647c8e
+# agent-pmo:2efd847
 name: CI
 
 on:
@@ -41,6 +41,9 @@ jobs:
       # `dotnet DataProvider postgres` codegen against the live database,
       # so it has to come after db-up + db-migrate. Still kept ahead of
       # the embedding service / Playwright steps to fail fast on warnings.
+      - name: Format check
+        run: make fmt CHECK=1
+
       - name: Lint
         run: make lint
 

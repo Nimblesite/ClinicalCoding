@@ -7,7 +7,7 @@
 > Read this entire file before writing any code.
 > These rules are NON-NEGOTIABLE. Violations will be rejected in review.
 
-<!-- agent-pmo:6647c8e -->
+<!-- agent-pmo:2efd847 -->
 
 ## Project Overview
 
@@ -80,8 +80,8 @@ make start-local    # run APIs locally against docker Postgres
 make ci             # lint + test + build (test includes coverage enforcement)
 make build          # compile everything
 make test           # run tests with coverage (fails if below threshold)
-make lint           # check formatting + run all linters
-make fmt            # format all code
+make lint           # run all linters/analyzers (read-only, no formatting)
+make fmt            # format all code (CHECK=1 for read-only verify)
 make clean          # remove build artifacts
 make setup          # restore tools + packages (first time)
 make db-up          # start Postgres container
