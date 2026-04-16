@@ -436,3 +436,63 @@ textarea.input { font-family: var(--font-family); resize: vertical; min-height: 
 .coding-result-details dd { margin: 0; font-size: var(--font-size-sm); color: var(--on-surface); line-height: 1.5; }
 
 .btn-outline.copied { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+
+/* === PATIENT / RECORD EDITOR === */
+.editor-page { max-width: 1120px; margin: 0 auto; padding: var(--space-6) 0; }
+.editor-page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-8); gap: var(--space-6); }
+.editor-tag { display: inline-block; padding: 0.2rem 0.55rem; background: var(--secondary-container); color: var(--on-secondary-container); font-size: var(--font-size-2xs); font-weight: var(--font-weight-bold); letter-spacing: var(--letter-spacing-widest); text-transform: uppercase; border-radius: var(--radius-sm); margin-bottom: 0.6rem; }
+.editor-title { font-size: var(--font-size-3xl); font-weight: var(--font-weight-extrabold); color: var(--on-surface); letter-spacing: -0.01em; margin: 0 0 0.4rem; }
+.editor-subtitle { color: var(--secondary); font-size: var(--font-size-md); margin: 0; max-width: 60ch; }
+
+.patient-editor-form { display: flex; flex-direction: column; gap: var(--space-6); }
+
+.editor-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-6); }
+.editor-grid > .editor-card--primary { grid-column: span 8; }
+.editor-grid > .editor-side { grid-column: span 4; display: flex; flex-direction: column; gap: var(--space-6); }
+@media (max-width: 960px) {
+  .editor-grid > .editor-card--primary,
+  .editor-grid > .editor-side { grid-column: 1 / -1; }
+}
+
+.editor-card { background: var(--surface-container-lowest); border-radius: 1.5rem; padding: var(--space-6) var(--space-8); box-shadow: 0 12px 32px rgba(25,28,30,0.02); border: 1px solid rgba(194,198,212,0.15); }
+.editor-card--soft { background: var(--surface-container-low); padding: var(--space-6); }
+
+.editor-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: var(--space-6); }
+.editor-card-icon { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: rgba(0,63,171,0.10); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.editor-card-icon .material-symbols-outlined { font-size: 20px; }
+.editor-card-header h3 { margin: 0; font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--on-surface); }
+
+.field-grid { display: grid; gap: var(--space-5) var(--space-6); }
+.field-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 640px) { .field-grid--two { grid-template-columns: 1fr; } }
+
+.field { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
+.field-label { font-size: var(--font-size-2xs); font-weight: var(--font-weight-bold); color: var(--secondary); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; margin-left: 0.25rem; }
+.field-input { width: 100%; box-sizing: border-box; padding: 0.85rem 1.1rem; background: var(--surface-container-low); color: var(--on-surface); font: inherit; font-weight: var(--font-weight-medium); border: 1px solid transparent; border-radius: 1rem; transition: background var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast); }
+.field-input:focus { background: var(--surface-container-lowest); outline: none; border-color: rgba(0,63,171,0.25); box-shadow: 0 0 0 3px rgba(0,63,171,0.15); }
+select.field-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23505f76' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1.1rem center; padding-right: 2.5rem; }
+
+.editor-card-section { margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid rgba(194,198,212,0.2); }
+
+.field-toggle { display: inline-flex; align-items: center; gap: 0.6rem; font-size: var(--font-size-sm); color: var(--on-surface); font-weight: var(--font-weight-medium); cursor: pointer; }
+.field-toggle input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
+.editor-side-title { margin: 0 0 var(--space-4); font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--on-surface); }
+
+.status-row { display: flex; align-items: center; gap: 0.75rem; }
+.status-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--tertiary); flex-shrink: 0; }
+.status-label { margin: 0 0 0.15rem; font-size: var(--font-size-2xs); color: var(--secondary); font-weight: var(--font-weight-medium); }
+.status-value { margin: 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--tertiary); }
+
+.verify-row { display: flex; gap: 0.75rem; margin-bottom: var(--space-3); }
+.verify-row:last-child { margin-bottom: 0; }
+.verify-marker { width: 4px; border-radius: 9999px; background: var(--outline-variant); flex-shrink: 0; }
+.verify-marker--tertiary { background: var(--tertiary); }
+.verify-marker--secondary { background: var(--secondary-container); }
+.verify-label { margin: 0 0 0.2rem; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); color: var(--on-surface); }
+.verify-desc { margin: 0; font-size: var(--font-size-2xs); color: var(--secondary); line-height: 1.5; }
+
+.editor-actions { display: flex; justify-content: flex-end; gap: var(--space-3); padding-top: var(--space-2); }
+.btn-pill { border-radius: 9999px; padding: 0.75rem 1.6rem; font-weight: var(--font-weight-bold); min-width: 160px; display: inline-flex; align-items: center; justify-content: center; }
+.btn-ghost { background: var(--surface-container-high); color: var(--on-secondary-container); border: none; border-radius: 9999px; padding: 0.75rem 1.4rem; font-weight: var(--font-weight-semibold); cursor: pointer; transition: background var(--transition-fast); }
+.btn-ghost:hover { background: var(--surface-container-highest); }

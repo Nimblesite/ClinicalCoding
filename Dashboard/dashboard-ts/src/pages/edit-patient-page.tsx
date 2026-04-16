@@ -33,23 +33,41 @@ export const EditPatientPage = ({ id }: EditPatientPageProps): ReactElement => {
         setSuccess(true);
       })
       .catch(() => {
-        // Error handled by mutation state
+        // Error surfaced via save.isError
       });
   };
 
+  const isEdit = id !== undefined;
+  const title = isEdit ? 'Edit Demographics' : 'New Patient';
+  const subtitle = isEdit
+    ? "Update the patient's identity and contact resources following HL7 FHIR standards."
+    : 'Create a new patient record following HL7 FHIR standards.';
+
   return (
-    <section className="page" data-testid="edit-patient-page">
-      <h2>{id === undefined ? 'Add patient' : 'Edit patient'}</h2>
-      {save.isError ? <div className="alert alert-error">{save.error.message}</div> : null}
-      {success ? (
-        <div className="alert alert-success" data-testid="edit-success">
-          Patient updated successfully
+    <section className="page editor-page" data-testid="edit-patient-page">
+      <header className="editor-page-header">
+        <div>
+          <span className="editor-tag">Patient Record</span>
+          <h1 className="editor-title">{title}</h1>
+          <p className="editor-subtitle">{subtitle}</p>
         </div>
-      ) : null}
+      </header>
+
+      {save.isError && (
+        <div className="alert alert-error" role="alert">
+          {save.error.message}
+        </div>
+      )}
+      {success && (
+        <div className="alert alert-success" data-testid="edit-success" role="status">
+          Patient record saved.
+        </div>
+      )}
+
       <PatientForm
         {...(data !== undefined ? { initial: data } : {})}
         onSubmit={handleSubmit}
-        submitLabel={id === undefined ? 'Create' : 'Save'}
+        submitLabel={isEdit ? 'Save Changes' : 'Create Patient'}
       />
     </section>
   );
