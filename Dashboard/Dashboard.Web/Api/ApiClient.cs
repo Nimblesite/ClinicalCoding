@@ -194,6 +194,14 @@ namespace Dashboard.Api
         }
 
         /// <summary>
+        /// Creates a new appointment via the Scheduling API.
+        /// </summary>
+        public static async Task<string> CreateAppointmentAsync(object data)
+        {
+            return await SendJsonAsync(_schedulingBaseUrl + "/Appointment", "POST", data);
+        }
+
+        /// <summary>
         /// Fetches appointments for a patient.
         /// </summary>
         public static async Task<Appointment[]> GetPatientAppointmentsAsync(string patientId)
@@ -323,7 +331,8 @@ namespace Dashboard.Api
         private static async Task<string> GetAsync(string url)
         {
             var token = Token;
-            var response = await Script.Write<Task<Response>>(@"
+            var response = await Script.Write<Task<Response>>(
+                @"
                 fetch(url, {
                     method: 'GET',
                     headers: {
@@ -331,7 +340,8 @@ namespace Dashboard.Api
                         'Authorization': 'Bearer ' + token
                     }
                 })
-            ");
+            "
+            );
             if (!response.Ok)
             {
                 throw new Exception("HTTP " + response.Status);
@@ -343,7 +353,8 @@ namespace Dashboard.Api
         {
             var token = Token;
             var body = Script.Call<string>("JSON.stringify", data);
-            var response = await Script.Write<Task<Response>>(@"
+            var response = await Script.Write<Task<Response>>(
+                @"
                 fetch(url, {
                     method: method,
                     headers: {
@@ -353,7 +364,8 @@ namespace Dashboard.Api
                     },
                     body: body
                 })
-            ");
+            "
+            );
             if (!response.Ok)
             {
                 throw new Exception("HTTP " + response.Status);
@@ -363,12 +375,22 @@ namespace Dashboard.Api
 
         // Backwards-compatible thin shims so the existing call sites stay readable.
         private static Task<string> FetchIcd10Async(string url) => GetAsync(url);
+
         private static Task<string> FetchClinicalAsync(string url) => GetAsync(url);
+
         private static Task<string> FetchSchedulingAsync(string url) => GetAsync(url);
-        private static Task<string> PostIcd10Async(string url, object data) => SendJsonAsync(url, "POST", data);
-        private static Task<string> PostClinicalAsync(string url, object data) => SendJsonAsync(url, "POST", data);
-        private static Task<string> PutClinicalAsync(string url, object data) => SendJsonAsync(url, "PUT", data);
-        private static Task<string> PutSchedulingAsync(string url, object data) => SendJsonAsync(url, "PUT", data);
+
+        private static Task<string> PostIcd10Async(string url, object data) =>
+            SendJsonAsync(url, "POST", data);
+
+        private static Task<string> PostClinicalAsync(string url, object data) =>
+            SendJsonAsync(url, "POST", data);
+
+        private static Task<string> PutClinicalAsync(string url, object data) =>
+            SendJsonAsync(url, "PUT", data);
+
+        private static Task<string> PutSchedulingAsync(string url, object data) =>
+            SendJsonAsync(url, "PUT", data);
 
         private static T ParseJson<T>(string json) => Script.Call<T>("JSON.parse", json);
 
@@ -384,18 +406,23 @@ namespace Dashboard.Api
     public class Response
     {
         /// <summary>Whether the response was successful.</summary>
+        [Name("ok")]
         public extern bool Ok { get; }
 
         /// <summary>HTTP status code.</summary>
+        [Name("status")]
         public extern int Status { get; }
 
         /// <summary>HTTP status text.</summary>
+        [Name("statusText")]
         public extern string StatusText { get; }
 
         /// <summary>Gets the response body as text.</summary>
+        [Name("text")]
         public extern Task<string> Text();
 
         /// <summary>Gets the response body as JSON.</summary>
+        [Name("json")]
         public extern Task<object> Json();
     }
 }

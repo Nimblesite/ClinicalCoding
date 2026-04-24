@@ -30,9 +30,21 @@ namespace Dashboard.Pages
                 className: "coding-tabs",
                 children: new[]
                 {
-                    RenderTab("AI Search", state.SearchMode == "semantic", () => SetSearchMode(state, setState, "semantic")),
-                    RenderTab("Keyword Search", state.SearchMode == "keyword", () => SetSearchMode(state, setState, "keyword")),
-                    RenderTab("Code Lookup", state.SearchMode == "lookup", () => SetSearchMode(state, setState, "lookup")),
+                    RenderTab(
+                        "AI Search",
+                        state.SearchMode == "semantic",
+                        () => SetSearchMode(state, setState, "semantic")
+                    ),
+                    RenderTab(
+                        "Keyword Search",
+                        state.SearchMode == "keyword",
+                        () => SetSearchMode(state, setState, "keyword")
+                    ),
+                    RenderTab(
+                        "Code Lookup",
+                        state.SearchMode == "lookup",
+                        () => SetSearchMode(state, setState, "lookup")
+                    ),
                 }
             );
 
@@ -100,11 +112,7 @@ namespace Dashboard.Pages
                     Div(className: "coding-options-divider"),
                     Div(
                         className: "coding-verified",
-                        children: new[]
-                        {
-                            Icons.Sparkles(),
-                            Text(" Verified AI-Powered Engine"),
-                        }
+                        children: new[] { Icons.Sparkles(), Text(" Verified AI-Powered Engine") }
                     ),
                 }
             );

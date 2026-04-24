@@ -131,10 +131,7 @@ namespace Dashboard.Pages
             if (state.Icd10Results.Length > 0)
                 return RenderKeywordResults(state, setState);
 
-            if (
-                state.SearchMode == "lookup"
-                && !string.IsNullOrWhiteSpace(state.SearchQuery)
-            )
+            if (state.SearchMode == "lookup" && !string.IsNullOrWhiteSpace(state.SearchQuery))
                 return RenderNoResults(state.SearchQuery);
 
             return RenderEmptyState(state);

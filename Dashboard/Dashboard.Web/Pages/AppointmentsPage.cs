@@ -4,6 +4,7 @@ using Dashboard.Api;
 using Dashboard.Components;
 using Dashboard.Models;
 using Dashboard.React;
+using H5;
 using static Dashboard.React.Elements;
 using static Dashboard.React.Hooks;
 
@@ -25,6 +26,12 @@ namespace Dashboard.Pages
 
         /// <summary>Current status filter.</summary>
         public string StatusFilter { get; set; }
+
+        /// <summary>Whether the add appointment modal is open.</summary>
+        public bool ShowAddModal { get; set; }
+
+        /// <summary>Service type for new appointment.</summary>
+        public string NewServiceType { get; set; }
     }
 
     /// <summary>
@@ -113,10 +120,27 @@ namespace Dashboard.Pages
                             ),
                             Button(
                                 className: "btn btn-primary",
+                                dataTestId: "add-appointment-btn",
+                                onClick: () =>
+                                    setState(
+                                        new AppointmentsState
+                                        {
+                                            Appointments = state.Appointments,
+                                            Loading = false,
+                                            Error = state.Error,
+                                            StatusFilter = state.StatusFilter,
+                                            ShowAddModal = true,
+                                            NewServiceType = "",
+                                        }
+                                    ),
                                 children: new[] { Icons.Plus(), Text("New Appointment") }
                             ),
                         }
                     ),
+                    // Add modal
+                    state.ShowAddModal
+                        ? RenderAddModal(state, setState)
+                        : Text(""),
                     // Filters
                     Div(
                         className: "card mb-6",
@@ -335,137 +359,36 @@ namespace Dashboard.Pages
                     ? appointments
                     : appointments.Where(a => a.Status == statusFilter).ToArray();
 
-            return Div(
-                className: "data-list",
-                children: filtered
-                    .Select(a => RenderAppointmentCard(a, onEditAppointment))
-                    .ToArray()
-            );
+            var rows = filtered.Select(a => RenderAppointmentRow(a, onEditAppointment)).ToArray();
+
+            return Table(className: "data-table", children: rows);
         }
 
-        private static ReactElement RenderAppointmentCard(
+        private static ReactElement RenderAppointmentRow(
             Appointment appointment,
             Action<string> onEditAppointment
-        )
-        {
-            ReactElement descElement;
-            if (appointment.Description != null)
-            {
-                descElement = P(
-                    className: "text-sm mt-2",
-                    children: new[] { Text(appointment.Description) }
-                );
-            }
-            else
-            {
-                descElement = Text("");
-            }
-
-            return Div(
-                className: "card-glass mb-4",
+        ) =>
+            Tr(
+                className: "appointment-row",
                 children: new[]
                 {
-                    Div(
-                        className: "flex items-start gap-4",
+                    Td(children: new[] { Text(FormatTime(appointment.StartTime)) }),
+                    Td(children: new[] { Text(appointment.ServiceType ?? "Appointment") }),
+                    Td(children: new[] { RenderStatusBadge(appointment.Status) }),
+                    Td(children: new[] { RenderPriorityBadge(appointment.Priority) }),
+                    Td(children: new[] { Text(FormatReference(appointment.PatientReference)) }),
+                    Td(
                         children: new[]
                         {
-                            // Time block
-                            Div(
-                                className: "metric-icon blue",
-                                style: new { width = "60px", height = "60px" },
-                                children: new[]
-                                {
-                                    Div(
-                                        className: "text-center",
-                                        children: new[]
-                                        {
-                                            Div(
-                                                className: "text-lg font-bold",
-                                                children: new[]
-                                                {
-                                                    Text(FormatTime(appointment.StartTime)),
-                                                }
-                                            ),
-                                            Div(
-                                                className: "text-xs",
-                                                children: new[]
-                                                {
-                                                    Text(appointment.MinutesDuration + "min"),
-                                                }
-                                            ),
-                                        }
-                                    ),
-                                }
-                            ),
-                            // Details
-                            Div(
-                                className: "flex-1",
-                                children: new[]
-                                {
-                                    Div(
-                                        className: "flex items-center gap-2",
-                                        children: new[]
-                                        {
-                                            H(
-                                                4,
-                                                className: "font-semibold",
-                                                children: new[]
-                                                {
-                                                    Text(appointment.ServiceType ?? "Appointment"),
-                                                }
-                                            ),
-                                            RenderStatusBadge(appointment.Status),
-                                            RenderPriorityBadge(appointment.Priority),
-                                        }
-                                    ),
-                                    Div(
-                                        className: "text-sm text-gray-600 mt-1",
-                                        children: new[]
-                                        {
-                                            Icons.Users(),
-                                            Text(
-                                                " Patient: "
-                                                    + FormatReference(appointment.PatientReference)
-                                            ),
-                                        }
-                                    ),
-                                    Div(
-                                        className: "text-sm text-gray-600",
-                                        children: new[]
-                                        {
-                                            Icons.UserDoctor(),
-                                            Text(
-                                                " Provider: "
-                                                    + FormatReference(
-                                                        appointment.PractitionerReference
-                                                    )
-                                            ),
-                                        }
-                                    ),
-                                    descElement,
-                                }
-                            ),
-                            // Actions
-                            Div(
-                                className: "flex flex-col gap-2",
-                                children: new[]
-                                {
-                                    Button(
-                                        className: "btn btn-primary btn-sm",
-                                        children: new[] { Text("Check In") }
-                                    ),
-                                    Button(
-                                        className: "btn btn-secondary btn-sm",
-                                        onClick: () => onEditAppointment(appointment.Id),
-                                        children: new[] { Icons.Edit() }
-                                    ),
-                                }
+                            Button(
+                                className: "btn btn-secondary btn-sm",
+                                onClick: () => onEditAppointment(appointment.Id),
+                                children: new[] { Icons.Edit() }
                             ),
                         }
                     ),
                 }
             );
-        }
 
         private static ReactElement RenderStatusBadge(string status)
         {
@@ -528,6 +451,117 @@ namespace Dashboard.Pages
                 return id.Substring(0, length) + "...";
             }
             return reference;
+        }
+
+        private static ReactElement RenderAddModal(
+            AppointmentsState state,
+            Action<AppointmentsState> setState
+        ) =>
+            Div(
+                className: "modal",
+                children: new[]
+                {
+                    Div(
+                        className: "card",
+                        style: new
+                        {
+                            padding = "24px",
+                            maxWidth = "500px",
+                            margin = "100px auto",
+                        },
+                        children: new[]
+                        {
+                            H(3, children: new[] { Text("New Appointment") }),
+                            Div(
+                                className: "mt-4",
+                                children: new[]
+                                {
+                                    Input(
+                                        className: "input",
+                                        placeholder: "Service Type",
+                                        value: state.NewServiceType ?? "",
+                                        dataTestId: "appointment-service-type",
+                                        onChange: v =>
+                                            setState(
+                                                new AppointmentsState
+                                                {
+                                                    Appointments = state.Appointments,
+                                                    Loading = false,
+                                                    Error = state.Error,
+                                                    StatusFilter = state.StatusFilter,
+                                                    ShowAddModal = true,
+                                                    NewServiceType = v,
+                                                }
+                                            )
+                                    ),
+                                }
+                            ),
+                            Div(
+                                className: "flex gap-2 mt-4",
+                                children: new[]
+                                {
+                                    Button(
+                                        className: "btn btn-primary",
+                                        dataTestId: "submit-appointment",
+                                        onClick: () =>
+                                            CreateAppointment(state.NewServiceType, setState),
+                                        children: new[] { Text("Create") }
+                                    ),
+                                    Button(
+                                        className: "btn btn-secondary",
+                                        onClick: () =>
+                                            setState(
+                                                new AppointmentsState
+                                                {
+                                                    Appointments = state.Appointments,
+                                                    Loading = false,
+                                                    Error = state.Error,
+                                                    StatusFilter = state.StatusFilter,
+                                                    ShowAddModal = false,
+                                                }
+                                            ),
+                                        children: new[] { Text("Cancel") }
+                                    ),
+                                }
+                            ),
+                        }
+                    ),
+                }
+            );
+
+        private static async void CreateAppointment(
+            string serviceType,
+            Action<AppointmentsState> setState
+        )
+        {
+            try
+            {
+                var now = Script.Write<string>("new Date().toISOString()");
+                var appointment = new
+                {
+                    ServiceCategory = "General",
+                    ServiceType = serviceType,
+                    Priority = "routine",
+                    Start = now,
+                    End = now,
+                    PatientReference = "Patient/1",
+                    PractitionerReference = "Practitioner/1",
+                };
+                await ApiClient.CreateAppointmentAsync(appointment);
+                LoadAppointments(setState);
+            }
+            catch (Exception ex)
+            {
+                setState(
+                    new AppointmentsState
+                    {
+                        Appointments = new Appointment[0],
+                        Loading = false,
+                        Error = ex.Message,
+                        ShowAddModal = false,
+                    }
+                );
+            }
         }
     }
 }

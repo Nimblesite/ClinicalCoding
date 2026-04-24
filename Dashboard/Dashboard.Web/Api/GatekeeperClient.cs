@@ -37,7 +37,8 @@ namespace Dashboard.Api
         public static async Task<PasskeyAuthResult> LoginAsync()
         {
             var baseUrl = ApiClient.GatekeeperBaseUrl;
-            var resultJson = await Script.Write<Task<string>>(@"
+            var resultJson = await Script.Write<Task<string>>(
+                @"
                 (async function() {
                     if (!navigator.credentials || !navigator.credentials.get) {
                         throw new Error('WebAuthn unavailable. Use https or http://localhost.');
@@ -98,7 +99,8 @@ namespace Dashboard.Api
                         return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
                     }
                 })()
-            ");
+            "
+            );
 
             return ParseAndPersist(resultJson);
         }
@@ -110,7 +112,8 @@ namespace Dashboard.Api
         public static async Task<PasskeyAuthResult> RegisterAsync(string email, string displayName)
         {
             var baseUrl = ApiClient.GatekeeperBaseUrl;
-            var resultJson = await Script.Write<Task<string>>(@"
+            var resultJson = await Script.Write<Task<string>>(
+                @"
                 (async function() {
                     if (!navigator.credentials || !navigator.credentials.create) {
                         throw new Error('WebAuthn unavailable. Use https or http://localhost.');
@@ -174,7 +177,8 @@ namespace Dashboard.Api
                         return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
                     }
                 })()
-            ");
+            "
+            );
 
             return ParseAndPersist(resultJson);
         }
@@ -189,14 +193,16 @@ namespace Dashboard.Api
             var baseUrl = ApiClient.GatekeeperBaseUrl;
             if (!string.IsNullOrEmpty(token))
             {
-                await Script.Write<Task<object>>(@"
+                await Script.Write<Task<object>>(
+                    @"
                     fetch(baseUrl + '/auth/logout', {
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + token }
                     }).catch(function(err) {
                         console.warn('[Auth] Logout request failed:', err);
                     })
-                ");
+                "
+                );
             }
             Auth.Clear();
         }
@@ -205,12 +211,14 @@ namespace Dashboard.Api
         {
             var parsed = Script.Call<PasskeyAuthResult>("JSON.parse", json);
             Auth.SetToken(parsed.Token);
-            Auth.SetUser(new AuthUser
-            {
-                UserId = parsed.UserId,
-                DisplayName = parsed.DisplayName,
-                Email = parsed.Email,
-            });
+            Auth.SetUser(
+                new AuthUser
+                {
+                    UserId = parsed.UserId,
+                    DisplayName = parsed.DisplayName,
+                    Email = parsed.Email,
+                }
+            );
             return parsed;
         }
     }

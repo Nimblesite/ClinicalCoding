@@ -127,7 +127,10 @@ namespace Dashboard.Pages
             Action<ClinicalCodingState> setState
         )
         {
-            var results = await ApiClient.SearchIcd10CodesAsync(query: state.SearchQuery, limit: 50);
+            var results = await ApiClient.SearchIcd10CodesAsync(
+                query: state.SearchQuery,
+                limit: 50
+            );
             var next = Clone(state);
             next.Icd10Results = results;
             next.Loading = false;

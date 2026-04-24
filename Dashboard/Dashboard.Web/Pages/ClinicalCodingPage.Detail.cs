@@ -110,10 +110,7 @@ namespace Dashboard.Pages
             Div(
                 children: new[]
                 {
-                    Span(
-                        className: "coding-detail-section-title",
-                        children: new[] { Text(label) }
-                    ),
+                    Span(className: "coding-detail-section-title", children: new[] { Text(label) }),
                     P(className: "font-medium", children: new[] { Text(value) }),
                 }
             );
@@ -127,11 +124,7 @@ namespace Dashboard.Pages
                 className: "coding-detail-section",
                 children: new[]
                 {
-                    H(
-                        4,
-                        className: "coding-detail-section-title",
-                        children: new[] { Text(title) }
-                    ),
+                    H(4, className: "coding-detail-section-title", children: new[] { Text(title) }),
                     Div(
                         className: "coding-detail-section-body",
                         children: new[] { P(children: new[] { Text(content) }) }

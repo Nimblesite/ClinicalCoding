@@ -622,7 +622,7 @@ namespace Dashboard.Pages
 
         private static ReactElement RenderInputField(
             string label,
-            string id,
+            string fieldId,
             string value,
             string placeholder,
             Action<string> onChange,
@@ -632,9 +632,14 @@ namespace Dashboard.Pages
                 className: "form-group",
                 children: new[]
                 {
-                    Label(htmlFor: id, className: "form-label", children: new[] { Text(label) }),
+                    Label(
+                        htmlFor: fieldId,
+                        className: "form-label",
+                        children: new[] { Text(label) }
+                    ),
                     Input(
                         className: "input",
+                        id: fieldId,
                         type: type,
                         value: value,
                         placeholder: placeholder,

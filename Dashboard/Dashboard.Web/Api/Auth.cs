@@ -43,7 +43,13 @@ namespace Dashboard.Api
             {
                 return null;
             }
-            return Script.Call<AuthUser>("JSON.parse", json);
+            var raw = Script.Call<object>("JSON.parse", json);
+            return new AuthUser
+            {
+                UserId = Script.Get<string>(raw, "userId"),
+                DisplayName = Script.Get<string>(raw, "displayName"),
+                Email = Script.Get<string>(raw, "email"),
+            };
         }
 
         /// <summary>Persists the current user.</summary>

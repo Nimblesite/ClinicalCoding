@@ -16,8 +16,9 @@ namespace Dashboard.React
             string id = null,
             object style = null,
             Action onClick = null,
+            string dataTestId = null,
             params ReactElement[] children
-        ) => CreateElement("div", className, id, style, onClick, children);
+        ) => CreateElement("div", className, id, style, onClick, children, dataTestId);
 
         /// <summary>
         /// Creates a span element.
@@ -55,6 +56,7 @@ namespace Dashboard.React
             Action onClick = null,
             bool disabled = false,
             string type = "button",
+            string dataTestId = null,
             params ReactElement[] children
         )
         {
@@ -67,6 +69,20 @@ namespace Dashboard.React
                     onClick();
                 };
             }
+
+            if (dataTestId != null)
+            {
+                var propsWithTestId = Script.Write<object>(
+                    "{ className: className, onClick: clickHandler, disabled: disabled, type: type, 'data-testid': dataTestId }"
+                );
+                return Script.Call<ReactElement>(
+                    "React.createElement",
+                    "button",
+                    propsWithTestId,
+                    children
+                );
+            }
+
             var props = new
             {
                 className = className,
@@ -87,7 +103,9 @@ namespace Dashboard.React
             string placeholder = null,
             Action<string> onChange = null,
             Action<string> onKeyDown = null,
-            bool disabled = false
+            bool disabled = false,
+            string dataTestId = null,
+            string id = null
         )
         {
             Action<object> changeHandler = null;
@@ -101,6 +119,15 @@ namespace Dashboard.React
             {
                 keyDownHandler = e => onKeyDown(Script.Get<string>(e, "key"));
             }
+
+            if (dataTestId != null || id != null)
+            {
+                var propsExt = Script.Write<object>(
+                    "{ className: className, id: id, type: type, value: value, placeholder: placeholder, onChange: changeHandler, onKeyDown: keyDownHandler, disabled: disabled, 'data-testid': dataTestId }"
+                );
+                return Script.Call<ReactElement>("React.createElement", "input", propsExt);
+            }
+
             var props = new
             {
                 className = className,
@@ -440,7 +467,8 @@ namespace Dashboard.React
             string id,
             object style,
             Action onClick,
-            ReactElement[] children
+            ReactElement[] children,
+            string dataTestId = null
         )
         {
             Action<object> clickHandler = null;
@@ -448,13 +476,25 @@ namespace Dashboard.React
             {
                 clickHandler = _ => onClick();
             }
-            var props = new
+
+            object props;
+            if (dataTestId != null)
             {
-                className = className,
-                id = id,
-                style = style,
-                onClick = clickHandler,
-            };
+                props = Script.Write<object>(
+                    "{ className: className, id: id, style: style, onClick: clickHandler, 'data-testid': dataTestId }"
+                );
+            }
+            else
+            {
+                props = new
+                {
+                    className = className,
+                    id = id,
+                    style = style,
+                    onClick = clickHandler,
+                };
+            }
+
             // Spread children as positional arguments via apply() so React assigns
             // implicit positional keys, avoiding the "unique key prop" warning cascade.
             var childCount = children == null ? 0 : children.Length;

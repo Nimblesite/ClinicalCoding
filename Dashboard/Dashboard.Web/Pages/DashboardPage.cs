@@ -72,10 +72,18 @@ namespace Dashboard.Pages
     /// </summary>
     public static class DashboardPage
     {
+        private static Action<string> _onNavigate;
+
         /// <summary>
         /// Renders the dashboard page.
         /// </summary>
-        public static ReactElement Render()
+        public static ReactElement Render(Action<string> onNavigate = null)
+        {
+            _onNavigate = onNavigate;
+            return RenderInternal();
+        }
+
+        private static ReactElement RenderInternal()
         {
             var stateResult = UseState(
                 new DashboardState
@@ -282,7 +290,12 @@ namespace Dashboard.Pages
                         children: new[]
                         {
                             Div(
-                                style: new { width = "44px", height = "44px", flexShrink = 0 },
+                                style: new
+                                {
+                                    width = "44px",
+                                    height = "44px",
+                                    flexShrink = 0,
+                                },
                                 children: new[]
                                 {
                                     Svg(
@@ -342,14 +355,8 @@ namespace Dashboard.Pages
                         className: "metric-card-header",
                         children: new[]
                         {
-                            Span(
-                                className: "metric-card-title",
-                                children: new[] { Text(label) }
-                            ),
-                            Div(
-                                className: "metric-card-icon " + accent,
-                                children: new[] { icon }
-                            ),
+                            Span(className: "metric-card-title", children: new[] { Text(label) }),
+                            Div(className: "metric-card-icon " + accent, children: new[] { icon }),
                         }
                     ),
                     Div(
@@ -406,7 +413,8 @@ namespace Dashboard.Pages
                             A(
                                 href: "#",
                                 className: "view-more-link",
-                                children: new[] { Text("View Calendar") }
+                                onClick: () => _onNavigate?.Invoke("appointments"),
+                                children: new[] { Text("View Schedule") }
                             ),
                         }
                     ),
@@ -447,10 +455,7 @@ namespace Dashboard.Pages
                         className: "text-right",
                         children: new[]
                         {
-                            Div(
-                                className: "font-bold text-sm",
-                                children: new[] { Text(apt.Time) }
-                            ),
+                            Div(className: "font-bold text-sm", children: new[] { Text(apt.Time) }),
                             Div(
                                 className: "text-2xs text-gray-400 uppercase tracking-wider",
                                 children: new[] { Text(apt.Meta) }
@@ -473,10 +478,7 @@ namespace Dashboard.Pages
                         className: "dashboard-section-title",
                         children: new[] { Text("Requests") }
                     ),
-                    Span(
-                        className: "badge badge-error",
-                        children: new[] { Text("3 New") }
-                    ),
+                    Span(className: "badge badge-error", children: new[] { Text("3 New") }),
                 }
             );
             for (var i = 0; i < requests.Length; i++)
@@ -501,10 +503,7 @@ namespace Dashboard.Pages
                         className: "appointment-request-info",
                         children: new[]
                         {
-                            Div(
-                                className: "icon-wrap",
-                                children: new[] { Icons.Users() }
-                            ),
+                            Div(className: "icon-wrap", children: new[] { Icons.Users() }),
                             Div(
                                 children: new[]
                                 {

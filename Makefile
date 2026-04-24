@@ -69,14 +69,26 @@ test: db-migrate
 	  proj_dir=$$(dirname "$$proj"); \
 	  echo ""; \
 	  echo "==> Testing $$proj"; \
-	  dotnet test "$$proj" --configuration Release \
-	    --settings coverlet.runsettings \
-	    --collect:"XPlat Code Coverage" \
-	    --results-directory "TestResults/$$proj_dir" \
-	    --verbosity normal \
-	    || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	  inc_filter=$$(jq -r --arg p "$$proj_dir" '.test_projects[$$p].include // ""' $(COVERAGE_THRESHOLDS_FILE)); \
+	  source_name=$$(jq -r --arg p "$$proj_dir" '.test_projects[$$p].source // $$p' $(COVERAGE_THRESHOLDS_FILE)); \
+	  if [ -n "$$inc_filter" ]; then \
+	    dotnet test "$$proj" --configuration Release \
+	      --settings coverlet.runsettings \
+	      --collect:"XPlat Code Coverage" \
+	      --results-directory "TestResults/$$proj_dir" \
+	      --verbosity normal \
+	      -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="$$inc_filter" \
+	      || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	  else \
+	    dotnet test "$$proj" --configuration Release \
+	      --settings coverlet.runsettings \
+	      --collect:"XPlat Code Coverage" \
+	      --results-directory "TestResults/$$proj_dir" \
+	      --verbosity normal \
+	      || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	  fi; \
 	  cobertura=$$(find "TestResults/$$proj_dir" -name 'coverage.cobertura.xml' 2>/dev/null | head -1); \
-	  threshold=$$(jq -r --arg p "$$proj_dir" --arg d "$$default" '.projects[$$p].threshold // ($$d | tonumber)' $(COVERAGE_THRESHOLDS_FILE)); \
+	  threshold=$$(jq -r --arg p "$$proj_dir" --arg d "$$default" '.test_projects[$$p].threshold // ($$d | tonumber)' $(COVERAGE_THRESHOLDS_FILE)); \
 	  if [ -z "$$cobertura" ]; then \
 	    echo "FAIL ($$proj_dir): no coverage.cobertura.xml"; exit 1; \
 	  fi; \
@@ -84,10 +96,10 @@ test: db-migrate
 	  pct=$$(awk "BEGIN{printf \"%.1f\", $${line_rate:-0}*100}"); \
 	  pct_int=$$(awk "BEGIN{printf \"%d\", $${line_rate:-0}*100}"); \
 	  if [ "$$pct_int" -lt "$$threshold" ]; then \
-	    printf "FAIL %-44s %s%% < %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
+	    printf "FAIL %-44s %s%% < %s%%\n" "$$source_name" "$$pct" "$$threshold"; \
 	    exit 1; \
 	  else \
-	    printf "OK   %-44s %s%% >= %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
+	    printf "OK   %-44s %s%% >= %s%%\n" "$$source_name" "$$pct" "$$threshold"; \
 	  fi; \
 	done
 

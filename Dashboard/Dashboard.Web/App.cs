@@ -41,17 +41,18 @@ namespace Dashboard
 
         /// <summary>Returns a shallow copy of this state, suitable as the
         /// base for setState mutations.</summary>
-        public AppState Clone() => new AppState
-        {
-            ActiveView = ActiveView,
-            SidebarCollapsed = SidebarCollapsed,
-            SearchQuery = SearchQuery,
-            NotificationCount = NotificationCount,
-            EditingPatientId = EditingPatientId,
-            EditingAppointmentId = EditingAppointmentId,
-            IsAuthenticated = IsAuthenticated,
-            CurrentUser = CurrentUser,
-        };
+        public AppState Clone() =>
+            new AppState
+            {
+                ActiveView = ActiveView,
+                SidebarCollapsed = SidebarCollapsed,
+                SearchQuery = SearchQuery,
+                NotificationCount = NotificationCount,
+                EditingPatientId = EditingPatientId,
+                EditingAppointmentId = EditingAppointmentId,
+                IsAuthenticated = IsAuthenticated,
+                CurrentUser = CurrentUser,
+            };
     }
 
     /// <summary>
@@ -64,10 +65,12 @@ namespace Dashboard
         /// </summary>
         public static ReactElement Render()
         {
+            var initialView = ReadHashView() ?? "dashboard";
+
             var stateResult = UseState(
                 new AppState
                 {
-                    ActiveView = "dashboard",
+                    ActiveView = initialView,
                     SidebarCollapsed = false,
                     SearchQuery = "",
                     NotificationCount = 3,
@@ -81,16 +84,42 @@ namespace Dashboard
             var state = stateResult.State;
             var setState = stateResult.SetState;
 
+            UseEffect(
+                () =>
+                {
+                    Action handler = () =>
+                    {
+                        var view = ReadHashView();
+                        if (view != null)
+                        {
+                            var next = state.Clone();
+                            next.ActiveView = view;
+                            next.EditingPatientId = null;
+                            next.EditingAppointmentId = null;
+                            setState(next);
+                        }
+                    };
+                    Script.Write("window.addEventListener('hashchange', handler)");
+                },
+                () =>
+                    (Action)(
+                        () => Script.Write("window.removeEventListener('hashchange', handler)")
+                    ),
+                new object[0]
+            );
+
             if (!state.IsAuthenticated)
             {
-                return AsComponent(() => LoginPage.Render(user =>
-                {
-                    var next = state.Clone();
-                    next.IsAuthenticated = true;
-                    next.CurrentUser = user;
-                    next.ActiveView = "dashboard";
-                    setState(next);
-                }));
+                return AsComponent(() =>
+                    LoginPage.Render(user =>
+                    {
+                        var next = state.Clone();
+                        next.IsAuthenticated = true;
+                        next.CurrentUser = user;
+                        next.ActiveView = "dashboard";
+                        setState(next);
+                    })
+                );
             }
 
             async void HandleLogout()
@@ -189,10 +218,7 @@ namespace Dashboard
         /// page Render() methods violates the rules of hooks.
         /// </summary>
         private static ReactElement AsComponent(Func<ReactElement> render) =>
-            (ReactElement)Script.Call<object>(
-                "React.createElement",
-                render
-            );
+            (ReactElement)Script.Call<object>("React.createElement", render);
 
         private static ReactElement RenderPage(AppState state, Action<AppState> setState)
         {
@@ -203,17 +229,19 @@ namespace Dashboard
             {
                 var editingId = state.EditingPatientId;
                 var snapshot = state;
-                return AsComponent(() => EditPatientPage.Render(
-                    editingId,
-                    () =>
-                    {
-                        var next = snapshot.Clone();
-                        next.ActiveView = "patients";
-                        next.EditingPatientId = null;
-                        next.EditingAppointmentId = null;
-                        setState(next);
-                    }
-                ));
+                return AsComponent(() =>
+                    EditPatientPage.Render(
+                        editingId,
+                        () =>
+                        {
+                            var next = snapshot.Clone();
+                            next.ActiveView = "patients";
+                            next.EditingPatientId = null;
+                            next.EditingAppointmentId = null;
+                            setState(next);
+                        }
+                    )
+                );
             }
 
             // Handle editing appointment
@@ -225,60 +253,80 @@ namespace Dashboard
                 var editingId = state.EditingAppointmentId;
                 var snapshot = state;
                 var returnView = view;
-                return AsComponent(() => EditAppointmentPage.Render(
-                    editingId,
-                    () =>
-                    {
-                        var next = snapshot.Clone();
-                        next.ActiveView = returnView;
-                        next.EditingPatientId = null;
-                        next.EditingAppointmentId = null;
-                        setState(next);
-                    }
-                ));
+                return AsComponent(() =>
+                    EditAppointmentPage.Render(
+                        editingId,
+                        () =>
+                        {
+                            var next = snapshot.Clone();
+                            next.ActiveView = returnView;
+                            next.EditingPatientId = null;
+                            next.EditingAppointmentId = null;
+                            setState(next);
+                        }
+                    )
+                );
             }
 
             if (view == "dashboard")
-                return AsComponent(DashboardPage.Render);
+            {
+                var snapshot = state;
+                return AsComponent(() =>
+                    DashboardPage.Render(targetView =>
+                    {
+                        var next = snapshot.Clone();
+                        next.ActiveView = targetView;
+                        next.EditingPatientId = null;
+                        next.EditingAppointmentId = null;
+                        setState(next);
+                    })
+                );
+            }
             if (view == "clinical-coding")
                 return AsComponent(ClinicalCodingPage.Render);
             if (view == "patients")
             {
                 var snapshot = state;
-                return AsComponent(() => PatientsPage.Render(patientId =>
-                {
-                    var next = snapshot.Clone();
-                    next.ActiveView = "patients";
-                    next.EditingPatientId = patientId;
-                    next.EditingAppointmentId = null;
-                    setState(next);
-                }));
+                return AsComponent(() =>
+                    PatientsPage.Render(patientId =>
+                    {
+                        var next = snapshot.Clone();
+                        next.ActiveView = "patients";
+                        next.EditingPatientId = patientId;
+                        next.EditingAppointmentId = null;
+                        setState(next);
+                    })
+                );
             }
             if (view == "practitioners")
                 return AsComponent(PractitionersPage.Render);
             if (view == "appointments")
             {
                 var snapshot = state;
-                return AsComponent(() => AppointmentsPage.Render(appointmentId =>
-                {
-                    var next = snapshot.Clone();
-                    next.ActiveView = "appointments";
-                    next.EditingPatientId = null;
-                    next.EditingAppointmentId = appointmentId;
-                    setState(next);
-                }));
+                return AsComponent(() =>
+                    AppointmentsPage.Render(appointmentId =>
+                    {
+                        var next = snapshot.Clone();
+                        next.ActiveView = "appointments";
+                        next.EditingPatientId = null;
+                        next.EditingAppointmentId = appointmentId;
+                        setState(next);
+                    })
+                );
             }
             if (view == "calendar")
             {
                 var snapshot = state;
-                return AsComponent(() => CalendarPage.Render(appointmentId =>
-                {
-                    var next = snapshot.Clone();
-                    next.ActiveView = "calendar";
-                    next.EditingPatientId = null;
-                    next.EditingAppointmentId = appointmentId;
-                    setState(next);
-                }));
+                return AsComponent(() =>
+                    CalendarPage.Render(appointmentId =>
+                    {
+                        var next = snapshot.Clone();
+                        next.ActiveView = "calendar";
+                        next.EditingPatientId = null;
+                        next.EditingAppointmentId = appointmentId;
+                        setState(next);
+                    })
+                );
             }
             if (view == "encounters")
                 return RenderPlaceholderPage("Encounters", "Manage patient encounters and visits");
@@ -328,5 +376,15 @@ namespace Dashboard
                     ),
                 }
             );
+
+        private static string ReadHashView()
+        {
+            var hash = Script.Write<string>("window.location.hash");
+            if (string.IsNullOrEmpty(hash) || hash.Length < 2)
+            {
+                return null;
+            }
+            return hash.Substring(1);
+        }
     }
 }

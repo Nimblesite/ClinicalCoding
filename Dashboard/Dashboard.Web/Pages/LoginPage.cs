@@ -2,6 +2,7 @@ using System;
 using Dashboard.Api;
 using Dashboard.Components;
 using Dashboard.React;
+using H5;
 using static Dashboard.React.Elements;
 using static Dashboard.React.Hooks;
 
@@ -41,14 +42,16 @@ namespace Dashboard.Pages
         /// </summary>
         public static ReactElement Render(Action<AuthUser> onLogin)
         {
-            var stateResult = UseState(new LoginState
-            {
-                Mode = "login",
-                Email = "",
-                DisplayName = "",
-                Loading = false,
-                Error = null,
-            });
+            var stateResult = UseState(
+                new LoginState
+                {
+                    Mode = "login",
+                    Email = "",
+                    DisplayName = "",
+                    Loading = false,
+                    Error = null,
+                }
+            );
             var state = stateResult.State;
             var setState = stateResult.SetState;
 
@@ -68,44 +71,88 @@ namespace Dashboard.Pages
 
             async void DoLogin()
             {
-                Mutate(s => { s.Loading = true; s.Error = null; });
+                Mutate(s =>
+                {
+                    s.Loading = true;
+                    s.Error = null;
+                });
                 try
                 {
                     var result = await GatekeeperClient.LoginAsync();
-                    onLogin(new AuthUser
-                    {
-                        UserId = result.UserId,
-                        DisplayName = result.DisplayName,
-                        Email = result.Email,
-                    });
+                    onLogin(
+                        new AuthUser
+                        {
+                            UserId = result.UserId,
+                            DisplayName = result.DisplayName,
+                            Email = result.Email,
+                        }
+                    );
                 }
                 catch (Exception ex)
                 {
-                    Mutate(s => { s.Loading = false; s.Error = ex.Message; });
+                    Mutate(s =>
+                    {
+                        s.Loading = false;
+                        s.Error = ex.Message;
+                    });
                 }
             }
 
             async void DoRegister()
             {
-                Mutate(s => { s.Loading = true; s.Error = null; });
+                Mutate(s =>
+                {
+                    s.Loading = true;
+                    s.Error = null;
+                });
                 try
                 {
-                    var result = await GatekeeperClient.RegisterAsync(state.Email, state.DisplayName);
-                    onLogin(new AuthUser
-                    {
-                        UserId = result.UserId,
-                        DisplayName = result.DisplayName,
-                        Email = result.Email,
-                    });
+                    var result = await GatekeeperClient.RegisterAsync(
+                        state.Email,
+                        state.DisplayName
+                    );
+                    onLogin(
+                        new AuthUser
+                        {
+                            UserId = result.UserId,
+                            DisplayName = result.DisplayName,
+                            Email = result.Email,
+                        }
+                    );
                 }
                 catch (Exception ex)
                 {
-                    Mutate(s => { s.Loading = false; s.Error = ex.Message; });
+                    Mutate(s =>
+                    {
+                        s.Loading = false;
+                        s.Error = ex.Message;
+                    });
                 }
             }
 
+            // Expose a test hook for E2E tests to trigger login without WebAuthn
+            UseEffect(
+                () =>
+                {
+                    Action<object> triggerLogin = user =>
+                    {
+                        var authUser = new AuthUser
+                        {
+                            UserId = Script.Get<string>(user, "userId"),
+                            DisplayName = Script.Get<string>(user, "displayName"),
+                            Email = Script.Get<string>(user, "email"),
+                        };
+                        onLogin(authUser);
+                    };
+                    Script.Write("window.__triggerLogin = triggerLogin");
+                },
+                () => (Action)(() => Script.Write("delete window.__triggerLogin")),
+                new object[0]
+            );
+
             return Div(
                 className: "login-page",
+                dataTestId: "login-page",
                 children: new[] { RenderCard(state, Mutate, DoLogin, DoRegister) }
             );
         }
@@ -127,13 +174,30 @@ namespace Dashboard.Pages
                     Form(
                         onSubmit: () =>
                         {
-                            if (state.Mode == "login") onLogin(); else onRegister();
+                            if (state.Mode == "login")
+                                onLogin();
+                            else
+                                onRegister();
                         },
                         children: state.Mode == "register"
                             ? new[]
                             {
-                                RenderField("Email", "email", state.Email, state.Loading, v => mutate(s => s.Email = v)),
-                                RenderField("Display Name", "text", state.DisplayName, state.Loading, v => mutate(s => s.DisplayName = v)),
+                                RenderField(
+                                    "Email",
+                                    "email",
+                                    state.Email,
+                                    state.Loading,
+                                    v => mutate(s => s.Email = v),
+                                    "email"
+                                ),
+                                RenderField(
+                                    "Display Name",
+                                    "text",
+                                    state.DisplayName,
+                                    state.Loading,
+                                    v => mutate(s => s.DisplayName = v),
+                                    "displayName"
+                                ),
                                 RenderSubmit(state),
                             }
                             : new[] { RenderSubmit(state) }
@@ -147,9 +211,22 @@ namespace Dashboard.Pages
                 className: "login-header",
                 children: new[]
                 {
-                    Img(src: "img/nimblesite-logo.webp", alt: "Nimblesite", className: "login-logo-img"),
+                    Img(
+                        src: "img/nimblesite-logo.webp",
+                        alt: "Nimblesite",
+                        className: "login-logo-img"
+                    ),
                     H(1, children: new[] { Text("Nimblesite Clinical Coding Platform") }),
-                    P(children: new[] { Text(mode == "login" ? "Sign in with your passkey" : "Create your account") }),
+                    P(
+                        children: new[]
+                        {
+                            Text(
+                                mode == "login"
+                                    ? "Sign in with your passkey"
+                                    : "Create your account"
+                            ),
+                        }
+                    ),
                 }
             );
 
@@ -158,7 +235,8 @@ namespace Dashboard.Pages
             string type,
             string value,
             bool disabled,
-            Action<string> onChange
+            Action<string> onChange,
+            string fieldId = null
         ) =>
             Div(
                 className: "form-group",
@@ -167,6 +245,7 @@ namespace Dashboard.Pages
                     Label(className: "form-label", children: new[] { Text(label) }),
                     Input(
                         className: "form-input",
+                        id: fieldId,
                         type: type,
                         value: value,
                         placeholder: label,
@@ -183,9 +262,15 @@ namespace Dashboard.Pages
                 disabled: state.Loading,
                 children: new[]
                 {
-                    Text(state.Loading
-                        ? "Please wait..."
-                        : (state.Mode == "login" ? "Sign in with Passkey" : "Register with Passkey")),
+                    Text(
+                        state.Loading
+                            ? "Please wait..."
+                            : (
+                                state.Mode == "login"
+                                    ? "Sign in with Passkey"
+                                    : "Register with Passkey"
+                            )
+                    ),
                 }
             );
 
@@ -194,20 +279,27 @@ namespace Dashboard.Pages
                 className: "login-footer",
                 children: new[]
                 {
-                    P(children: new[]
-                    {
-                        Text(mode == "login" ? "Don't have an account? " : "Already have an account? "),
-                        Button(
-                            className: "link-btn",
-                            type: "button",
-                            onClick: () => mutate(s =>
-                            {
-                                s.Mode = mode == "login" ? "register" : "login";
-                                s.Error = null;
-                            }),
-                            children: new[] { Text(mode == "login" ? "Register" : "Sign in") }
-                        ),
-                    }),
+                    P(
+                        children: new[]
+                        {
+                            Text(
+                                mode == "login"
+                                    ? "Don't have an account? "
+                                    : "Already have an account? "
+                            ),
+                            Button(
+                                className: "link-btn",
+                                type: "button",
+                                onClick: () =>
+                                    mutate(s =>
+                                    {
+                                        s.Mode = mode == "login" ? "register" : "login";
+                                        s.Error = null;
+                                    }),
+                                children: new[] { Text(mode == "login" ? "Register" : "Sign in") }
+                            ),
+                        }
+                    ),
                 }
             );
     }

@@ -86,7 +86,8 @@ namespace Dashboard.Components
             {
                 return "??";
             }
-            var parts = name.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = name.Trim()
+                .Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length >= 2)
             {
                 return (parts[0][0].ToString() + parts[parts.Length - 1][0].ToString()).ToUpper();
@@ -285,20 +286,43 @@ namespace Dashboard.Components
                         className: "sidebar-user",
                         children: new[]
                         {
-                            Div(className: "avatar avatar-md", children: new[] { Text(initials) }),
+                            Div(
+                                className: "avatar avatar-md",
+                                dataTestId: "user-menu-button",
+                                children: new[] { Text(initials) }
+                            ),
                             Div(
                                 className: "sidebar-user-info",
                                 children: new[]
                                 {
-                                    Div(className: "sidebar-user-name", children: new[] { Text(name) }),
-                                    Div(className: "sidebar-user-role", children: new[] { Text(subtitle) }),
+                                    Div(
+                                        className: "sidebar-user-name",
+                                        children: new[] { Text(name) }
+                                    ),
+                                    Div(
+                                        className: "sidebar-user-role",
+                                        children: new[] { Text(subtitle) }
+                                    ),
                                 }
+                            ),
+                        }
+                    ),
+                    Div(
+                        className: "sidebar-user-dropdown",
+                        dataTestId: "user-dropdown",
+                        children: new[]
+                        {
+                            Div(className: "user-dropdown-name", children: new[] { Text(name) }),
+                            Div(
+                                className: "user-dropdown-email",
+                                children: new[] { Text(subtitle) }
                             ),
                         }
                     ),
                     onLogout != null
                         ? Button(
                             className: "sidebar-logout-btn",
+                            dataTestId: "logout-button",
                             onClick: onLogout,
                             children: new[]
                             {

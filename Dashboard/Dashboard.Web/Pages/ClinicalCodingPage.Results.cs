@@ -98,7 +98,10 @@ namespace Dashboard.Pages
                     H(
                         2,
                         className: "coding-results-title",
-                        children: new[] { Text(count + (isAi ? " AI-Matched Results" : " results found")) }
+                        children: new[]
+                        {
+                            Text(count + (isAi ? " AI-Matched Results" : " results found")),
+                        }
                     ),
                 }
             );
@@ -216,7 +219,9 @@ namespace Dashboard.Pages
                         children: new[]
                         {
                             Span(
-                                className: isAchi ? "code-chip code-chip-achi" : "code-chip code-chip-icd",
+                                className: isAchi
+                                    ? "code-chip code-chip-achi"
+                                    : "code-chip code-chip-icd",
                                 children: new[] { Text(result.Code) }
                             ),
                             Span(
