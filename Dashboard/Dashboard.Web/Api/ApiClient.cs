@@ -202,6 +202,36 @@ namespace Dashboard.Api
         }
 
         /// <summary>
+        /// Fetches sync records from the Clinical API.
+        /// </summary>
+        public static async Task<string> FetchClinicalSyncRecordsAsync()
+        {
+            try
+            {
+                return await GetAsync(_clinicalBaseUrl + "/sync/records");
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Fetches sync records from the Scheduling API.
+        /// </summary>
+        public static async Task<string> FetchSchedulingSyncRecordsAsync()
+        {
+            try
+            {
+                return await GetAsync(_schedulingBaseUrl + "/sync/records");
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Fetches appointments for a patient.
         /// </summary>
         public static async Task<Appointment[]> GetPatientAppointmentsAsync(string patientId)

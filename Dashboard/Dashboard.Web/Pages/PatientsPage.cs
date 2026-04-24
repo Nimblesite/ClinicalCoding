@@ -3,6 +3,7 @@ using Dashboard.Api;
 using Dashboard.Components;
 using Dashboard.Models;
 using Dashboard.React;
+using H5;
 using static Dashboard.React.Elements;
 using static Dashboard.React.Hooks;
 
@@ -27,6 +28,18 @@ namespace Dashboard.Pages
 
         /// <summary>Selected patient.</summary>
         public Patient SelectedPatient { get; set; }
+
+        /// <summary>Whether the add patient modal is open.</summary>
+        public bool ShowAddModal { get; set; }
+
+        /// <summary>Given name for new patient.</summary>
+        public string NewGivenName { get; set; }
+
+        /// <summary>Family name for new patient.</summary>
+        public string NewFamilyName { get; set; }
+
+        /// <summary>Gender for new patient.</summary>
+        public string NewGender { get; set; }
     }
 
     /// <summary>
@@ -112,10 +125,13 @@ namespace Dashboard.Pages
                             ),
                             Button(
                                 className: "btn btn-primary",
+                                dataTestId: "add-patient-btn",
+                                onClick: () => OpenAddModal(state, setState),
                                 children: new[] { Icons.Plus(), Text("Add Patient") }
                             ),
                         }
                     ),
+                    state.ShowAddModal ? RenderAddPatientModal(state, setState) : Text(""),
                     // Search bar
                     Div(
                         className: "card mb-6",
@@ -364,11 +380,18 @@ namespace Dashboard.Pages
                     ),
                     Button(
                         className: "btn btn-ghost btn-sm",
-                        onClick: () => _onEditPatient?.Invoke(patient.Id),
+                        dataTestId: "edit-patient-" + patient.Id,
+                        onClick: () => NavigateEditPatient(patient.Id),
                         children: new[] { Icons.Edit() }
                     ),
                 }
             );
+
+        private static void NavigateEditPatient(string patientId)
+        {
+            Script.Write("window.location.hash = '#patients/edit/' + patientId");
+            _onEditPatient?.Invoke(patientId);
+        }
 
         private static string GetInitials(Patient patient) =>
             FirstChar(patient.GivenName) + FirstChar(patient.FamilyName);
@@ -378,6 +401,160 @@ namespace Dashboard.Pages
             if (string.IsNullOrEmpty(s))
                 return "";
             return s.Substring(0, 1).ToUpper();
+        }
+
+        private static void OpenAddModal(PatientsState state, Action<PatientsState> setState) =>
+            setState(WithModal(state, true, "", "", "male"));
+
+        private static void CloseAddModal(PatientsState state, Action<PatientsState> setState) =>
+            setState(WithModal(state, false, "", "", "male"));
+
+        private static PatientsState WithModal(
+            PatientsState state,
+            bool open,
+            string given,
+            string family,
+            string gender
+        ) =>
+            new PatientsState
+            {
+                Patients = state.Patients,
+                Loading = state.Loading,
+                Error = state.Error,
+                SearchQuery = state.SearchQuery,
+                SelectedPatient = state.SelectedPatient,
+                ShowAddModal = open,
+                NewGivenName = given,
+                NewFamilyName = family,
+                NewGender = gender,
+            };
+
+        private static ReactElement RenderAddPatientModal(
+            PatientsState state,
+            Action<PatientsState> setState
+        ) =>
+            Div(
+                className: "modal",
+                children: new[]
+                {
+                    Div(
+                        className: "card",
+                        style: new
+                        {
+                            padding = "24px",
+                            maxWidth = "500px",
+                            margin = "100px auto",
+                        },
+                        children: new[]
+                        {
+                            H(3, children: new[] { Text("Add Patient") }),
+                            Div(
+                                className: "mt-4",
+                                children: new[]
+                                {
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Given Name",
+                                        value: state.NewGivenName ?? "",
+                                        dataTestId: "patient-given-name",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    v,
+                                                    state.NewFamilyName,
+                                                    state.NewGender
+                                                )
+                                            )
+                                    ),
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Family Name",
+                                        value: state.NewFamilyName ?? "",
+                                        dataTestId: "patient-family-name",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewGivenName,
+                                                    v,
+                                                    state.NewGender
+                                                )
+                                            )
+                                    ),
+                                    Select(
+                                        className: "input",
+                                        value: state.NewGender ?? "male",
+                                        dataTestId: "patient-gender",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewGivenName,
+                                                    state.NewFamilyName,
+                                                    v
+                                                )
+                                            ),
+                                        children: new[]
+                                        {
+                                            Option("male", "Male"),
+                                            Option("female", "Female"),
+                                            Option("other", "Other"),
+                                        }
+                                    ),
+                                }
+                            ),
+                            Div(
+                                className: "flex gap-2 mt-4",
+                                children: new[]
+                                {
+                                    Button(
+                                        className: "btn btn-primary",
+                                        dataTestId: "submit-patient",
+                                        onClick: () => SubmitPatient(state, setState),
+                                        children: new[] { Text("Create") }
+                                    ),
+                                    Button(
+                                        className: "btn btn-secondary",
+                                        onClick: () => CloseAddModal(state, setState),
+                                        children: new[] { Text("Cancel") }
+                                    ),
+                                }
+                            ),
+                        }
+                    ),
+                }
+            );
+
+        private static async void SubmitPatient(PatientsState state, Action<PatientsState> setState)
+        {
+            try
+            {
+                var patient = new Patient
+                {
+                    Active = true,
+                    GivenName = state.NewGivenName,
+                    FamilyName = state.NewFamilyName,
+                    Gender = state.NewGender,
+                };
+                await ApiClient.CreatePatientAsync(patient);
+                LoadPatients(setState);
+            }
+            catch (Exception ex)
+            {
+                setState(
+                    new PatientsState
+                    {
+                        Patients = state.Patients,
+                        Loading = false,
+                        Error = ex.Message,
+                        ShowAddModal = false,
+                    }
+                );
+            }
         }
     }
 }

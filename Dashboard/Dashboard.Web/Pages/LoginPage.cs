@@ -216,7 +216,7 @@ namespace Dashboard.Pages
                         alt: "Nimblesite",
                         className: "login-logo-img"
                     ),
-                    H(1, children: new[] { Text("Nimblesite Clinical Coding Platform") }),
+                    H(1, children: new[] { Text("Nimblesite Platform") }),
                     P(
                         children: new[]
                         {

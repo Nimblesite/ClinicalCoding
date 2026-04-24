@@ -121,6 +121,7 @@ namespace Dashboard.Pages
 
             return Div(
                 className: "page",
+                dataTestId: "edit-patient-page",
                 children: new[]
                 {
                     RenderHeader(state.Patient, onBack),

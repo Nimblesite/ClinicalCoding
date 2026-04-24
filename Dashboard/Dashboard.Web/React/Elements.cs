@@ -352,6 +352,7 @@ namespace Dashboard.React
             string className = null,
             string value = null,
             Action<string> onChange = null,
+            string dataTestId = null,
             params ReactElement[] children
         )
         {
@@ -361,6 +362,20 @@ namespace Dashboard.React
                 changeHandler = e =>
                     onChange(Script.Get<string>(Script.Get<object>(e, "target"), "value"));
             }
+
+            if (dataTestId != null)
+            {
+                var propsExt = Script.Write<object>(
+                    "{ className: className, value: value, onChange: changeHandler, 'data-testid': dataTestId }"
+                );
+                return Script.Call<ReactElement>(
+                    "React.createElement",
+                    "select",
+                    propsExt,
+                    children
+                );
+            }
+
             var props = new
             {
                 className = className,

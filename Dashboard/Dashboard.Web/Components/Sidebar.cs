@@ -181,6 +181,12 @@ namespace Dashboard.Components
                     {
                         new NavItem
                         {
+                            Id = "sync",
+                            Label = "Sync Dashboard",
+                            Icon = Icons.Settings,
+                        },
+                        new NavItem
+                        {
                             Id = "settings",
                             Label = "Settings",
                             Icon = Icons.Settings,

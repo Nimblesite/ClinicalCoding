@@ -79,7 +79,7 @@ namespace Dashboard.Pages
                     Button(
                         className: "btn btn-primary coding-analyze-btn",
                         onClick: () => ExecuteSearch(state, setState),
-                        children: new[] { Text(state.Loading ? "Analyzing..." : "Analyze") }
+                        children: new[] { Text(state.Loading ? "Searching..." : "Search") }
                     ),
                 }
             );
@@ -124,7 +124,7 @@ namespace Dashboard.Pages
                 return "Search by code, description, or keywords (e.g. 'diabetes', 'fracture')";
             if (mode == "semantic")
                 return "Describe symptoms or diagnosis in natural language...";
-            return "Enter ICD-10 code or prefix (e.g. 'O9A.', 'E11', 'J18.9')";
+            return "Enter exact ICD-10 code or prefix (e.g. 'O9A.', 'E11', 'J18.9')";
         }
     }
 }

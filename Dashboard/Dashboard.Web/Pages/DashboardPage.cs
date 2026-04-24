@@ -544,7 +544,7 @@ namespace Dashboard.Pages
                     RenderQuickActionCard(
                         variant: "primary",
                         icon: Icons.Code(),
-                        title: "Clinical Coding Guide",
+                        title: "Coding Guide",
                         description: "Review latest ICD-11 updates for cardiology.",
                         cta: "Access Library"
                     ),

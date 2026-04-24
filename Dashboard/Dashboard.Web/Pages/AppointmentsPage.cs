@@ -382,7 +382,13 @@ namespace Dashboard.Pages
                         {
                             Button(
                                 className: "btn btn-secondary btn-sm",
-                                onClick: () => onEditAppointment(appointment.Id),
+                                onClick: () =>
+                                {
+                                    Script.Write(
+                                        "window.location.hash = '#appointments/edit/' + appointment.Id"
+                                    );
+                                    onEditAppointment(appointment.Id);
+                                },
                                 children: new[] { Icons.Edit() }
                             ),
                         }

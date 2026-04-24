@@ -65,7 +65,30 @@ namespace Dashboard
         /// </summary>
         public static ReactElement Render()
         {
-            var initialView = ReadHashView() ?? "dashboard";
+            var initialHash = ReadHashView();
+            var initialView = initialHash ?? "dashboard";
+            string initialEditingPatientId = null;
+            string initialEditingAppointmentId = null;
+            if (initialHash != null)
+            {
+                if (initialHash.StartsWith("patients/edit/"))
+                {
+                    initialView = "patients";
+                    initialEditingPatientId = initialHash.Substring("patients/edit/".Length);
+                }
+                else if (initialHash.StartsWith("appointments/edit/"))
+                {
+                    initialView = "appointments";
+                    initialEditingAppointmentId = initialHash.Substring(
+                        "appointments/edit/".Length
+                    );
+                }
+                else if (initialHash.StartsWith("calendar/edit/"))
+                {
+                    initialView = "calendar";
+                    initialEditingAppointmentId = initialHash.Substring("calendar/edit/".Length);
+                }
+            }
 
             var stateResult = UseState(
                 new AppState
@@ -74,8 +97,8 @@ namespace Dashboard
                     SidebarCollapsed = false,
                     SearchQuery = "",
                     NotificationCount = 3,
-                    EditingPatientId = null,
-                    EditingAppointmentId = null,
+                    EditingPatientId = initialEditingPatientId,
+                    EditingAppointmentId = initialEditingAppointmentId,
                     IsAuthenticated = Auth.IsAuthenticated(),
                     CurrentUser = Auth.GetUser(),
                 }
@@ -90,21 +113,41 @@ namespace Dashboard
                     Action handler = () =>
                     {
                         var view = ReadHashView();
-                        if (view != null)
+                        if (view == null)
+                            return;
+                        var next = state.Clone();
+                        if (view.StartsWith("patients/edit/"))
                         {
-                            var next = state.Clone();
+                            next.ActiveView = "patients";
+                            next.EditingPatientId = view.Substring("patients/edit/".Length);
+                            next.EditingAppointmentId = null;
+                        }
+                        else if (
+                            view.StartsWith("appointments/edit/")
+                            || view.StartsWith("calendar/edit/")
+                        )
+                        {
+                            var prefix = view.StartsWith("calendar/edit/")
+                                ? "calendar/edit/"
+                                : "appointments/edit/";
+                            next.ActiveView =
+                                prefix == "calendar/edit/" ? "calendar" : "appointments";
+                            next.EditingPatientId = null;
+                            next.EditingAppointmentId = view.Substring(prefix.Length);
+                        }
+                        else
+                        {
                             next.ActiveView = view;
                             next.EditingPatientId = null;
                             next.EditingAppointmentId = null;
-                            setState(next);
                         }
+                        setState(next);
                     };
                     Script.Write("window.addEventListener('hashchange', handler)");
+                    Script.Write(
+                        "if (!window.location.hash) { history.replaceState(null, '', '#dashboard'); }"
+                    );
                 },
-                () =>
-                    (Action)(
-                        () => Script.Write("window.removeEventListener('hashchange', handler)")
-                    ),
                 new object[0]
             );
 
@@ -143,6 +186,7 @@ namespace Dashboard
                         activeView: state.ActiveView,
                         onNavigate: view =>
                         {
+                            Script.Write("window.location.hash = '#' + view");
                             var newState = state.Clone();
                             newState.ActiveView = view;
                             newState.EditingPatientId = null;
@@ -228,19 +272,8 @@ namespace Dashboard
             if (view == "patients" && state.EditingPatientId != null)
             {
                 var editingId = state.EditingPatientId;
-                var snapshot = state;
                 return AsComponent(() =>
-                    EditPatientPage.Render(
-                        editingId,
-                        () =>
-                        {
-                            var next = snapshot.Clone();
-                            next.ActiveView = "patients";
-                            next.EditingPatientId = null;
-                            next.EditingAppointmentId = null;
-                            setState(next);
-                        }
-                    )
+                    EditPatientPage.Render(editingId, () => Script.Write("history.back()"))
                 );
             }
 
@@ -251,20 +284,8 @@ namespace Dashboard
             )
             {
                 var editingId = state.EditingAppointmentId;
-                var snapshot = state;
-                var returnView = view;
                 return AsComponent(() =>
-                    EditAppointmentPage.Render(
-                        editingId,
-                        () =>
-                        {
-                            var next = snapshot.Clone();
-                            next.ActiveView = returnView;
-                            next.EditingPatientId = null;
-                            next.EditingAppointmentId = null;
-                            setState(next);
-                        }
-                    )
+                    EditAppointmentPage.Render(editingId, () => Script.Write("history.back()"))
                 );
             }
 
@@ -334,6 +355,8 @@ namespace Dashboard
                 return RenderPlaceholderPage("Conditions", "View and manage patient conditions");
             if (view == "medications")
                 return RenderPlaceholderPage("Medications", "Manage medication requests");
+            if (view == "sync")
+                return AsComponent(SyncPage.Render);
             if (view == "settings")
                 return RenderPlaceholderPage("Settings", "Configure application settings");
             return RenderPlaceholderPage("Page Not Found", "The requested page does not exist");

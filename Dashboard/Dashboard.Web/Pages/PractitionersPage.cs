@@ -329,7 +329,7 @@ namespace Dashboard.Pages
 
         private static ReactElement RenderPractitionerCard(Practitioner practitioner) =>
             Div(
-                className: "card",
+                className: "card practitioner-card",
                 children: new[]
                 {
                     // Header
