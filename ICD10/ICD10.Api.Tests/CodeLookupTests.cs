@@ -1,3 +1,5 @@
+using ClinicalCoding.TestSupport;
+
 namespace ICD10.Api.Tests;
 
 /// <summary>
@@ -15,9 +17,7 @@ public sealed class CodeLookupTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task GetCodeByCode_ReturnsOk_WhenCodeExists()
     {
-        var response = await _client.GetAsync("/api/icd10/codes/A00.0");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.GetAsync("/api/icd10/codes/A00.0").ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -35,9 +35,9 @@ public sealed class CodeLookupTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task GetCodeByCode_ReturnsNotFound_WhenCodeNotExists()
     {
-        var response = await _client.GetAsync("/api/icd10/codes/INVALID99");
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await _client
+            .GetAsync("/api/icd10/codes/INVALID99")
+            .ShouldHaveStatusAsync(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -56,9 +56,9 @@ public sealed class CodeLookupTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task SearchCodes_ReturnsOk()
     {
-        var response = await _client.GetAsync("/api/icd10/codes?q=cholera");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client
+            .GetAsync("/api/icd10/codes?q=cholera")
+            .ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -161,9 +161,7 @@ public sealed class CodeLookupTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task Icd10Cm_GetCodeByCode_ReturnsOk_WhenCodeExists()
     {
-        var response = await _client.GetAsync("/api/icd10/codes/I10");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.GetAsync("/api/icd10/codes/I10").ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -196,9 +194,9 @@ public sealed class CodeLookupTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task Icd10Cm_GetCodeByCode_ReturnsNotFound_WhenCodeNotExists()
     {
-        var response = await _client.GetAsync("/api/icd10/codes/INVALID99");
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await _client
+            .GetAsync("/api/icd10/codes/INVALID99")
+            .ShouldHaveStatusAsync(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -215,9 +213,9 @@ public sealed class CodeLookupTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task Icd10Cm_SearchCodes_ReturnsOk()
     {
-        var response = await _client.GetAsync("/api/icd10/codes?q=hypertension");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client
+            .GetAsync("/api/icd10/codes?q=hypertension")
+            .ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -249,9 +247,9 @@ public sealed class CodeLookupTests : IClassFixture<ICD10ApiFactory>
         // via /api/icd10/codes/{code}
 
         // I21.11 exists in the database
-        var response = await _client.GetAsync("/api/icd10/codes/I21.11");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync("/api/icd10/codes/I21.11")
+            .WithStatusAsync(HttpStatusCode.OK);
 
         var code = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("I21.11", code.GetProperty("Code").GetString());

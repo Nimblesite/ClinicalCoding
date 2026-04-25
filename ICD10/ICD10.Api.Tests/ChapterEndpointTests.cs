@@ -1,3 +1,5 @@
+using ClinicalCoding.TestSupport;
+
 namespace ICD10.Api.Tests;
 
 /// <summary>
@@ -15,9 +17,7 @@ public sealed class ChapterEndpointTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task GetChapters_ReturnsOk()
     {
-        var response = await _client.GetAsync("/api/icd10/chapters");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.GetAsync("/api/icd10/chapters").ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -63,9 +63,10 @@ public sealed class ChapterEndpointTests : IClassFixture<ICD10ApiFactory>
         Assert.NotEmpty(chapters);
 
         var chapterId = chapters[0].GetProperty("Id").GetString();
-        var response = await _client.GetAsync($"/api/icd10/chapters/{chapterId}/blocks");
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client
+            .GetAsync($"/api/icd10/chapters/{chapterId}/blocks")
+            .ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using ClinicalCoding.TestSupport;
 
 namespace Scheduling.Api.Tests;
 
@@ -36,9 +37,7 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
         request.Headers.Add("Origin", "http://localhost:5173");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
 
-        var response = await _client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client.SendAsync(request).WithStatusAsync(HttpStatusCode.OK);
         Assert.True(
             response.Headers.Contains("Access-Control-Allow-Origin"),
             "Missing Access-Control-Allow-Origin header - Dashboard cannot fetch from Scheduling API!"
@@ -87,9 +86,7 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
         request.Headers.Add("Origin", "http://localhost:5173");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
 
-        var response = await _client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client.SendAsync(request).WithStatusAsync(HttpStatusCode.OK);
         Assert.True(
             response.Headers.Contains("Access-Control-Allow-Origin"),
             "Missing Access-Control-Allow-Origin on /Appointment - Dashboard cannot fetch appointments!"
@@ -101,9 +98,7 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
     [Fact]
     public async Task GetAllPractitioners_ReturnsOk()
     {
-        var response = await _client.GetAsync("/Practitioner");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.GetAsync("/Practitioner").ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -120,9 +115,9 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
             TelecomPhone = "555-1234",
         };
 
-        var response = await _client.PostAsJsonAsync("/Practitioner", request);
-
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var response = await _client
+            .PostAsJsonAsync("/Practitioner", request)
+            .WithStatusAsync(HttpStatusCode.Created);
         var practitioner = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Smith", practitioner.GetProperty("NameFamily").GetString());
         Assert.Equal("John", practitioner.GetProperty("NameGiven").GetString());
@@ -145,9 +140,9 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
         var created = await createResponse.Content.ReadFromJsonAsync<JsonElement>();
         var practitionerId = created.GetProperty("Id").GetString();
 
-        var response = await _client.GetAsync($"/Practitioner/{practitionerId}");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync($"/Practitioner/{practitionerId}")
+            .WithStatusAsync(HttpStatusCode.OK);
         var practitioner = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Johnson", practitioner.GetProperty("NameFamily").GetString());
         Assert.Equal("Jane", practitioner.GetProperty("NameGiven").GetString());
@@ -156,9 +151,9 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
     [Fact]
     public async Task GetPractitionerById_ReturnsNotFound_WhenNotExists()
     {
-        var response = await _client.GetAsync("/Practitioner/nonexistent-id-12345");
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await _client
+            .GetAsync("/Practitioner/nonexistent-id-12345")
+            .ShouldHaveStatusAsync(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -174,9 +169,9 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
 
         await _client.PostAsJsonAsync("/Practitioner", request);
 
-        var response = await _client.GetAsync("/Practitioner/_search?specialty=Orthopedics");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync("/Practitioner/_search?specialty=Orthopedics")
+            .WithStatusAsync(HttpStatusCode.OK);
         var practitioners = await response.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(practitioners);
         Assert.Contains(
@@ -198,9 +193,9 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
 
         await _client.PostAsJsonAsync("/Practitioner", request);
 
-        var response = await _client.GetAsync("/Practitioner/_search");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync("/Practitioner/_search")
+            .WithStatusAsync(HttpStatusCode.OK);
         var practitioners = await response.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(practitioners);
         Assert.True(practitioners.Length >= 1);
@@ -304,9 +299,7 @@ public sealed class PractitionerEndpointTests : IClassFixture<SchedulingApiFacto
         await _client.PostAsJsonAsync("/Practitioner", request1);
         await _client.PostAsJsonAsync("/Practitioner", request2);
 
-        var response = await _client.GetAsync("/Practitioner");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client.GetAsync("/Practitioner").WithStatusAsync(HttpStatusCode.OK);
         var practitioners = await response.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(practitioners);
         Assert.True(practitioners.Length >= 2);

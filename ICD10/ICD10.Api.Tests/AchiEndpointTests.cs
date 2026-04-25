@@ -1,3 +1,5 @@
+using ClinicalCoding.TestSupport;
+
 namespace ICD10.Api.Tests;
 
 /// <summary>
@@ -15,9 +17,7 @@ public sealed class AchiEndpointTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task GetAchiBlocks_ReturnsOk()
     {
-        var response = await _client.GetAsync("/api/achi/blocks");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.GetAsync("/api/achi/blocks").ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -34,9 +34,9 @@ public sealed class AchiEndpointTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task GetAchiCodesByBlock_ReturnsOk()
     {
-        var response = await _client.GetAsync("/api/achi/blocks/achi-blk-1/codes");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client
+            .GetAsync("/api/achi/blocks/achi-blk-1/codes")
+            .ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -53,9 +53,7 @@ public sealed class AchiEndpointTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task GetAchiCodeByCode_ReturnsOk_WhenCodeExists()
     {
-        var response = await _client.GetAsync("/api/achi/codes/38497-00");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.GetAsync("/api/achi/codes/38497-00").ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -75,9 +73,9 @@ public sealed class AchiEndpointTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task GetAchiCodeByCode_ReturnsNotFound_WhenCodeNotExists()
     {
-        var response = await _client.GetAsync("/api/achi/codes/99999-99");
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await _client
+            .GetAsync("/api/achi/codes/99999-99")
+            .ShouldHaveStatusAsync(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -93,9 +91,9 @@ public sealed class AchiEndpointTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task SearchAchiCodes_ReturnsOk()
     {
-        var response = await _client.GetAsync("/api/achi/codes?q=coronary");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client
+            .GetAsync("/api/achi/codes?q=coronary")
+            .ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]

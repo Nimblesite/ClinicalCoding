@@ -29,6 +29,13 @@
     <ProjectReference Include="..\Gatekeeper.Api\Gatekeeper.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile
+      Include="..\..\Shared\TestSupport\HttpResponseAssertions.cs"
+      Link="TestSupport\HttpResponseAssertions.cs"
+    />
+  </ItemGroup>
+
   <!-- Copy YAML schema from Gatekeeper.Api to test output -->
   <ItemGroup>
     <Content Include="..\Gatekeeper.Api\gatekeeper-schema.yaml" Link="gatekeeper-schema.yaml">

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using ClinicalCoding.TestSupport;
 
 namespace Clinical.Api.Tests;
 
@@ -58,14 +59,15 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
             Country = "USA",
         };
 
-        var response = await _client.PostAsJsonAsync("/fhir/Patient/", request);
+        var response = await _client
+            .PostAsJsonAsync("/fhir/Patient/", request)
+            .WithStatusAsync(HttpStatusCode.Created);
         var content = await response.Content.ReadAsStringAsync();
 
         Assert.True(
             response.IsSuccessStatusCode,
             $"Expected success. Got {response.StatusCode}: {content}"
         );
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         Assert.True(
@@ -100,9 +102,9 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
         var created = await createResponse.Content.ReadFromJsonAsync<JsonElement>();
         var patientId = created.GetProperty("Id").GetString();
 
-        var response = await _client.GetAsync($"/fhir/Patient/{patientId}");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync($"/fhir/Patient/{patientId}")
+            .WithStatusAsync(HttpStatusCode.OK);
         var patient = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Jane", patient.GetProperty("GivenName").GetString());
         Assert.Equal("Smith", patient.GetProperty("FamilyName").GetString());
@@ -111,9 +113,9 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
     [Fact]
     public async Task GetPatientById_ReturnsNotFound_WhenNotExists()
     {
-        var response = await _client.GetAsync("/fhir/Patient/nonexistent-id-12345");
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await _client
+            .GetAsync("/fhir/Patient/nonexistent-id-12345")
+            .ShouldHaveStatusAsync(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -129,9 +131,9 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
 
         await _client.PostAsJsonAsync("/fhir/Patient/", request);
 
-        var response = await _client.GetAsync("/fhir/Patient/_search?q=UniqueLastName");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync("/fhir/Patient/_search?q=UniqueLastName")
+            .WithStatusAsync(HttpStatusCode.OK);
         var patients = await response.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(patients);
         Assert.Contains(patients, p => p.GetProperty("FamilyName").GetString() == "UniqueLastName");
@@ -159,8 +161,9 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
         await _client.PostAsJsonAsync("/fhir/Patient/", activePatient);
         await _client.PostAsJsonAsync("/fhir/Patient/", inactivePatient);
 
-        var activeResponse = await _client.GetAsync("/fhir/Patient/?active=true");
-        Assert.Equal(HttpStatusCode.OK, activeResponse.StatusCode);
+        var activeResponse = await _client
+            .GetAsync("/fhir/Patient/?active=true")
+            .WithStatusAsync(HttpStatusCode.OK);
         var activePatients = await activeResponse.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(activePatients);
         Assert.All(activePatients, p => Assert.Equal(1L, p.GetProperty("Active").GetInt64()));
@@ -179,9 +182,9 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
 
         await _client.PostAsJsonAsync("/fhir/Patient/", patient);
 
-        var response = await _client.GetAsync("/fhir/Patient/?familyName=FilterFamilyName");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync("/fhir/Patient/?familyName=FilterFamilyName")
+            .WithStatusAsync(HttpStatusCode.OK);
         var patients = await response.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(patients);
         Assert.Contains(
@@ -203,9 +206,9 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
 
         await _client.PostAsJsonAsync("/fhir/Patient/", patient);
 
-        var response = await _client.GetAsync("/fhir/Patient/?givenName=UniqueGivenName");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync("/fhir/Patient/?givenName=UniqueGivenName")
+            .WithStatusAsync(HttpStatusCode.OK);
         var patients = await response.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(patients);
         Assert.Contains(patients, p => p.GetProperty("GivenName").GetString() == "UniqueGivenName");
@@ -224,9 +227,9 @@ public sealed class PatientEndpointTests : IClassFixture<ClinicalApiFactory>
 
         await _client.PostAsJsonAsync("/fhir/Patient/", malePatient);
 
-        var response = await _client.GetAsync("/fhir/Patient/?gender=male");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .GetAsync("/fhir/Patient/?gender=male")
+            .WithStatusAsync(HttpStatusCode.OK);
         var patients = await response.Content.ReadFromJsonAsync<JsonElement[]>();
         Assert.NotNull(patients);
         Assert.All(patients, p => Assert.Equal("male", p.GetProperty("Gender").GetString()));

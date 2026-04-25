@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using ClinicalCoding.TestSupport;
 
 namespace Scheduling.Api.Tests;
 
@@ -23,9 +24,7 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
     [Fact]
     public async Task GetPractitioners_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/Practitioner");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/Practitioner").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -34,9 +33,7 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
         using var request = new HttpRequestMessage(HttpMethod.Get, "/Practitioner");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "invalid-token");
 
-        var response = await _client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.SendAsync(request).ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -48,17 +45,15 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
             TestTokenHelper.GenerateExpiredToken()
         );
 
-        var response = await _client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.SendAsync(request).ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetPractitionerById_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/Practitioner/test-id");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/Practitioner/test-id")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -72,9 +67,9 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
             Specialty = "General Practice",
         };
 
-        var response = await _client.PostAsJsonAsync("/Practitioner", practitioner);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsJsonAsync("/Practitioner", practitioner)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -88,17 +83,17 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
             Active = true,
         };
 
-        var response = await _client.PutAsJsonAsync("/Practitioner/test-id", practitioner);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PutAsJsonAsync("/Practitioner/test-id", practitioner)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SearchPractitioners_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/Practitioner/_search?specialty=Cardiology");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/Practitioner/_search?specialty=Cardiology")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     // === APPOINTMENT ENDPOINTS ===
@@ -106,17 +101,15 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
     [Fact]
     public async Task GetAppointments_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/Appointment");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/Appointment").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetAppointmentById_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/Appointment/test-id");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/Appointment/test-id")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -138,9 +131,9 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
             Comment = "test",
         };
 
-        var response = await _client.PostAsJsonAsync("/Appointment", appointment);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsJsonAsync("/Appointment", appointment)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -162,36 +155,33 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
             Status = "booked",
         };
 
-        var response = await _client.PutAsJsonAsync("/Appointment/test-id", appointment);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PutAsJsonAsync("/Appointment/test-id", appointment)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task PatchAppointmentStatus_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.PatchAsync(
-            "/Appointment/test-id/status?status=cancelled",
-            null
-        );
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PatchAsync("/Appointment/test-id/status?status=cancelled", null)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetPatientAppointments_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/Patient/test-patient/Appointment");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/Patient/test-patient/Appointment")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetPractitionerAppointments_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/Practitioner/test-practitioner/Appointment");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/Practitioner/test-practitioner/Appointment")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     // === SYNC ENDPOINTS ===
@@ -199,41 +189,33 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
     [Fact]
     public async Task SyncChanges_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/changes");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/changes").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncOrigin_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/origin");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/origin").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncStatus_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/status");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/status").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncRecords_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/records");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/records").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncRetry_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.PostAsync("/sync/records/test-id/retry", null);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsync("/sync/records/test-id/retry", null)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     // === TOKEN VALIDATION TESTS ===
@@ -250,9 +232,7 @@ public sealed class AuthorizationTests : IClassFixture<SchedulingApiFactory>
             TestTokenHelper.GenerateNoRoleToken()
         );
 
-        var response = await _client.SendAsync(request);
-
         // In dev mode, valid tokens succeed without permission checks
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.SendAsync(request).ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 }

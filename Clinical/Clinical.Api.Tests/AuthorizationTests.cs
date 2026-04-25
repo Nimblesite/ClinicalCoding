@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using ClinicalCoding.TestSupport;
 
 namespace Clinical.Api.Tests;
 
@@ -21,9 +22,7 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
     [Fact]
     public async Task GetPatients_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/fhir/Patient/");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/fhir/Patient/").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -32,9 +31,7 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
         using var request = new HttpRequestMessage(HttpMethod.Get, "/fhir/Patient/");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "invalid-token");
 
-        var response = await _client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.SendAsync(request).ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -46,9 +43,7 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
             TestTokenHelper.GenerateExpiredToken()
         );
 
-        var response = await _client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.SendAsync(request).ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -63,10 +58,8 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
             TestTokenHelper.GenerateNoRoleToken()
         );
 
-        var response = await _client.SendAsync(request);
-
         // In dev mode, valid tokens succeed without permission checks
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.SendAsync(request).ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -80,89 +73,81 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
             Gender = "male",
         };
 
-        var response = await _client.PostAsJsonAsync("/fhir/Patient/", patient);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsJsonAsync("/fhir/Patient/", patient)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetEncounters_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/fhir/Patient/test-patient/Encounter/");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/fhir/Patient/test-patient/Encounter/")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetConditions_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/fhir/Patient/test-patient/Condition/");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/fhir/Patient/test-patient/Condition/")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetMedicationRequests_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/fhir/Patient/test-patient/MedicationRequest/");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/fhir/Patient/test-patient/MedicationRequest/")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncChanges_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/changes");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/changes").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncOrigin_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/origin");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/origin").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncStatus_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/status");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/status").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncRecords_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/sync/records");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/sync/records").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task SyncRetry_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.PostAsync("/sync/records/test-id/retry", null);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsync("/sync/records/test-id/retry", null)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task PatientSearch_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/fhir/Patient/_search?q=test");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/fhir/Patient/_search?q=test")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task GetPatientById_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/fhir/Patient/test-patient-id");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .GetAsync("/fhir/Patient/test-patient-id")
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -176,9 +161,9 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
             Gender = "male",
         };
 
-        var response = await _client.PutAsJsonAsync("/fhir/Patient/test-id", patient);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PutAsJsonAsync("/fhir/Patient/test-id", patient)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -196,12 +181,9 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
             Notes = "Test",
         };
 
-        var response = await _client.PostAsJsonAsync(
-            "/fhir/Patient/test-patient/Encounter/",
-            encounter
-        );
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsJsonAsync("/fhir/Patient/test-patient/Encounter/", encounter)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -218,12 +200,9 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
             CodeDisplay = "Test Condition",
         };
 
-        var response = await _client.PostAsJsonAsync(
-            "/fhir/Patient/test-patient/Condition/",
-            condition
-        );
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsJsonAsync("/fhir/Patient/test-patient/Condition/", condition)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -243,11 +222,8 @@ public sealed class AuthorizationTests : IClassFixture<ClinicalApiFactory>
             Refills = 2,
         };
 
-        var response = await _client.PostAsJsonAsync(
-            "/fhir/Patient/test-patient/MedicationRequest/",
-            medication
-        );
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsJsonAsync("/fhir/Patient/test-patient/MedicationRequest/", medication)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 }
