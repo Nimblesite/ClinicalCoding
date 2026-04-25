@@ -4,6 +4,8 @@
 
 ⚠️ DO NOT ASK THE USER QUESTIONS. USE YOUR JUDGMENT ⚠️
 
+⚠️ do not kill vscode processes ever!!! ⚠️ 
+
 > Read this entire file before writing any code.
 > These rules are NON-NEGOTIABLE. Violations will be rejected in review.
 

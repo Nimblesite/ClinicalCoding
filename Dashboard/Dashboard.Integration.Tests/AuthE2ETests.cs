@@ -7,14 +7,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class AuthE2ETests
+public sealed class AuthE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public AuthE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public AuthE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Login page uses discoverable credentials (no email required).
@@ -22,7 +21,7 @@ public sealed class AuthE2ETests
     [Fact]
     public async Task LoginPage_DoesNotRequireEmailForSignIn()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         await page.GotoAsync(E2EFixture.DashboardUrl);
@@ -55,7 +54,7 @@ public sealed class AuthE2ETests
     [Fact]
     public async Task LoginPage_RegistrationRequiresEmailAndDisplayName()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         await page.GotoAsync(E2EFixture.DashboardUrl);
@@ -154,7 +153,7 @@ public sealed class AuthE2ETests
     [Fact]
     public async Task LoginPage_SignInButton_CallsApiWithoutJsonErrors()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         var consoleErrors = new List<string>();
         var networkRequests = new List<string>();
 
@@ -200,7 +199,7 @@ public sealed class AuthE2ETests
     [Fact]
     public async Task UserMenu_ClickShowsDropdownWithSignOut()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         await page.WaitForSelectorAsync(
@@ -230,7 +229,7 @@ public sealed class AuthE2ETests
     [Fact]
     public async Task SignOutButton_ClickShowsLoginPage()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         await page.WaitForSelectorAsync(
@@ -286,7 +285,7 @@ public sealed class AuthE2ETests
     [Fact]
     public async Task UserMenu_DisplaysUserInitialsAndNameInDropdown()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         // Generate valid test token for custom user
@@ -337,7 +336,7 @@ public sealed class AuthE2ETests
     [Fact]
     public async Task FirstTimeSignIn_TransitionsToDashboard_WithoutRefresh()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         await page.GotoAsync(E2EFixture.DashboardUrl);

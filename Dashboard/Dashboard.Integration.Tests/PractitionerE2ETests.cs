@@ -8,14 +8,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class PractitionerE2ETests
+public sealed class PractitionerE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public PractitionerE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public PractitionerE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Dashboard loads and displays practitioner data from Scheduling API.
@@ -23,7 +22,7 @@ public sealed class PractitionerE2ETests
     [Fact]
     public async Task Dashboard_DisplaysPractitionerData_FromSchedulingApi()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -62,7 +61,7 @@ public sealed class PractitionerE2ETests
         Assert.Contains("E2EPractitioner", apiResponse);
         Assert.Contains("MD", apiResponse);
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         await page.WaitForSelectorAsync(
             ".sidebar",
             new PageWaitForSelectorOptions { Timeout = 20000 }
@@ -87,7 +86,7 @@ public sealed class PractitionerE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueId = $"DR{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueId = $"DR{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -108,7 +107,7 @@ public sealed class PractitionerE2ETests
     [Fact]
     public async Task AddPractitionerButton_OpensModal_AndCreatesPractitioner()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -125,8 +124,8 @@ public sealed class PractitionerE2ETests
             new PageWaitForSelectorOptions { Timeout = 5000 }
         );
 
-        var uniqueIdentifier = $"DR{DateTime.UtcNow.Ticks % 100000}";
-        var uniqueGivenName = $"E2EDoc{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DR{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var uniqueGivenName = $"E2EDoc{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='practitioner-identifier']", uniqueIdentifier);
         await page.FillAsync("[data-testid='practitioner-given-name']", uniqueGivenName);
         await page.FillAsync("[data-testid='practitioner-family-name']", "TestCreated");
@@ -153,8 +152,8 @@ public sealed class PractitionerE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueIdentifier = $"DREdit{DateTime.UtcNow.Ticks % 100000}";
-        var uniqueGivenName = $"EditTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DREdit{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var uniqueGivenName = $"EditTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -168,7 +167,7 @@ public sealed class PractitionerE2ETests
         var practitionerIdMatch = Regex.Match(createdJson, "\"Id\"\\s*:\\s*\"([^\"]+)\"");
         var practitionerId = practitionerIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -189,7 +188,7 @@ public sealed class PractitionerE2ETests
             new PageWaitForSelectorOptions { Timeout = 5000 }
         );
 
-        var newSpecialty = $"Updated Specialty {DateTime.UtcNow.Ticks % 100000}";
+        var newSpecialty = $"Updated Specialty {Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='edit-practitioner-specialty']", newSpecialty);
         await page.ClickAsync("[data-testid='save-practitioner']");
         await page.WaitForSelectorAsync(
@@ -213,7 +212,7 @@ public sealed class PractitionerE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueIdentifier = $"DRApi{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DRApi{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -231,7 +230,7 @@ public sealed class PractitionerE2ETests
         );
         var practitionerId = practitionerIdMatch.Groups[1].Value;
 
-        var updatedSpecialty = $"ApiUpdated{DateTime.UtcNow.Ticks % 100000}";
+        var updatedSpecialty = $"ApiUpdated{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var updateResponse = await client.PutAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner/{practitionerId}",
             new StringContent(
@@ -257,8 +256,8 @@ public sealed class PractitionerE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueIdentifier = $"DRBack{DateTime.UtcNow.Ticks % 100000}";
-        var uniqueGivenName = $"BackTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DRBack{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var uniqueGivenName = $"BackTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -272,7 +271,7 @@ public sealed class PractitionerE2ETests
         var practitionerIdMatch = Regex.Match(createdJson, "\"Id\"\\s*:\\s*\"([^\"]+)\"");
         var practitionerId = practitionerIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",

@@ -8,14 +8,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class DashboardE2ETests
+public sealed class DashboardE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public DashboardE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public DashboardE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Dashboard main page shows stats from both APIs.
@@ -23,7 +22,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task Dashboard_MainPage_ShowsStatsFromBothApis()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         await page.WaitForSelectorAsync(
             ".sidebar",
             new PageWaitForSelectorOptions { Timeout = 20000 }
@@ -46,7 +45,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task AddPatientButton_OpensModal_AndCreatesPatient()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -70,7 +69,7 @@ public sealed class DashboardE2ETests
         );
 
         // Fill in patient details
-        var uniqueName = $"E2ECreated{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"E2ECreated{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='patient-given-name']", uniqueName);
         await page.FillAsync("[data-testid='patient-family-name']", "TestCreated");
         await page.SelectOptionAsync("[data-testid='patient-gender']", "male");
@@ -99,7 +98,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task AddAppointmentButton_OpensModal_AndCreatesAppointment()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -123,7 +122,7 @@ public sealed class DashboardE2ETests
         );
 
         // Fill in appointment details
-        var uniqueServiceType = $"E2EConsult{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueServiceType = $"E2EConsult{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='appointment-service-type']", uniqueServiceType);
 
         // Submit the form
@@ -149,7 +148,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task PatientSearchButton_NavigatesToSearch_AndFindsPatients()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         await page.WaitForSelectorAsync(
             ".sidebar",
             new PageWaitForSelectorOptions { Timeout = 20000 }
@@ -185,7 +184,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task ViewScheduleButton_NavigatesToAppointments()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         await page.WaitForSelectorAsync(
             ".sidebar",
             new PageWaitForSelectorOptions { Timeout = 20000 }
@@ -222,7 +221,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a patient with a unique name
-        var uniqueName = $"ApiTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"ApiTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -249,7 +248,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a practitioner with a unique identifier
-        var uniqueId = $"DR{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueId = $"DR{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -276,7 +275,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // First create a patient to edit
-        var uniqueName = $"EditTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"EditTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -296,7 +295,7 @@ public sealed class DashboardE2ETests
         Assert.True(patientIdMatch.Success, "Should get patient ID from creation response");
         var patientId = patientIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -337,7 +336,7 @@ public sealed class DashboardE2ETests
         );
 
         // Modify the patient's name
-        var newFamilyName = $"Edited{DateTime.UtcNow.Ticks % 100000}";
+        var newFamilyName = $"Edited{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='edit-family-name']", newFamilyName);
 
         // Submit the form
@@ -365,7 +364,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task BrowserBackButton_NavigatesToPreviousView()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -417,7 +416,7 @@ public sealed class DashboardE2ETests
     public async Task DeepLinking_LoadsCorrectView()
     {
         // Navigate directly to patients page via hash with auth
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#patients"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -456,7 +455,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a patient to edit
-        var uniqueName = $"CancelTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"CancelTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -473,7 +472,7 @@ public sealed class DashboardE2ETests
         );
         var patientId = patientIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -528,7 +527,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a patient to edit
-        var uniqueName = $"BackBtnTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"BackBtnTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -545,7 +544,7 @@ public sealed class DashboardE2ETests
         );
         var patientId = patientIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -616,7 +615,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task BrowserForwardButton_WorksAfterGoingBack()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -670,7 +669,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a patient first
-        var uniqueName = $"UpdateApiTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"UpdateApiTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -691,7 +690,7 @@ public sealed class DashboardE2ETests
         var patientId = patientIdMatch.Groups[1].Value;
 
         // Update the patient
-        var updatedFamilyName = $"Updated{DateTime.UtcNow.Ticks % 100000}";
+        var updatedFamilyName = $"Updated{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var updateResponse = await client.PutAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/{patientId}",
             new StringContent(
@@ -717,7 +716,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task AddPractitionerButton_OpensModal_AndCreatesPractitioner()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -741,8 +740,8 @@ public sealed class DashboardE2ETests
         );
 
         // Fill in practitioner details
-        var uniqueIdentifier = $"DR{DateTime.UtcNow.Ticks % 100000}";
-        var uniqueGivenName = $"E2EDoc{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DR{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var uniqueGivenName = $"E2EDoc{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='practitioner-identifier']", uniqueIdentifier);
         await page.FillAsync("[data-testid='practitioner-given-name']", uniqueGivenName);
         await page.FillAsync("[data-testid='practitioner-family-name']", "TestCreated");
@@ -775,8 +774,8 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a practitioner to edit
-        var uniqueIdentifier = $"DREdit{DateTime.UtcNow.Ticks % 100000}";
-        var uniqueGivenName = $"EditTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DREdit{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var uniqueGivenName = $"EditTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -793,7 +792,7 @@ public sealed class DashboardE2ETests
         );
         var practitionerId = practitionerIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -826,7 +825,7 @@ public sealed class DashboardE2ETests
         Assert.Contains($"#practitioners/edit/{practitionerId}", page.Url);
 
         // Update the practitioner's specialty
-        var newSpecialty = $"Updated Specialty {DateTime.UtcNow.Ticks % 100000}";
+        var newSpecialty = $"Updated Specialty {Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='edit-practitioner-specialty']", newSpecialty);
 
         // Save changes
@@ -857,7 +856,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a practitioner first
-        var uniqueIdentifier = $"DRApi{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DRApi{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -881,7 +880,7 @@ public sealed class DashboardE2ETests
         var practitionerId = practitionerIdMatch.Groups[1].Value;
 
         // Update the practitioner
-        var updatedSpecialty = $"ApiUpdated{DateTime.UtcNow.Ticks % 100000}";
+        var updatedSpecialty = $"ApiUpdated{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var updateResponse = await client.PutAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner/{practitionerId}",
             new StringContent(
@@ -912,8 +911,8 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a practitioner to edit
-        var uniqueIdentifier = $"DRBack{DateTime.UtcNow.Ticks % 100000}";
-        var uniqueGivenName = $"BackTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueIdentifier = $"DRBack{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+        var uniqueGivenName = $"BackTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Practitioner",
             new StringContent(
@@ -930,7 +929,7 @@ public sealed class DashboardE2ETests
         );
         var practitionerId = practitionerIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -1000,7 +999,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task SyncDashboard_NavigatesToSyncPage_AndDisplaysStatus()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -1062,7 +1061,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task SyncDashboard_FiltersWorkCorrectly()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -1109,7 +1108,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task SyncDashboard_DeepLinkingWorks()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -1138,7 +1137,7 @@ public sealed class DashboardE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // First create an appointment to edit
-        var uniqueServiceType = $"EditApptTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueServiceType = $"EditApptTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var startTime = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
         var endTime = DateTime
             .UtcNow.AddDays(7)
@@ -1163,7 +1162,7 @@ public sealed class DashboardE2ETests
         Assert.True(appointmentIdMatch.Success, "Should get appointment ID from creation response");
         var appointmentId = appointmentIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -1191,7 +1190,7 @@ public sealed class DashboardE2ETests
         );
 
         // Modify the appointment's service type
-        var newServiceType = $"Edited{DateTime.UtcNow.Ticks % 100000}";
+        var newServiceType = $"Edited{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("#appointment-service-type", newServiceType);
 
         // Submit the form
@@ -1219,7 +1218,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task CalendarPage_DisplaysAppointmentsInCalendarGrid()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#calendar"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -1282,7 +1281,7 @@ public sealed class DashboardE2ETests
             0,
             DateTimeKind.Local
         ).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-        var uniqueServiceType = $"CalTest{DateTime.Now.Ticks % 100000}";
+        var uniqueServiceType = $"CalTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Appointment",
@@ -1297,7 +1296,7 @@ public sealed class DashboardE2ETests
             $"[TEST] Created appointment with ServiceType: {uniqueServiceType}, Start: {startTime}"
         );
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -1377,7 +1376,7 @@ public sealed class DashboardE2ETests
         )
             .ToUniversalTime()
             .ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-        var uniqueServiceType = $"CalEdit{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueServiceType = $"CalEdit{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Appointment",
@@ -1389,7 +1388,7 @@ public sealed class DashboardE2ETests
         );
         createResponse.EnsureSuccessStatusCode();
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -1445,7 +1444,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task CalendarPage_NavigationButtons_ChangeMonth()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -1502,7 +1501,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task CalendarPage_DeepLinkingWorks()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#calendar"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -1527,7 +1526,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task LoginPage_DoesNotRequireEmailForSignIn()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         // Navigate to Dashboard without auth - should show login page
@@ -1566,7 +1565,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task LoginPage_RegistrationRequiresEmailAndDisplayName()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         // Navigate to Dashboard without auth
@@ -1746,7 +1745,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task LoginPage_SignInButton_CallsApiWithoutJsonErrors()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         var consoleErrors = new List<string>();
         var networkRequests = new List<string>();
 
@@ -1813,7 +1812,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task UserMenu_ClickShowsDropdownWithSignOut()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         await page.WaitForSelectorAsync(
@@ -1847,7 +1846,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task SignOutButton_ClickShowsLoginPage()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         // Wait for the sidebar to appear (authenticated state)
@@ -1912,7 +1911,7 @@ public sealed class DashboardE2ETests
     public async Task UserMenu_DisplaysUserInitialsAndNameInDropdown()
     {
         // Create page with specific user details
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             userId: "test-user",
             displayName: "Alice Smith",
             email: "alice@example.com"
@@ -1957,7 +1956,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task FirstTimeSignIn_TransitionsToDashboard_WithoutRefresh()
     {
-        var page = await _fixture.Browser!.NewPageAsync();
+        var page = await Fixture.Browser!.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
 
         // Navigate to Dashboard without auth - should show login page
@@ -2053,7 +2052,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task ClinicalCoding_NavigatesToPage_AndDisplaysSearchOptions()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -2084,7 +2083,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task ClinicalCoding_KeywordSearch_ReturnsResultsWithChapterAndCategory()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#clinical-coding"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
@@ -2128,7 +2127,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task ClinicalCoding_AISearch_ReturnsResultsWithChapterAndCategory()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#clinical-coding"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
@@ -2181,7 +2180,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task ClinicalCoding_CodeLookup_ReturnsDetailedCodeInfo()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#clinical-coding"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
@@ -2222,7 +2221,7 @@ public sealed class DashboardE2ETests
     [Fact]
     public async Task ClinicalCoding_DeepLinkingWorks()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#clinical-coding"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");

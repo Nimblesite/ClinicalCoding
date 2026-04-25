@@ -8,14 +8,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class NavigationE2ETests
+public sealed class NavigationE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public NavigationE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public NavigationE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Browser back button navigates to previous view.
@@ -23,7 +22,7 @@ public sealed class NavigationE2ETests
     [Fact]
     public async Task BrowserBackButton_NavigatesToPreviousView()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -68,7 +67,7 @@ public sealed class NavigationE2ETests
     [Fact]
     public async Task DeepLinking_LoadsCorrectView()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#patients"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -104,7 +103,7 @@ public sealed class NavigationE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueName = $"CancelTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"CancelTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -118,7 +117,7 @@ public sealed class NavigationE2ETests
         var patientIdMatch = Regex.Match(createdJson, "\"Id\"\\s*:\\s*\"([^\"]+)\"");
         var patientId = patientIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -161,7 +160,7 @@ public sealed class NavigationE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueName = $"BackBtnTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"BackBtnTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -175,7 +174,7 @@ public sealed class NavigationE2ETests
         var patientIdMatch = Regex.Match(createdJson, "\"Id\"\\s*:\\s*\"([^\"]+)\"");
         var patientId = patientIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -230,7 +229,7 @@ public sealed class NavigationE2ETests
     [Fact]
     public async Task BrowserForwardButton_WorksAfterGoingBack()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",

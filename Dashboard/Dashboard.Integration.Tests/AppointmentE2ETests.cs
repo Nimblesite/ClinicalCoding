@@ -8,14 +8,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class AppointmentE2ETests
+public sealed class AppointmentE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public AppointmentE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public AppointmentE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Dashboard loads and displays appointment data from Scheduling API.
@@ -23,7 +22,7 @@ public sealed class AppointmentE2ETests
     [Fact]
     public async Task Dashboard_DisplaysAppointmentData_FromSchedulingApi()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         await page.WaitForSelectorAsync(
             ".sidebar",
             new PageWaitForSelectorOptions { Timeout = 20000 }
@@ -46,7 +45,7 @@ public sealed class AppointmentE2ETests
     [Fact]
     public async Task AddAppointmentButton_OpensModal_AndCreatesAppointment()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -63,7 +62,7 @@ public sealed class AppointmentE2ETests
             new PageWaitForSelectorOptions { Timeout = 5000 }
         );
 
-        var uniqueServiceType = $"E2EConsult{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueServiceType = $"E2EConsult{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='appointment-service-type']", uniqueServiceType);
         await page.ClickAsync("[data-testid='submit-appointment']");
 
@@ -85,7 +84,7 @@ public sealed class AppointmentE2ETests
     [Fact]
     public async Task ViewScheduleButton_NavigatesToAppointments()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         await page.WaitForSelectorAsync(
             ".sidebar",
             new PageWaitForSelectorOptions { Timeout = 20000 }
@@ -114,7 +113,7 @@ public sealed class AppointmentE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueServiceType = $"EditApptTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueServiceType = $"EditApptTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var startTime = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
         var endTime = DateTime
             .UtcNow.AddDays(7)
@@ -135,7 +134,7 @@ public sealed class AppointmentE2ETests
         Assert.True(appointmentIdMatch.Success);
         var appointmentId = appointmentIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -158,7 +157,7 @@ public sealed class AppointmentE2ETests
             new PageWaitForSelectorOptions { Timeout = 5000 }
         );
 
-        var newServiceType = $"Edited{DateTime.UtcNow.Ticks % 100000}";
+        var newServiceType = $"Edited{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("#appointment-service-type", newServiceType);
         await page.ClickAsync("button:has-text('Save Changes')");
 

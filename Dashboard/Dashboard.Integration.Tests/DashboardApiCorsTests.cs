@@ -417,7 +417,7 @@ public sealed class DashboardApiCorsTests : IAsyncLifetime
     public async Task ClinicalApi_CreatePatient_WorksEndToEnd()
     {
         // Arrange - Create a patient with unique name
-        var uniqueName = $"IntTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"IntTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var request = new HttpRequestMessage(HttpMethod.Post, "/fhir/Patient/");
         request.Headers.Add("Origin", DashboardOrigin);
         request.Content = new StringContent(
@@ -448,7 +448,7 @@ public sealed class DashboardApiCorsTests : IAsyncLifetime
     public async Task SchedulingApi_CreatePractitioner_WorksEndToEnd()
     {
         // Arrange - Create a practitioner with unique identifier
-        var uniqueId = $"DR{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueId = $"DR{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var request = new HttpRequestMessage(HttpMethod.Post, "/Practitioner");
         request.Headers.Add("Origin", DashboardOrigin);
         request.Content = new StringContent(
@@ -479,7 +479,7 @@ public sealed class DashboardApiCorsTests : IAsyncLifetime
     public async Task SchedulingApi_CreateAppointment_WorksEndToEnd()
     {
         // Arrange - Create an appointment with unique service type
-        var uniqueService = $"Consult{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueService = $"Consult{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var request = new HttpRequestMessage(HttpMethod.Post, "/Appointment");
         request.Headers.Add("Origin", DashboardOrigin);
         request.Content = new StringContent(

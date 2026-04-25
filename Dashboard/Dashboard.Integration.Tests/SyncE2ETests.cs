@@ -7,14 +7,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class SyncE2ETests
+public sealed class SyncE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public SyncE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public SyncE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Sync Dashboard menu item navigates to sync page and displays sync status.
@@ -22,7 +21,7 @@ public sealed class SyncE2ETests
     [Fact]
     public async Task SyncDashboard_NavigatesToSyncPage_AndDisplaysStatus()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -74,13 +73,13 @@ public sealed class SyncE2ETests
     public async Task SyncDashboard_ServiceFilter_ShowsOnlySelectedService()
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
 
         // Create data in both services to ensure we have records from both
-        var uniqueId = $"FilterTest{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"FilterTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 
         // Create patient in Clinical.Api
         var patientRequest = new
@@ -185,13 +184,13 @@ public sealed class SyncE2ETests
     public async Task SyncDashboard_ActionFilter_ShowsOnlySelectedOperation()
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
 
         // Create a patient (Insert operation = 0)
-        var uniqueId = $"ActionTest{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"ActionTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var patientRequest = new
         {
             Active = true,
@@ -307,13 +306,13 @@ public sealed class SyncE2ETests
     public async Task SyncDashboard_CombinedFilters_WorkTogether()
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
 
         // Create data in Clinical.Api
-        var uniqueId = $"ComboTest{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"ComboTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var patientRequest = new
         {
             Active = true,
@@ -414,7 +413,7 @@ public sealed class SyncE2ETests
         using var client = E2EFixture.CreateAuthenticatedClient();
 
         // Create a patient BEFORE loading the sync page so data is fresh
-        var uniqueId = $"SearchTest{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"SearchTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var patientRequest = new
         {
             Active = true,
@@ -436,7 +435,7 @@ public sealed class SyncE2ETests
         var patientId = patientDoc.RootElement.GetProperty("Id").GetString();
 
         // Navigate to sync page AFTER patient exists in sync log
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -486,7 +485,7 @@ public sealed class SyncE2ETests
     [Fact]
     public async Task SyncDashboard_DeepLinkingWorks()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
@@ -510,7 +509,7 @@ public sealed class SyncE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueId = $"SyncTest{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"SyncTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var patientRequest = new
         {
             Active = true,
@@ -572,7 +571,7 @@ public sealed class SyncE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueId = $"SyncTest{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"SyncTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var practitionerRequest = new
         {
             Identifier = $"SYNC-DR-{uniqueId}",
@@ -635,12 +634,12 @@ public sealed class SyncE2ETests
     public async Task Sync_ChangesAppearInDashboardUI_Seamlessly()
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#sync"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
 
-        var uniqueId = $"DashSync{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"DashSync{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var patientRequest = new
         {
             Active = true,
@@ -706,7 +705,7 @@ public sealed class SyncE2ETests
         var initialClinicalDoc = System.Text.Json.JsonDocument.Parse(initialClinicalJson);
         var initialClinicalCount = initialClinicalDoc.RootElement.GetProperty("total").GetInt32();
 
-        var uniqueId = $"LogTest{DateTime.UtcNow.Ticks % 1000000}";
+        var uniqueId = $"LogTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var patientRequest = new
         {
             Active = true,

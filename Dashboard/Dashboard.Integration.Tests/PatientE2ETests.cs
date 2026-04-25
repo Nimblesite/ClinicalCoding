@@ -8,14 +8,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class PatientE2ETests
+public sealed class PatientE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public PatientE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public PatientE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Dashboard loads and displays patient data from Clinical API.
@@ -23,7 +22,7 @@ public sealed class PatientE2ETests
     [Fact]
     public async Task Dashboard_DisplaysPatientData_FromClinicalApi()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -48,7 +47,7 @@ public sealed class PatientE2ETests
     [Fact]
     public async Task AddPatientButton_OpensModal_AndCreatesPatient()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -65,7 +64,7 @@ public sealed class PatientE2ETests
             new PageWaitForSelectorOptions { Timeout = 5000 }
         );
 
-        var uniqueName = $"E2ECreated{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"E2ECreated{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='patient-given-name']", uniqueName);
         await page.FillAsync("[data-testid='patient-family-name']", "TestCreated");
         await page.SelectOptionAsync("[data-testid='patient-gender']", "male");
@@ -89,7 +88,7 @@ public sealed class PatientE2ETests
     [Fact]
     public async Task PatientSearchButton_NavigatesToSearch_AndFindsPatients()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         await page.WaitForSelectorAsync(
             ".sidebar",
             new PageWaitForSelectorOptions { Timeout = 20000 }
@@ -119,7 +118,7 @@ public sealed class PatientE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueName = $"ApiTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"ApiTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -142,7 +141,7 @@ public sealed class PatientE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueName = $"EditTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"EditTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -158,7 +157,7 @@ public sealed class PatientE2ETests
         Assert.True(patientIdMatch.Success);
         var patientId = patientIdMatch.Groups[1].Value;
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -180,7 +179,7 @@ public sealed class PatientE2ETests
             new PageWaitForSelectorOptions { Timeout = 5000 }
         );
 
-        var newFamilyName = $"Edited{DateTime.UtcNow.Ticks % 100000}";
+        var newFamilyName = $"Edited{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         await page.FillAsync("[data-testid='edit-family-name']", newFamilyName);
         await page.ClickAsync("[data-testid='save-patient']");
         await page.WaitForSelectorAsync(
@@ -204,7 +203,7 @@ public sealed class PatientE2ETests
     {
         using var client = E2EFixture.CreateAuthenticatedClient();
 
-        var uniqueName = $"UpdateApiTest{DateTime.UtcNow.Ticks % 100000}";
+        var uniqueName = $"UpdateApiTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var createResponse = await client.PostAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/",
             new StringContent(
@@ -219,7 +218,7 @@ public sealed class PatientE2ETests
         var patientIdMatch = Regex.Match(createdPatientJson, "\"Id\"\\s*:\\s*\"([^\"]+)\"");
         var patientId = patientIdMatch.Groups[1].Value;
 
-        var updatedFamilyName = $"Updated{DateTime.UtcNow.Ticks % 100000}";
+        var updatedFamilyName = $"Updated{Guid.NewGuid().ToString("N").Substring(0, 8)}";
         var updateResponse = await client.PutAsync(
             $"{E2EFixture.ClinicalUrl}/fhir/Patient/{patientId}",
             new StringContent(

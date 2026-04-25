@@ -39,6 +39,10 @@ public sealed class E2EFixture : IAsyncLifetime
     private Process? _clinicalSyncProcess;
     private Process? _schedulingSyncProcess;
     private IHost? _dashboardHost;
+    private string? _clinicalConnStr;
+    private string? _schedulingConnStr;
+    private string? _gatekeeperConnStr;
+    private readonly SemaphoreSlim _resetGate = new(1, 1);
 
     /// <summary>
     /// Playwright instance shared by all tests.
@@ -135,6 +139,9 @@ public sealed class E2EFixture : IAsyncLifetime
         var schedulingConnStr = await CreateDatabaseAsync(baseConnStr, "scheduling_e2e");
         var gatekeeperConnStr = await CreateDatabaseAsync(baseConnStr, "gatekeeper_e2e");
         var icd10ConnStr = await CreateDatabaseAsync(baseConnStr, "icd10_e2e");
+        _clinicalConnStr = clinicalConnStr;
+        _schedulingConnStr = schedulingConnStr;
+        _gatekeeperConnStr = gatekeeperConnStr;
 
         Console.WriteLine("[E2E] PostgreSQL container started");
 
@@ -882,7 +889,12 @@ public sealed class E2EFixture : IAsyncLifetime
         string email = "e2etest@example.com"
     )
     {
-        var page = await Browser!.NewPageAsync();
+        // Create a FRESH BrowserContext per page so cookies, localStorage, cache
+        // and service workers never leak between tests. Using Browser.NewPageAsync
+        // directly shares the default context across the whole run — a major
+        // source of flake.
+        var context = await Browser!.NewContextAsync();
+        var page = await context.NewPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER {msg.Type}] {msg.Text}");
         page.PageError += (_, err) => Console.WriteLine($"[PAGE ERROR] {err}");
 
@@ -1033,6 +1045,61 @@ public sealed class E2EFixture : IAsyncLifetime
         );
     }
 
+    /// <summary>
+    /// Resets all E2E databases to the clean-slate baseline: truncates every user
+    /// table in the clinical, scheduling, and gatekeeper databases (restarting
+    /// identity sequences so seeded rows land on IDs 1, 2, 3 deterministically),
+    /// then re-seeds the baseline patient, practitioners, and appointment.
+    /// Call this at the start of every test to guarantee isolation.
+    /// </summary>
+    public async Task ResetAsync()
+    {
+        await _resetGate.WaitAsync();
+        try
+        {
+            // Local mode shares a dev DB; we still truncate by best-effort but
+            // tests that run against local infra accept that isolation is weak.
+            if (_clinicalConnStr is not null)
+                await TruncateAllTablesAsync(_clinicalConnStr);
+            if (_schedulingConnStr is not null)
+                await TruncateAllTablesAsync(_schedulingConnStr);
+            if (_gatekeeperConnStr is not null)
+                await TruncateAllTablesAsync(_gatekeeperConnStr);
+
+            await SeedTestDataAsync();
+            Console.Error.WriteLine("[E2E] ResetAsync complete: DBs truncated + baseline reseeded");
+        }
+        finally
+        {
+            _resetGate.Release();
+        }
+    }
+
+    private static async Task TruncateAllTablesAsync(string connectionString)
+    {
+        await using var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        var tables = new List<string>();
+        await using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText =
+                "SELECT table_name FROM information_schema.tables "
+                + "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'";
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                tables.Add(reader.GetString(0));
+        }
+
+        if (tables.Count == 0)
+            return;
+
+        var quoted = string.Join(", ", tables.Select(t => $"\"{t}\""));
+        await using var truncate = conn.CreateCommand();
+        truncate.CommandText = $"TRUNCATE TABLE {quoted} RESTART IDENTITY CASCADE";
+        await truncate.ExecuteNonQueryAsync();
+    }
+
     private static async Task SeedAsync(HttpClient client, string url, string json)
     {
         try
@@ -1041,13 +1108,14 @@ public sealed class E2EFixture : IAsyncLifetime
                 url,
                 new StringContent(json, Encoding.UTF8, "application/json")
             );
-            Console.WriteLine(
-                $"[E2E] Seed {url}: {(int)response.StatusCode} {response.ReasonPhrase}"
+            var body = await response.Content.ReadAsStringAsync();
+            Console.Error.WriteLine(
+                $"[E2E] Seed {url}: {(int)response.StatusCode} body={body[..Math.Min(200, body.Length)]}"
             );
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[E2E] Seed {url} failed: {ex.Message}");
+            Console.Error.WriteLine($"[E2E] Seed {url} failed: {ex.Message}");
         }
     }
 

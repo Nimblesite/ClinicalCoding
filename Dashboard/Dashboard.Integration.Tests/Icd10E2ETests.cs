@@ -9,14 +9,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class Icd10E2ETests
+public sealed class Icd10E2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared E2E fixture.
     /// </summary>
-    public Icd10E2ETests(E2EFixture fixture) => _fixture = fixture;
+    public Icd10E2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     // =========================================================================
     // KEYWORD SEARCH
@@ -573,7 +572,7 @@ public sealed class Icd10E2ETests
 
     private async Task<IPage> NavigateToClinicalCodingAsync()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#clinical-coding"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Type}: {msg.Text}");

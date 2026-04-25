@@ -7,14 +7,13 @@ namespace Dashboard.Integration.Tests;
 /// </summary>
 [Collection("E2E Tests")]
 [Trait("Category", "E2E")]
-public sealed class CalendarE2ETests
+public sealed class CalendarE2ETests : E2ETestBase
 {
-    private readonly E2EFixture _fixture;
-
     /// <summary>
     /// Constructor receives shared fixture.
     /// </summary>
-    public CalendarE2ETests(E2EFixture fixture) => _fixture = fixture;
+    public CalendarE2ETests(E2EFixture fixture)
+        : base(fixture) { }
 
     /// <summary>
     /// Calendar page displays appointments in calendar grid.
@@ -22,7 +21,7 @@ public sealed class CalendarE2ETests
     [Fact]
     public async Task CalendarPage_DisplaysAppointmentsInCalendarGrid()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#calendar"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER {msg.Type}] {msg.Text}");
@@ -86,7 +85,7 @@ public sealed class CalendarE2ETests
             0,
             DateTimeKind.Local
         ).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-        var uniqueServiceType = $"CalTest{DateTime.Now.Ticks % 100000}";
+        var uniqueServiceType = $"CalTest{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Appointment",
@@ -98,7 +97,7 @@ public sealed class CalendarE2ETests
         );
         createResponse.EnsureSuccessStatusCode();
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -159,7 +158,7 @@ public sealed class CalendarE2ETests
             0,
             DateTimeKind.Local
         ).ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-        var uniqueServiceType = $"CalEdit{DateTime.Now.Ticks % 100000}";
+        var uniqueServiceType = $"CalEdit{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 
         var createResponse = await client.PostAsync(
             $"{E2EFixture.SchedulingUrl}/Appointment",
@@ -171,7 +170,7 @@ public sealed class CalendarE2ETests
         );
         createResponse.EnsureSuccessStatusCode();
 
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -217,7 +216,7 @@ public sealed class CalendarE2ETests
     [Fact]
     public async Task CalendarPage_NavigationButtons_ChangeMonth()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync();
+        var page = await Fixture.CreateAuthenticatedPageAsync();
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER] {msg.Text}");
         await page.WaitForSelectorAsync(
             ".sidebar",
@@ -261,7 +260,7 @@ public sealed class CalendarE2ETests
     [Fact]
     public async Task CalendarPage_DeepLinkingWorks()
     {
-        var page = await _fixture.CreateAuthenticatedPageAsync(
+        var page = await Fixture.CreateAuthenticatedPageAsync(
             navigateTo: $"{E2EFixture.DashboardUrl}#calendar"
         );
         page.Console += (_, msg) => Console.WriteLine($"[BROWSER {msg.Type}] {msg.Text}");
