@@ -164,6 +164,33 @@ namespace Dashboard.Api
         }
 
         /// <summary>
+        /// Creates a new practitioner via the Scheduling API.
+        /// </summary>
+        public static async Task<Practitioner> CreatePractitionerAsync(Practitioner practitioner)
+        {
+            var response = await PostSchedulingAsync(
+                _schedulingBaseUrl + "/Practitioner",
+                practitioner
+            );
+            return ParseJson<Practitioner>(response);
+        }
+
+        /// <summary>
+        /// Updates an existing practitioner via the Scheduling API.
+        /// </summary>
+        public static async Task<Practitioner> UpdatePractitionerAsync(
+            string id,
+            Practitioner practitioner
+        )
+        {
+            var response = await PutSchedulingAsync(
+                _schedulingBaseUrl + "/Practitioner/" + id,
+                practitioner
+            );
+            return ParseJson<Practitioner>(response);
+        }
+
+        /// <summary>
         /// Fetches all appointments from the Scheduling API.
         /// </summary>
         public static async Task<Appointment[]> GetAppointmentsAsync()
@@ -418,6 +445,9 @@ namespace Dashboard.Api
 
         private static Task<string> PutClinicalAsync(string url, object data) =>
             SendJsonAsync(url, "PUT", data);
+
+        private static Task<string> PostSchedulingAsync(string url, object data) =>
+            SendJsonAsync(url, "POST", data);
 
         private static Task<string> PutSchedulingAsync(string url, object data) =>
             SendJsonAsync(url, "PUT", data);

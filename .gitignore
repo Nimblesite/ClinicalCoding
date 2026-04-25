@@ -111,3 +111,4 @@ Dashboard/dashboard-ts/.vite/
 Dashboard/dashboard-ts/coverage/
 Dashboard/dashboard-ts/playwright-report/
 Dashboard/dashboard-ts/test-results/
+.ghissues/

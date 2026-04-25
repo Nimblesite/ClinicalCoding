@@ -30,6 +30,9 @@ namespace Dashboard
         /// <summary>Patient ID being edited (null if not editing).</summary>
         public string EditingPatientId { get; set; }
 
+        /// <summary>Practitioner ID being edited (null if not editing).</summary>
+        public string EditingPractitionerId { get; set; }
+
         /// <summary>Appointment ID being edited (null if not editing).</summary>
         public string EditingAppointmentId { get; set; }
 
@@ -49,6 +52,7 @@ namespace Dashboard
                 SearchQuery = SearchQuery,
                 NotificationCount = NotificationCount,
                 EditingPatientId = EditingPatientId,
+                EditingPractitionerId = EditingPractitionerId,
                 EditingAppointmentId = EditingAppointmentId,
                 IsAuthenticated = IsAuthenticated,
                 CurrentUser = CurrentUser,
@@ -68,6 +72,7 @@ namespace Dashboard
             var initialHash = ReadHashView();
             var initialView = initialHash ?? "dashboard";
             string initialEditingPatientId = null;
+            string initialEditingPractitionerId = null;
             string initialEditingAppointmentId = null;
             if (initialHash != null)
             {
@@ -75,6 +80,13 @@ namespace Dashboard
                 {
                     initialView = "patients";
                     initialEditingPatientId = initialHash.Substring("patients/edit/".Length);
+                }
+                else if (initialHash.StartsWith("practitioners/edit/"))
+                {
+                    initialView = "practitioners";
+                    initialEditingPractitionerId = initialHash.Substring(
+                        "practitioners/edit/".Length
+                    );
                 }
                 else if (initialHash.StartsWith("appointments/edit/"))
                 {
@@ -98,6 +110,7 @@ namespace Dashboard
                     SearchQuery = "",
                     NotificationCount = 3,
                     EditingPatientId = initialEditingPatientId,
+                    EditingPractitionerId = initialEditingPractitionerId,
                     EditingAppointmentId = initialEditingAppointmentId,
                     IsAuthenticated = Auth.IsAuthenticated(),
                     CurrentUser = Auth.GetUser(),
@@ -120,6 +133,16 @@ namespace Dashboard
                         {
                             next.ActiveView = "patients";
                             next.EditingPatientId = view.Substring("patients/edit/".Length);
+                            next.EditingPractitionerId = null;
+                            next.EditingAppointmentId = null;
+                        }
+                        else if (view.StartsWith("practitioners/edit/"))
+                        {
+                            next.ActiveView = "practitioners";
+                            next.EditingPatientId = null;
+                            next.EditingPractitionerId = view.Substring(
+                                "practitioners/edit/".Length
+                            );
                             next.EditingAppointmentId = null;
                         }
                         else if (
@@ -133,12 +156,14 @@ namespace Dashboard
                             next.ActiveView =
                                 prefix == "calendar/edit/" ? "calendar" : "appointments";
                             next.EditingPatientId = null;
+                            next.EditingPractitionerId = null;
                             next.EditingAppointmentId = view.Substring(prefix.Length);
                         }
                         else
                         {
                             next.ActiveView = view;
                             next.EditingPatientId = null;
+                            next.EditingPractitionerId = null;
                             next.EditingAppointmentId = null;
                         }
                         setState(next);
@@ -173,6 +198,7 @@ namespace Dashboard
                 next.CurrentUser = null;
                 next.ActiveView = "dashboard";
                 next.EditingPatientId = null;
+                next.EditingPractitionerId = null;
                 next.EditingAppointmentId = null;
                 setState(next);
             }
@@ -190,6 +216,7 @@ namespace Dashboard
                             var newState = state.Clone();
                             newState.ActiveView = view;
                             newState.EditingPatientId = null;
+                            newState.EditingPractitionerId = null;
                             newState.EditingAppointmentId = null;
                             setState(newState);
                         },
@@ -277,6 +304,15 @@ namespace Dashboard
                 );
             }
 
+            // Handle editing practitioner
+            if (view == "practitioners" && state.EditingPractitionerId != null)
+            {
+                var editingId = state.EditingPractitionerId;
+                return AsComponent(() =>
+                    EditPractitionerPage.Render(editingId, () => Script.Write("history.back()"))
+                );
+            }
+
             // Handle editing appointment
             if (
                 (view == "appointments" || view == "calendar")
@@ -298,6 +334,7 @@ namespace Dashboard
                         var next = snapshot.Clone();
                         next.ActiveView = targetView;
                         next.EditingPatientId = null;
+                        next.EditingPractitionerId = null;
                         next.EditingAppointmentId = null;
                         setState(next);
                     })
@@ -314,13 +351,27 @@ namespace Dashboard
                         var next = snapshot.Clone();
                         next.ActiveView = "patients";
                         next.EditingPatientId = patientId;
+                        next.EditingPractitionerId = null;
                         next.EditingAppointmentId = null;
                         setState(next);
                     })
                 );
             }
             if (view == "practitioners")
-                return AsComponent(PractitionersPage.Render);
+            {
+                var snapshot = state;
+                return AsComponent(() =>
+                    PractitionersPage.Render(practitionerId =>
+                    {
+                        var next = snapshot.Clone();
+                        next.ActiveView = "practitioners";
+                        next.EditingPatientId = null;
+                        next.EditingPractitionerId = practitionerId;
+                        next.EditingAppointmentId = null;
+                        setState(next);
+                    })
+                );
+            }
             if (view == "appointments")
             {
                 var snapshot = state;
@@ -330,6 +381,7 @@ namespace Dashboard
                         var next = snapshot.Clone();
                         next.ActiveView = "appointments";
                         next.EditingPatientId = null;
+                        next.EditingPractitionerId = null;
                         next.EditingAppointmentId = appointmentId;
                         setState(next);
                     })
@@ -344,6 +396,7 @@ namespace Dashboard
                         var next = snapshot.Clone();
                         next.ActiveView = "calendar";
                         next.EditingPatientId = null;
+                        next.EditingPractitionerId = null;
                         next.EditingAppointmentId = appointmentId;
                         setState(next);
                     })

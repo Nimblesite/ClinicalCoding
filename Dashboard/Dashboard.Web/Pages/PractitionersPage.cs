@@ -4,6 +4,7 @@ using Dashboard.Api;
 using Dashboard.Components;
 using Dashboard.Models;
 using Dashboard.React;
+using H5;
 using static Dashboard.React.Elements;
 using static Dashboard.React.Hooks;
 
@@ -25,6 +26,30 @@ namespace Dashboard.Pages
 
         /// <summary>Current specialty filter.</summary>
         public string SpecialtyFilter { get; set; }
+
+        /// <summary>Whether the add practitioner modal is open.</summary>
+        public bool ShowAddModal { get; set; }
+
+        /// <summary>Form: identifier.</summary>
+        public string NewIdentifier { get; set; }
+
+        /// <summary>Form: given name.</summary>
+        public string NewGivenName { get; set; }
+
+        /// <summary>Form: family name.</summary>
+        public string NewFamilyName { get; set; }
+
+        /// <summary>Form: qualification.</summary>
+        public string NewQualification { get; set; }
+
+        /// <summary>Form: specialty.</summary>
+        public string NewSpecialty { get; set; }
+
+        /// <summary>Form: email.</summary>
+        public string NewEmail { get; set; }
+
+        /// <summary>Form: phone.</summary>
+        public string NewPhone { get; set; }
     }
 
     /// <summary>
@@ -32,11 +57,14 @@ namespace Dashboard.Pages
     /// </summary>
     public static class PractitionersPage
     {
+        private static Action<string> _onEditPractitioner;
+
         /// <summary>
         /// Renders the practitioners page.
         /// </summary>
-        public static ReactElement Render()
+        public static ReactElement Render(Action<string> onEditPractitioner = null)
         {
+            _onEditPractitioner = onEditPractitioner;
             var stateResult = UseState(
                 new PractitionersState
                 {
@@ -106,10 +134,13 @@ namespace Dashboard.Pages
                             ),
                             Button(
                                 className: "btn btn-primary",
+                                dataTestId: "add-practitioner-btn",
+                                onClick: () => OpenAddModal(state, setState),
                                 children: new[] { Icons.Plus(), Text("Add Practitioner") }
                             ),
                         }
                     ),
+                    state.ShowAddModal ? RenderAddPractitionerModal(state, setState) : Text(""),
                     // Filters
                     Div(
                         className: "card mb-6",
@@ -275,10 +306,6 @@ namespace Dashboard.Pages
                                     ),
                                 }
                             ),
-                            Button(
-                                className: "btn btn-primary mt-4",
-                                children: new[] { Icons.Plus(), Text("Add Practitioner") }
-                            ),
                         }
                     ),
                 }
@@ -402,12 +429,20 @@ namespace Dashboard.Pages
                             ),
                             Button(
                                 className: "btn btn-secondary btn-sm",
+                                dataTestId: "edit-practitioner-" + practitioner.Id,
+                                onClick: () => NavigateEditPractitioner(practitioner.Id),
                                 children: new[] { Icons.Edit() }
                             ),
                         }
                     ),
                 }
             );
+
+        private static void NavigateEditPractitioner(string practitionerId)
+        {
+            Script.Write("window.location.hash = '#practitioners/edit/' + practitionerId");
+            _onEditPractitioner?.Invoke(practitionerId);
+        }
 
         private static ReactElement RenderDetail(string label, string value) =>
             Div(
@@ -427,6 +462,265 @@ namespace Dashboard.Pages
             if (string.IsNullOrEmpty(s))
                 return "";
             return s.Substring(0, 1).ToUpper();
+        }
+
+        private static void OpenAddModal(
+            PractitionersState state,
+            Action<PractitionersState> setState
+        ) => setState(WithModal(state, true, "", "", "", "MD", "", "", ""));
+
+        private static void CloseAddModal(
+            PractitionersState state,
+            Action<PractitionersState> setState
+        ) => setState(WithModal(state, false, "", "", "", "MD", "", "", ""));
+
+        private static PractitionersState WithModal(
+            PractitionersState state,
+            bool open,
+            string identifier,
+            string given,
+            string family,
+            string qualification,
+            string specialty,
+            string email,
+            string phone
+        ) =>
+            new PractitionersState
+            {
+                Practitioners = state.Practitioners,
+                Loading = state.Loading,
+                Error = state.Error,
+                SpecialtyFilter = state.SpecialtyFilter,
+                ShowAddModal = open,
+                NewIdentifier = identifier,
+                NewGivenName = given,
+                NewFamilyName = family,
+                NewQualification = qualification,
+                NewSpecialty = specialty,
+                NewEmail = email,
+                NewPhone = phone,
+            };
+
+        private static ReactElement RenderAddPractitionerModal(
+            PractitionersState state,
+            Action<PractitionersState> setState
+        ) =>
+            Div(
+                className: "modal",
+                children: new[]
+                {
+                    Div(
+                        className: "card",
+                        style: new
+                        {
+                            padding = "24px",
+                            maxWidth = "500px",
+                            margin = "100px auto",
+                        },
+                        children: new[]
+                        {
+                            H(3, children: new[] { Text("Add Practitioner") }),
+                            Div(
+                                className: "mt-4",
+                                children: new[]
+                                {
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Identifier (e.g. DR001)",
+                                        value: state.NewIdentifier ?? "",
+                                        dataTestId: "practitioner-identifier",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    v,
+                                                    state.NewGivenName,
+                                                    state.NewFamilyName,
+                                                    state.NewQualification,
+                                                    state.NewSpecialty,
+                                                    state.NewEmail,
+                                                    state.NewPhone
+                                                )
+                                            )
+                                    ),
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Given Name",
+                                        value: state.NewGivenName ?? "",
+                                        dataTestId: "practitioner-given-name",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewIdentifier,
+                                                    v,
+                                                    state.NewFamilyName,
+                                                    state.NewQualification,
+                                                    state.NewSpecialty,
+                                                    state.NewEmail,
+                                                    state.NewPhone
+                                                )
+                                            )
+                                    ),
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Family Name",
+                                        value: state.NewFamilyName ?? "",
+                                        dataTestId: "practitioner-family-name",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewIdentifier,
+                                                    state.NewGivenName,
+                                                    v,
+                                                    state.NewQualification,
+                                                    state.NewSpecialty,
+                                                    state.NewEmail,
+                                                    state.NewPhone
+                                                )
+                                            )
+                                    ),
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Qualification (e.g. MD)",
+                                        value: state.NewQualification ?? "",
+                                        dataTestId: "practitioner-qualification",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewIdentifier,
+                                                    state.NewGivenName,
+                                                    state.NewFamilyName,
+                                                    v,
+                                                    state.NewSpecialty,
+                                                    state.NewEmail,
+                                                    state.NewPhone
+                                                )
+                                            )
+                                    ),
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Specialty",
+                                        value: state.NewSpecialty ?? "",
+                                        dataTestId: "practitioner-specialty",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewIdentifier,
+                                                    state.NewGivenName,
+                                                    state.NewFamilyName,
+                                                    state.NewQualification,
+                                                    v,
+                                                    state.NewEmail,
+                                                    state.NewPhone
+                                                )
+                                            )
+                                    ),
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Email",
+                                        value: state.NewEmail ?? "",
+                                        dataTestId: "practitioner-email",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewIdentifier,
+                                                    state.NewGivenName,
+                                                    state.NewFamilyName,
+                                                    state.NewQualification,
+                                                    state.NewSpecialty,
+                                                    v,
+                                                    state.NewPhone
+                                                )
+                                            )
+                                    ),
+                                    Input(
+                                        className: "input mb-2",
+                                        placeholder: "Phone",
+                                        value: state.NewPhone ?? "",
+                                        dataTestId: "practitioner-phone",
+                                        onChange: v =>
+                                            setState(
+                                                WithModal(
+                                                    state,
+                                                    true,
+                                                    state.NewIdentifier,
+                                                    state.NewGivenName,
+                                                    state.NewFamilyName,
+                                                    state.NewQualification,
+                                                    state.NewSpecialty,
+                                                    state.NewEmail,
+                                                    v
+                                                )
+                                            )
+                                    ),
+                                }
+                            ),
+                            Div(
+                                className: "flex gap-2 mt-4",
+                                children: new[]
+                                {
+                                    Button(
+                                        className: "btn btn-primary",
+                                        dataTestId: "submit-practitioner",
+                                        onClick: () => SubmitPractitioner(state, setState),
+                                        children: new[] { Text("Create") }
+                                    ),
+                                    Button(
+                                        className: "btn btn-secondary",
+                                        onClick: () => CloseAddModal(state, setState),
+                                        children: new[] { Text("Cancel") }
+                                    ),
+                                }
+                            ),
+                        }
+                    ),
+                }
+            );
+
+        private static async void SubmitPractitioner(
+            PractitionersState state,
+            Action<PractitionersState> setState
+        )
+        {
+            try
+            {
+                var practitioner = new Practitioner
+                {
+                    Active = true,
+                    Identifier = state.NewIdentifier,
+                    NameGiven = state.NewGivenName,
+                    NameFamily = state.NewFamilyName,
+                    Qualification = state.NewQualification ?? "MD",
+                    Specialty = state.NewSpecialty,
+                    TelecomEmail = state.NewEmail,
+                    TelecomPhone = state.NewPhone,
+                };
+                await ApiClient.CreatePractitionerAsync(practitioner);
+                LoadPractitioners(setState);
+            }
+            catch (Exception ex)
+            {
+                setState(
+                    new PractitionersState
+                    {
+                        Practitioners = state.Practitioners,
+                        Loading = false,
+                        Error = ex.Message,
+                        ShowAddModal = false,
+                    }
+                );
+            }
         }
     }
 }
