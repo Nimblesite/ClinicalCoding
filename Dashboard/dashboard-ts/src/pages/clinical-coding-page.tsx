@@ -14,6 +14,52 @@ interface ResultRow {
   readonly score?: number;
 }
 
+interface ResultCardProps {
+  readonly copied: boolean;
+  readonly expanded: boolean;
+  readonly onCopy: (key: string, code: string) => void;
+  readonly onToggle: (key: string) => void;
+  readonly row: ResultRow;
+  readonly rowKey: string;
+}
+
+interface ModeOption {
+  readonly label: string;
+  readonly mode: Mode;
+  readonly testId: string;
+}
+
+interface ModeTabsProps {
+  readonly mode: Mode;
+  readonly onModeChange: (mode: Mode) => void;
+}
+
+interface SearchControlsProps {
+  readonly includeAchi: boolean;
+  readonly isBusy: boolean;
+  readonly mode: Mode;
+  readonly onIncludeAchiChange: (includeAchi: boolean) => void;
+  readonly onQueryChange: (query: string) => void;
+  readonly onSearch: () => void;
+  readonly query: string;
+}
+
+interface ResultsPanelProps {
+  readonly copiedKey: string | null;
+  readonly expandedKey: string | null;
+  readonly isBusy: boolean;
+  readonly onCopy: (key: string, code: string) => void;
+  readonly onToggle: (key: string) => void;
+  readonly resultLabel: string;
+  readonly rows: ResultRow[];
+}
+
+const MODE_OPTIONS: readonly ModeOption[] = [
+  { mode: 'semantic', label: 'AI Search', testId: 'coding-mode-ai' },
+  { mode: 'keyword', label: 'Keyword Search', testId: 'coding-mode-keyword' },
+  { mode: 'lookup', label: 'Code Lookup', testId: 'coding-mode-lookup' },
+];
+
 const toRowsFromIcd10 = (codes: Icd10Code[]): ResultRow[] =>
   codes.map((c) => ({
     code: c.Code,
@@ -31,6 +77,267 @@ const toRowsFromSemantic = (results: SemanticSearchResult[]): ResultRow[] =>
     score: r.score,
   }));
 
+const getRows = (
+  mode: Mode,
+  semanticRows: SemanticSearchResult[] | undefined,
+  keywordRows: Icd10Code[] | undefined,
+  lookupRow: Icd10Code | undefined,
+): ResultRow[] => {
+  if (mode === 'semantic') {
+    return semanticRows === undefined ? [] : toRowsFromSemantic(semanticRows);
+  }
+  if (mode === 'keyword') {
+    return keywordRows === undefined ? [] : toRowsFromIcd10(keywordRows);
+  }
+  return lookupRow === undefined ? [] : toRowsFromIcd10([lookupRow]);
+};
+
+const ResultCard = ({
+  copied,
+  expanded,
+  onCopy,
+  onToggle,
+  row,
+  rowKey,
+}: ResultCardProps): ReactElement => {
+  const hasDescription = row.description !== '' && row.description !== row.title;
+  const scorePercent = row.score === undefined ? undefined : Math.round(row.score * 100);
+  const scoreLabel = scorePercent === undefined ? '' : `${String(scorePercent)}%`;
+
+  return (
+    <article className={`result-card${expanded ? ' expanded' : ''}`} data-testid="coding-result">
+      <div className="coding-result-content">
+        <div className="coding-result-code-section">
+          <span className={`code-badge${row.source === 'ACHI' ? ' secondary' : ''}`}>
+            {row.code}
+          </span>
+          <span className="code-type-label">{row.source}</span>
+        </div>
+
+        <div className="coding-result-body">
+          <h3 className="coding-result-title">{row.title}</h3>
+          {hasDescription ? <p className="coding-result-description">{row.description}</p> : null}
+        </div>
+
+        <div className="coding-result-actions">
+          {scorePercent === undefined ? null : (
+            <div className="ai-match-score">
+              <div className="ai-match-row">
+                <span className="ai-match-label">Match</span>
+                <span className="ai-match-value">{scoreLabel}</span>
+              </div>
+              <div className="ai-match-bar">
+                <div className="ai-match-fill" style={{ width: scoreLabel }} />
+              </div>
+            </div>
+          )}
+          <div className="coding-result-buttons">
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => {
+                onToggle(rowKey);
+              }}
+              aria-expanded={expanded}
+            >
+              {expanded ? 'Hide' : 'Details'}
+            </button>
+            <button
+              type="button"
+              className={`btn-outline${copied ? ' copied' : ''}`}
+              data-testid="coding-copy"
+              onClick={() => {
+                onCopy(rowKey, row.code);
+              }}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {expanded ? (
+        <div className="coding-result-details" data-testid="coding-detail">
+          <dl>
+            <div>
+              <dt>Code</dt>
+              <dd>{row.code}</dd>
+            </div>
+            <div>
+              <dt>Classification</dt>
+              <dd>{row.source}</dd>
+            </div>
+            <div>
+              <dt>Title</dt>
+              <dd>{row.title}</dd>
+            </div>
+            {hasDescription ? (
+              <div>
+                <dt>Description</dt>
+                <dd>{row.description}</dd>
+              </div>
+            ) : null}
+            {scorePercent === undefined ? null : (
+              <div>
+                <dt>Match score</dt>
+                <dd>{scoreLabel}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      ) : null}
+    </article>
+  );
+};
+
+const ModeTabs = ({ mode, onModeChange }: ModeTabsProps): ReactElement => (
+  <div className="mode-tabs" role="tablist">
+    {MODE_OPTIONS.map((option) => (
+      <button
+        key={option.mode}
+        type="button"
+        role="tab"
+        aria-selected={mode === option.mode}
+        data-testid={option.testId}
+        className={mode === option.mode ? 'active' : ''}
+        onClick={() => {
+          onModeChange(option.mode);
+        }}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+);
+
+const SearchControls = ({
+  includeAchi,
+  isBusy,
+  mode,
+  onIncludeAchiChange,
+  onQueryChange,
+  onSearch,
+  query,
+}: SearchControlsProps): ReactElement => (
+  <>
+    <div className="search-shell">
+      {mode === 'semantic' ? (
+        <textarea
+          data-testid="coding-search-input"
+          className="search-field"
+          rows={12}
+          placeholder="Describe symptoms or diagnosis, e.g. 'acute myocardial infarction of anterior wall'"
+          value={query}
+          disabled={isBusy}
+          onChange={(e) => {
+            onQueryChange(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              onSearch();
+            }
+          }}
+        />
+      ) : (
+        <input
+          data-testid="coding-search-input"
+          className="search-field"
+          type="text"
+          placeholder={mode === 'keyword' ? 'e.g. chest pain' : 'e.g. R07.4'}
+          value={query}
+          onChange={(e) => {
+            onQueryChange(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onSearch();
+          }}
+        />
+      )}
+      {mode === 'semantic' ? (
+        <button
+          type="button"
+          className="search-submit"
+          onClick={onSearch}
+          disabled={isBusy || query.trim() === ''}
+        >
+          {isBusy ? (
+            <>
+              <span className="spinner" aria-hidden="true" /> Searching
+            </>
+          ) : (
+            'Search'
+          )}
+        </button>
+      ) : null}
+    </div>
+
+    <label className="achi-toggle">
+      <input
+        type="checkbox"
+        data-testid="achi-toggle"
+        checked={includeAchi}
+        onChange={(e) => {
+          onIncludeAchiChange(e.target.checked);
+        }}
+      />
+      <span>Include ACHI procedure codes</span>
+    </label>
+  </>
+);
+
+const ResultsPanel = ({
+  copiedKey,
+  expandedKey,
+  isBusy,
+  onCopy,
+  onToggle,
+  resultLabel,
+  rows,
+}: ResultsPanelProps): ReactElement => {
+  const resultCount = rows.length;
+
+  return (
+    <div className="coding-results">
+      <div className="coding-results-header">
+        <h2>{isBusy ? 'Searching' : `${String(resultCount)} ${resultLabel}`}</h2>
+      </div>
+
+      {isBusy ? (
+        <div className="coding-loading">
+          <span className="spinner spinner-lg" aria-hidden="true" />
+          <p>Searching the ICD-10-AM index…</p>
+        </div>
+      ) : null}
+
+      {!isBusy && resultCount === 0 ? (
+        <div className="coding-empty">
+          Enter a clinical description and press Search to see matching codes.
+        </div>
+      ) : null}
+
+      {!isBusy && resultCount > 0 ? (
+        <div className="results-list">
+          {rows.map((r) => {
+            const key = `${r.source}-${r.code}`;
+            return (
+              <ResultCard
+                key={key}
+                copied={copiedKey === key}
+                expanded={expandedKey === key}
+                onCopy={onCopy}
+                onToggle={onToggle}
+                row={r}
+                rowKey={key}
+              />
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 export const ClinicalCodingPage = (): ReactElement => {
   const [mode, setMode] = useState<Mode>('semantic');
   const [query, setQuery] = useState('');
@@ -42,15 +349,7 @@ export const ClinicalCodingPage = (): ReactElement => {
   const lookup = useIcd10Lookup(mode === 'lookup' ? query : '');
   const semantic = useSemanticSearch();
 
-  const rows: ResultRow[] = ((): ResultRow[] => {
-    if (mode === 'semantic') {
-      return semantic.data !== undefined ? toRowsFromSemantic(semantic.data) : [];
-    }
-    if (mode === 'keyword') {
-      return keyword.data !== undefined ? toRowsFromIcd10(keyword.data) : [];
-    }
-    return lookup.data !== undefined ? toRowsFromIcd10([lookup.data]) : [];
-  })();
+  const rows = getRows(mode, semantic.data, keyword.data, lookup.data);
 
   const isBusy =
     (mode === 'semantic' && semantic.isPending) ||
@@ -77,7 +376,6 @@ export const ClinicalCodingPage = (): ReactElement => {
     setExpandedKey((current) => (current === key ? null : key));
   };
 
-  const resultCount = rows.length;
   const resultLabel = mode === 'lookup' ? 'Result' : 'Results';
 
   return (
@@ -92,229 +390,26 @@ export const ClinicalCodingPage = (): ReactElement => {
       </div>
 
       <div className="coding-console">
-        <div className="mode-tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'semantic'}
-            data-testid="coding-mode-ai"
-            className={mode === 'semantic' ? 'active' : ''}
-            onClick={() => {
-              setMode('semantic');
-            }}
-          >
-            AI Search
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'keyword'}
-            data-testid="coding-mode-keyword"
-            className={mode === 'keyword' ? 'active' : ''}
-            onClick={() => {
-              setMode('keyword');
-            }}
-          >
-            Keyword Search
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'lookup'}
-            data-testid="coding-mode-lookup"
-            className={mode === 'lookup' ? 'active' : ''}
-            onClick={() => {
-              setMode('lookup');
-            }}
-          >
-            Code Lookup
-          </button>
-        </div>
-
-        <div className="search-shell">
-          {mode === 'semantic' ? (
-            <textarea
-              data-testid="coding-search-input"
-              className="search-field"
-              rows={12}
-              placeholder="Describe symptoms or diagnosis, e.g. 'acute myocardial infarction of anterior wall'"
-              value={query}
-              disabled={isBusy}
-              onChange={(e) => {
-                setQuery(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  runSearch();
-                }
-              }}
-            />
-          ) : (
-            <input
-              data-testid="coding-search-input"
-              className="search-field"
-              type="text"
-              placeholder={mode === 'keyword' ? 'e.g. chest pain' : 'e.g. R07.4'}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') runSearch();
-              }}
-            />
-          )}
-          {mode === 'semantic' && (
-            <button
-              type="button"
-              className="search-submit"
-              onClick={runSearch}
-              disabled={isBusy || query.trim() === ''}
-            >
-              {isBusy ? (
-                <>
-                  <span className="spinner" aria-hidden="true" /> Searching
-                </>
-              ) : (
-                'Search'
-              )}
-            </button>
-          )}
-        </div>
-
-        <label className="achi-toggle">
-          <input
-            type="checkbox"
-            data-testid="achi-toggle"
-            checked={includeAchi}
-            onChange={(e) => {
-              setIncludeAchi(e.target.checked);
-            }}
-          />
-          <span>Include ACHI procedure codes</span>
-        </label>
+        <ModeTabs mode={mode} onModeChange={setMode} />
+        <SearchControls
+          includeAchi={includeAchi}
+          isBusy={isBusy}
+          mode={mode}
+          onIncludeAchiChange={setIncludeAchi}
+          onQueryChange={setQuery}
+          onSearch={runSearch}
+          query={query}
+        />
       </div>
-
-      <div className="coding-results">
-        <div className="coding-results-header">
-          <h2>{isBusy ? 'Searching' : `${String(resultCount)} ${resultLabel}`}</h2>
-        </div>
-
-        {isBusy ? (
-          <div className="coding-loading">
-            <span className="spinner spinner-lg" aria-hidden="true" />
-            <p>Searching the ICD-10-AM index…</p>
-          </div>
-        ) : null}
-
-        {!isBusy && resultCount === 0 ? (
-          <div className="coding-empty">
-            Enter a clinical description and press Search to see matching codes.
-          </div>
-        ) : null}
-
-        {!isBusy && resultCount > 0 ? (
-          <div className="results-list">
-            {rows.map((r) => {
-              const key = `${r.source}-${r.code}`;
-              const expanded = expandedKey === key;
-              const copied = copiedKey === key;
-              const pct = r.score !== undefined ? Math.round(r.score * 100) : undefined;
-              return (
-                <article
-                  key={key}
-                  className={`result-card${expanded ? ' expanded' : ''}`}
-                  data-testid="coding-result"
-                >
-                  <div className="coding-result-content">
-                    <div className="coding-result-code-section">
-                      <span className={`code-badge${r.source === 'ACHI' ? ' secondary' : ''}`}>
-                        {r.code}
-                      </span>
-                      <span className="code-type-label">{r.source}</span>
-                    </div>
-
-                    <div className="coding-result-body">
-                      <h3 className="coding-result-title">{r.title}</h3>
-                      {r.description !== '' && r.description !== r.title && (
-                        <p className="coding-result-description">{r.description}</p>
-                      )}
-                    </div>
-
-                    <div className="coding-result-actions">
-                      {pct !== undefined && (
-                        <div className="ai-match-score">
-                          <div className="ai-match-row">
-                            <span className="ai-match-label">Match</span>
-                            <span className="ai-match-value">{pct}%</span>
-                          </div>
-                          <div className="ai-match-bar">
-                            <div className="ai-match-fill" style={{ width: `${String(pct)}%` }} />
-                          </div>
-                        </div>
-                      )}
-                      <div className="coding-result-buttons">
-                        <button
-                          type="button"
-                          className="btn-outline"
-                          onClick={() => {
-                            toggleExpanded(key);
-                          }}
-                          aria-expanded={expanded}
-                        >
-                          {expanded ? 'Hide' : 'Details'}
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn-outline${copied ? ' copied' : ''}`}
-                          data-testid="coding-copy"
-                          onClick={() => {
-                            handleCopy(key, r.code);
-                          }}
-                        >
-                          {copied ? 'Copied' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {expanded ? (
-                    <div className="coding-result-details" data-testid="coding-detail">
-                      <dl>
-                        <div>
-                          <dt>Code</dt>
-                          <dd>{r.code}</dd>
-                        </div>
-                        <div>
-                          <dt>Classification</dt>
-                          <dd>{r.source}</dd>
-                        </div>
-                        <div>
-                          <dt>Title</dt>
-                          <dd>{r.title}</dd>
-                        </div>
-                        {r.description !== '' && r.description !== r.title && (
-                          <div>
-                            <dt>Description</dt>
-                            <dd>{r.description}</dd>
-                          </div>
-                        )}
-                        {pct !== undefined && (
-                          <div>
-                            <dt>Match score</dt>
-                            <dd>{String(pct)}%</dd>
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-                  ) : null}
-                </article>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
+      <ResultsPanel
+        copiedKey={copiedKey}
+        expandedKey={expandedKey}
+        isBusy={isBusy}
+        onCopy={handleCopy}
+        onToggle={toggleExpanded}
+        resultLabel={resultLabel}
+        rows={rows}
+      />
     </section>
   );
 };

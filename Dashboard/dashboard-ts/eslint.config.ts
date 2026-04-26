@@ -26,7 +26,9 @@ const config: Linter.Config[] = [
       'dist',
       'node_modules',
       'coverage',
+      'e2e',
       'playwright-report',
+      'playwright.config.ts',
       'test-results',
       '.prettierrc.cjs',
       'eslint.config.ts',
@@ -39,7 +41,7 @@ const config: Linter.Config[] = [
   {
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.e2e.json'],
+        project: './tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
