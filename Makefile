@@ -1,10 +1,10 @@
-# agent-pmo:29b9dcf
+# agent-pmo:2efd847
 # =============================================================================
-# Standard Makefile — HealthcareSamples
+# Makefile — HealthcareSamples
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt fmt-check clean check ci coverage coverage-check setup db-up db-down db-reset db-wait db-migrate kill-ports-local kill-ports-docker clean-local clean-docker start-local start-docker
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-check nuke _reclaim-ports
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -21,8 +21,8 @@ else
 endif
 
 # Per-project coverage thresholds live in this JSON file. Each test
-# project gets its own minimum line-rate; bump them via `make coverage-check`
-# output minus 1 percentage point (rounding margin).
+# project gets its own minimum line-rate. `make test` enforces these after
+# each project. Bump thresholds to floor(measured) - 1 when coverage increases.
 COVERAGE_THRESHOLDS_FILE ?= coverage-thresholds.json
 
 # Postgres dev database (docker compose). Override in CI via env vars.
@@ -40,6 +40,7 @@ PG_BASE_URL ?= Host=$(DB_HOST);Port=$(DB_PORT);Username=postgres;Password=$(DB_P
 build: db-migrate
 	@echo "==> Building..."
 	dotnet build HealthcareSamples.sln --configuration Release
+	@$(MAKE) dashboard-ts-build
 
 # Test projects in execution order. Cheapest / most foundational first so a
 # break in a lower layer fails the run immediately, before slower E2E suites.
@@ -48,44 +49,78 @@ TEST_PROJECTS = \
   Clinical/Clinical.Api.Tests/Clinical.Api.Tests.csproj \
   Scheduling/Scheduling.Api.Tests/Scheduling.Api.Tests.csproj \
   ICD10/ICD10.Api.Tests/ICD10.Api.Tests.csproj \
-  ICD10/ICD10.Cli.Tests/ICD10.Cli.Tests.csproj \
-  Dashboard/Dashboard.Integration.Tests/Dashboard.Integration.Tests.csproj
+  ICD10/ICD10.Cli.Tests/ICD10.Cli.Tests.csproj
 
 ## test: Run full test suite with coverage (FAIL FAST)
 ##   - Stops at the first failing test inside an assembly (xunit stopOnFail)
 ##   - Stops at the first failing assembly across the suite (set -e)
-##   - Each project's coverage lands under TestResults/<project-dir>/ so
-##     `make coverage-check` can attribute results back to a project.
+##   - After each project, checks coverage against threshold from $(COVERAGE_THRESHOLDS_FILE)
+##     and fails immediately if below.
 test: db-migrate
 	@echo "==> Testing (fail-fast)..."
+	@command -v jq >/dev/null 2>&1 || { echo "FAIL: jq is required (brew install jq / apt-get install jq)"; exit 1; }
+	@if [ ! -f "$(COVERAGE_THRESHOLDS_FILE)" ]; then \
+	  echo "FAIL: $(COVERAGE_THRESHOLDS_FILE) not found"; exit 1; \
+	fi
 	@set -e; \
 	rm -rf TestResults; \
+	default=$$(jq -r '.default_threshold' $(COVERAGE_THRESHOLDS_FILE)); \
 	for proj in $(TEST_PROJECTS); do \
 	  proj_dir=$$(dirname "$$proj"); \
 	  echo ""; \
 	  echo "==> Testing $$proj"; \
-	  dotnet test "$$proj" --configuration Release \
-	    --settings coverlet.runsettings \
-	    --collect:"XPlat Code Coverage" \
-	    --results-directory "TestResults/$$proj_dir" \
-	    --verbosity normal \
-	    || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	  inc_filter=$$(jq -r --arg p "$$proj_dir" '.test_projects[$$p].include // ""' $(COVERAGE_THRESHOLDS_FILE)); \
+	  source_name=$$(jq -r --arg p "$$proj_dir" '.test_projects[$$p].source // $$p' $(COVERAGE_THRESHOLDS_FILE)); \
+	  if [ -n "$$inc_filter" ]; then \
+	    dotnet test "$$proj" --configuration Release \
+	      --settings coverlet.runsettings \
+	      --collect:"XPlat Code Coverage" \
+	      --results-directory "TestResults/$$proj_dir" \
+	      --verbosity normal \
+	      -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="$$inc_filter" \
+	      || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	  else \
+	    dotnet test "$$proj" --configuration Release \
+	      --settings coverlet.runsettings \
+	      --collect:"XPlat Code Coverage" \
+	      --results-directory "TestResults/$$proj_dir" \
+	      --verbosity normal \
+	      || { echo ""; echo "FAIL: $$proj failed -- aborting remaining test projects"; exit 1; }; \
+	  fi; \
+	  cobertura=$$(find "TestResults/$$proj_dir" -name 'coverage.cobertura.xml' 2>/dev/null | head -1); \
+	  threshold=$$(jq -r --arg p "$$proj_dir" --arg d "$$default" '.test_projects[$$p].threshold // ($$d | tonumber)' $(COVERAGE_THRESHOLDS_FILE)); \
+	  if [ -z "$$cobertura" ]; then \
+	    echo "FAIL ($$proj_dir): no coverage.cobertura.xml"; exit 1; \
+	  fi; \
+	  line_rate=$$(awk 'match($$0, /line-rate="[0-9.]+"/) { s=substr($$0, RSTART+11, RLENGTH-12); print s; exit }' "$$cobertura"); \
+	  pct=$$(awk "BEGIN{printf \"%.1f\", $${line_rate:-0}*100}"); \
+	  pct_int=$$(awk "BEGIN{printf \"%d\", $${line_rate:-0}*100}"); \
+	  if [ "$$pct_int" -lt "$$threshold" ]; then \
+	    printf "FAIL %-44s %s%% < %s%%\n" "$$source_name" "$$pct" "$$threshold"; \
+	    exit 1; \
+	  else \
+	    printf "OK   %-44s %s%% >= %s%%\n" "$$source_name" "$$pct" "$$threshold"; \
+	  fi; \
 	done
+	@$(MAKE) dashboard-ts-test
 
-## lint: Run all linters (fails on any warning)
-lint: fmt-check db-migrate
+## lint: Run all linters/analyzers (read-only). Does NOT format.
+lint: db-migrate
 	@echo "==> Linting..."
 	dotnet build HealthcareSamples.sln --configuration Release
+	@$(MAKE) dashboard-ts-lint
 
-## fmt: Format all code in-place
+## fmt: Format all code in-place. Pass CHECK=1 for read-only verify (CI use).
 fmt:
-	@echo "==> Formatting..."
-	dotnet csharpier format .
-
-## fmt-check: Check formatting without modifying
-fmt-check:
+ifdef CHECK
 	@echo "==> Checking format..."
 	dotnet csharpier check .
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm format
+else
+	@echo "==> Formatting..."
+	dotnet csharpier format .
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm format:fix
+endif
 
 ## clean: Remove all build artifacts
 clean:
@@ -98,65 +133,34 @@ else
 	$(RM) TestResults
 endif
 
-## check: lint + test (pre-commit)
-check: lint test
+## nuke: Absolute zero -- destroy both docker stacks, their volumes, their images,
+##        AND all local build artifacts. Next `make start-docker` rebuilds from scratch.
+nuke: clean
+	@echo "==> NUKE: full docker stack + db-only stack + volumes + images"
+	-cd docker && docker compose down -v --rmi all --remove-orphans 2>/dev/null
+	-docker compose -f $(DB_COMPOSE_FILE) down -v --rmi all --remove-orphans 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=healthcaresamples") 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=docker-app") 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=docker-dashboard") 2>/dev/null
+	-docker rm -f $$(docker ps -aq --filter "name=docker-db") 2>/dev/null
+	-docker volume rm -f docker_db-data 2>/dev/null
+	-docker volume rm -f healthcaresamples_db-data 2>/dev/null
+	-docker image rm -f docker-app docker-dashboard 2>/dev/null
+	@echo "==> Nuked. Run 'make start-docker' for a cold start."
 
-## ci: lint + test + build (full CI simulation)
-ci: lint test build
-
-## coverage: Generate coverage report
-coverage:
-	@echo "==> Coverage report..."
-	reportgenerator \
-	  -reports:"TestResults/**/coverage.cobertura.xml" \
-	  -targetdir:coverage/html \
-	  -reporttypes:Html
-	@echo "==> HTML report: coverage/html/index.html"
-
-## coverage-check: Assert per-project line-rate >= threshold from $(COVERAGE_THRESHOLDS_FILE)
-##   The JSON file declares { "default_threshold": N, "projects": { "<dir>": { "threshold": N } } }.
-##   A project that is missing from the file inherits "default_threshold".
-##   When coverage actually goes UP, edit the file: floor(measured) - 1 to leave a rounding cushion.
-coverage-check:
-	@echo "==> Checking coverage thresholds (file: $(COVERAGE_THRESHOLDS_FILE))..."
-	@command -v jq >/dev/null 2>&1 || { echo "FAIL: jq is required (brew install jq / apt-get install jq)"; exit 1; }
-	@if [ ! -f "$(COVERAGE_THRESHOLDS_FILE)" ]; then \
-	  echo "FAIL: $(COVERAGE_THRESHOLDS_FILE) not found"; exit 1; \
-	fi
-	@set -e; \
-	default=$$(jq -r '.default_threshold' $(COVERAGE_THRESHOLDS_FILE)); \
-	any_failed=0; \
-	for proj in $(TEST_PROJECTS); do \
-	  proj_dir=$$(dirname "$$proj"); \
-	  cobertura=$$(find "TestResults/$$proj_dir" -name 'coverage.cobertura.xml' 2>/dev/null | head -1); \
-	  threshold=$$(jq -r --arg p "$$proj_dir" --arg d "$$default" '.projects[$$p].threshold // ($$d | tonumber)' $(COVERAGE_THRESHOLDS_FILE)); \
-	  if [ -z "$$cobertura" ]; then \
-	    echo "FAIL ($$proj_dir): no coverage.cobertura.xml under TestResults/$$proj_dir"; \
-	    any_failed=1; continue; \
-	  fi; \
-	  line_rate=$$(awk 'match($$0, /line-rate="[0-9.]+"/) { s=substr($$0, RSTART+11, RLENGTH-12); print s; exit }' "$$cobertura"); \
-	  pct=$$(awk "BEGIN{printf \"%.1f\", $${line_rate:-0}*100}"); \
-	  pct_int=$$(awk "BEGIN{printf \"%d\", $${line_rate:-0}*100}"); \
-	  if [ "$$pct_int" -lt "$$threshold" ]; then \
-	    printf "FAIL %-44s %s%% < %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
-	    any_failed=1; \
-	  else \
-	    printf "OK   %-44s %s%% >= %s%%\n" "$$proj_dir" "$$pct" "$$threshold"; \
-	  fi; \
-	done; \
-	if [ "$$any_failed" -ne 0 ]; then \
-	  echo ""; \
-	  echo "FAIL: one or more projects below threshold (see $(COVERAGE_THRESHOLDS_FILE))"; \
-	  exit 1; \
-	fi; \
-	echo ""; \
-	echo "OK: all projects meet their coverage thresholds"
+## ci: fmt-check + lint + test + build (full CI simulation)
+ci:
+	$(MAKE) fmt CHECK=1
+	$(MAKE) lint
+	$(MAKE) test
+	$(MAKE) build
 
 ## setup: Post-create dev environment setup
 setup:
 	@echo "==> Setting up development environment..."
 	dotnet tool restore
 	dotnet restore
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile
 	@echo "==> Setup complete. Run 'make ci' to validate."
 
 # =============================================================================
@@ -206,57 +210,74 @@ db-migrate: db-up
 	  --output "$(PG_BASE_URL);Database=icd10" --provider postgres
 
 # =============================================================================
-# LOCAL DEV STACK
+# RUN THE STACK
 # =============================================================================
 
-# Ports owned by the local dev stack (4 APIs + dashboard + embedding service)
-LOCAL_PORTS  := 5002 5080 5001 5090 5173 8000
-# Same as LOCAL_PORTS plus the Postgres host port (docker stack publishes it)
-DOCKER_PORTS := 5432 5002 5080 5001 5090 5173
+# Ports the stack binds on the host. Used by _reclaim-ports to forcibly
+# evict any stale containers or host processes holding them before we bring
+# the compose stack up.
+STACK_PORTS := 5002 5080 5001 5090 8000 5173 5432
 
-## kill-ports-local: Free ports used by the local dev stack
-kill-ports-local:
-	@echo "==> Clearing local dev ports..."
-	@for port in $(LOCAL_PORTS); do \
-	  pids=$$(lsof -ti :$$port 2>/dev/null || true); \
+## _reclaim-ports: Kill anything (docker containers or host procs) bound to STACK_PORTS
+_reclaim-ports:
+	@echo "==> Reclaiming stack ports: $(STACK_PORTS)"
+	@for port in $(STACK_PORTS); do \
+	  cids=$$(docker ps -aq --filter "publish=$$port" 2>/dev/null); \
+	  if [ -n "$$cids" ]; then \
+	    echo "  [:$$port] killing containers: $$cids"; \
+	    docker rm -f $$cids >/dev/null 2>&1 || true; \
+	  fi; \
+	  pids=$$(lsof -nP -iTCP:$$port -sTCP:LISTEN -t 2>/dev/null || true); \
 	  if [ -n "$$pids" ]; then \
-	    echo "  killing port $$port: $$pids"; \
-	    echo "$$pids" | xargs kill -9 2>/dev/null || true; \
+	    echo "  [:$$port] killing host PIDs: $$pids"; \
+	    kill -9 $$pids 2>/dev/null || true; \
 	  fi; \
 	done
 
-## kill-ports-docker: Free ports used by the docker stack (incl. Postgres)
-kill-ports-docker:
-	@echo "==> Clearing docker dev ports..."
-	@for port in $(DOCKER_PORTS); do \
-	  pids=$$(lsof -ti :$$port 2>/dev/null || true); \
-	  if [ -n "$$pids" ]; then \
-	    echo "  killing port $$port: $$pids"; \
-	    echo "$$pids" | xargs kill -9 2>/dev/null || true; \
-	  fi; \
-	done
+## resume-docker: Start the existing docker stack without rebuilding or reclaiming ports.
+##   Use this to bring containers back up after they were stopped. No builds, no
+##   port-killing, no data loss -- just `docker compose up -d` on whatever is there.
+resume-docker:
+	@echo "==> Resuming docker stack (no rebuild)..."
+	cd docker && docker compose up -d
 
-## clean-local: Kill local dev processes and drop the Postgres dev volume
-clean-local: kill-ports-local
-	@echo "==> Removing Postgres dev volume..."
-	docker compose -f $(DB_COMPOSE_FILE) down -v 2>/dev/null || true
-	@echo "Clean complete."
+## dashboard-ts-dev: Run the new TypeScript dashboard dev server (vite)
+dashboard-ts-dev:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm dev
 
-## clean-docker: Kill docker stack and drop all docker-compose volumes
-clean-docker: kill-ports-docker
-	@echo "==> Removing docker volumes..."
-	cd docker && docker compose down -v
-	@echo "Clean complete."
+## dashboard-ts-build: Build the new TypeScript dashboard SPA (vite)
+dashboard-ts-build:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm build
 
-## start-docker: Build the dashboard locally then start the docker compose stack
-##   Usage: make start-docker [BUILD=1]
-##     BUILD=1   force image rebuild (passes --build to docker compose up)
-start-docker:
-	@echo "==> Building Dashboard locally (H5 requires native build)..."
-	cd Dashboard/Dashboard.Web && \
-	  dotnet publish -c Release -o ../../docker/dashboard-build --nologo -v q
-	@echo "==> Starting docker stack..."
-	cd docker && docker compose up $(if $(BUILD),--build,)
+## dashboard-ts-lint: Typecheck, lint, and format-check the new TypeScript dashboard
+dashboard-ts-lint:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm typecheck && pnpm lint && pnpm format
+
+## dashboard-ts-test: Run unit tests for the new TypeScript dashboard
+dashboard-ts-test:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm test
+
+## dashboard-ts-check: Typecheck + lint + test + build for the new TypeScript dashboard
+dashboard-ts-check:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm check
+
+## dashboard-ts: Alias for dashboard-ts-check
+dashboard-ts: dashboard-ts-check
+
+## deploy-dashboard: Rebuild ONLY the dashboard image and restart ONLY the dashboard
+##   container. Leaves db/app containers untouched. Use this for CSS/HTML/JS changes
+##   when the full stack is already running.
+deploy-dashboard:
+	@echo "==> Building TypeScript dashboard image..."
+	cd docker && docker compose up -d --build --no-deps dashboard
+	@echo "==> Dashboard redeployed at http://localhost:5173"
+
+## start-docker: Start the full docker compose stack
+##   Always rebuilds images so Dockerfile / start-services.sh changes can't be masked
+##   by a stale cached image.
+start-docker: _reclaim-ports
+	@echo "==> Starting docker stack (forced rebuild)..."
+	cd docker && docker compose up --build
 
 # Embedded runner for the local dev stack. Inlined as a `define` block so the
 # orchestration (background processes, trap-based cleanup, log prefixing) runs
@@ -349,7 +370,7 @@ ConnectionStrings__Postgres="Host=localhost;Database=icd10;Username=icd10;Passwo
 PIDS+=($$!)
 
 echo "Starting Dashboard on :5173..."
-python3 -m http.server 5173 --directory Dashboard/Dashboard.Web/wwwroot 2>&1 | sed 's/^/  [dashboard]  /' &
+cd Dashboard/dashboard-ts && pnpm dev --host 0.0.0.0 2>&1 | sed 's/^/  [dashboard]  /' &
 PIDS+=($$!)
 
 populate_icd10 &
@@ -371,38 +392,17 @@ wait
 endef
 export START_LOCAL_RUNNER
 
-## start-local: Run all 4 APIs locally against the docker postgres dev DB
-##   Builds projects in Debug, dashboard in Release, then runs everything in
+## start-local: Run all APIs locally against the docker Postgres dev DB
+##   Builds API projects, installs dashboard packages, then runs everything in
 ##   the foreground with prefixed log output. Ctrl+C cleans up all children.
 start-local: db-up
 	@echo "==> Setting up Python environment..."
 	@if [ ! -d ICD10/.venv ]; then python3 -m venv ICD10/.venv; fi
 	@ICD10/.venv/bin/pip install -q -r ICD10/embedding-service/requirements.txt psycopg2-binary click requests
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent
 	@echo "==> Building all projects..."
 	dotnet build Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj --nologo -v q
 	dotnet build Clinical/Clinical.Api/Clinical.Api.csproj --nologo -v q
 	dotnet build Scheduling/Scheduling.Api/Scheduling.Api.csproj --nologo -v q
 	dotnet build ICD10/ICD10.Api/ICD10.Api.csproj --nologo -v q
-	dotnet build Dashboard/Dashboard.Web/Dashboard.Web.csproj -c Release --nologo -v q
 	@bash -c "$$START_LOCAL_RUNNER"
-
-# =============================================================================
-# HELP
-# =============================================================================
-help:
-	@echo "Available targets:"
-	@echo "  build             - Compile/assemble all artifacts"
-	@echo "  test              - Run full test suite with coverage"
-	@echo "  lint              - Run all linters (errors mode)"
-	@echo "  fmt               - Format all code in-place"
-	@echo "  fmt-check         - Check formatting (no modification)"
-	@echo "  clean             - Remove build artifacts"
-	@echo "  check             - lint + test (pre-commit)"
-	@echo "  ci                - lint + test + build (full CI)"
-	@echo "  coverage          - Generate and open coverage report"
-	@echo "  coverage-check    - Assert coverage thresholds"
-	@echo "  setup             - Post-create dev environment setup"
-	@echo "  start-local       - Run all 4 APIs locally against docker postgres"
-	@echo "  start-docker      - Build dashboard + docker compose up the full stack"
-	@echo "  clean-local       - Kill local dev processes and drop postgres volume"
-	@echo "  clean-docker      - Kill docker stack and drop all volumes"

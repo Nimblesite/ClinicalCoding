@@ -25,4 +25,11 @@
     <ProjectReference Include="..\Clinical.Api\Clinical.Api.csproj" />
     <ProjectReference Include="..\..\Shared\Authorization\Authorization.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile
+      Include="..\..\Shared\TestSupport\HttpResponseAssertions.cs"
+      Link="TestSupport\HttpResponseAssertions.cs"
+    />
+  </ItemGroup>
 </Project>

@@ -1,23 +1,31 @@
 {
+  "_agent_pmo": "2efd847",
   "default_threshold": 80,
-  "projects": {
+  "test_projects": {
     "Gatekeeper/Gatekeeper.Api.Tests": {
+      "source": "Gatekeeper.Api",
+      "include": "[Gatekeeper.Api]*",
       "threshold": 68
     },
     "Clinical/Clinical.Api.Tests": {
+      "source": "Clinical.Api",
+      "include": "[Clinical.Api]*",
       "threshold": 90
     },
     "Scheduling/Scheduling.Api.Tests": {
+      "source": "Scheduling.Api",
+      "include": "[Scheduling.Api]*",
       "threshold": 85
     },
     "ICD10/ICD10.Api.Tests": {
+      "source": "ICD10.Api",
+      "include": "[ICD10.Api]*",
       "threshold": 71
     },
     "ICD10/ICD10.Cli.Tests": {
+      "source": "ICD10.Cli",
+      "include": "[ICD10.Cli]*",
       "threshold": 67
-    },
-    "Dashboard/Dashboard.Integration.Tests": {
-      "threshold": 42
     }
   }
 }

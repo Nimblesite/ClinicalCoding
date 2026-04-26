@@ -1,3 +1,5 @@
+using ClinicalCoding.TestSupport;
+
 namespace Gatekeeper.Api.Tests;
 
 /// <summary>
@@ -18,9 +20,9 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
     {
         var request = new { Email = "test@example.com", DisplayName = "Test User" };
 
-        var response = await _client.PostAsJsonAsync("/auth/register/begin", request);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .PostAsJsonAsync("/auth/register/begin", request)
+            .WithStatusAsync(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
@@ -40,9 +42,9 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
         // Registration must require resident keys so login works without email
         var request = new { Email = "resident@example.com", DisplayName = "Resident User" };
 
-        var response = await _client.PostAsJsonAsync("/auth/register/begin", request);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .PostAsJsonAsync("/auth/register/begin", request)
+            .WithStatusAsync(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
@@ -63,9 +65,9 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
         // Registration must require user verification for security
         var request = new { Email = "verify@example.com", DisplayName = "Verify User" };
 
-        var response = await _client.PostAsJsonAsync("/auth/register/begin", request);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .PostAsJsonAsync("/auth/register/begin", request)
+            .WithStatusAsync(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
@@ -82,9 +84,9 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
     {
         // Discoverable credentials flow: no email needed, browser shows all passkeys
         // Server returns challenge with empty allowCredentials
-        var response = await _client.PostAsJsonAsync("/auth/login/begin", new { });
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .PostAsJsonAsync("/auth/login/begin", new { })
+            .WithStatusAsync(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
@@ -110,9 +112,9 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
     public async Task LoginBegin_RequiresUserVerification()
     {
         // Login must require user verification (Touch ID, Face ID, etc.)
-        var response = await _client.PostAsJsonAsync("/auth/login/begin", new { });
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await _client
+            .PostAsJsonAsync("/auth/login/begin", new { })
+            .WithStatusAsync(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
@@ -191,9 +193,7 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
     [Fact]
     public async Task Session_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.GetAsync("/auth/session");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/auth/session").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -202,17 +202,15 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "invalid-token");
 
-        var response = await _client.GetAsync("/auth/session");
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client.GetAsync("/auth/session").ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task Logout_WithoutToken_ReturnsUnauthorized()
     {
-        var response = await _client.PostAsync("/auth/logout", null);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await _client
+            .PostAsync("/auth/logout", null)
+            .ShouldHaveStatusAsync(HttpStatusCode.Unauthorized);
     }
 }
 

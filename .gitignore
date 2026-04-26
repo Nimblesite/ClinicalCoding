@@ -1,4 +1,4 @@
-# agent-pmo:29b9dcf
+# agent-pmo:2efd847
 
 # =============================================================================
 # UNIVERSAL
@@ -15,7 +15,9 @@ ehthumbs.db
 Desktop.ini
 
 # IDE / Editor
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
@@ -99,3 +101,14 @@ project.lock.json
 
 *.nupkg
 *.generated.sql
+
+/*.png
+
+# Dashboard TypeScript rewrite (Dashboard/dashboard-ts/)
+Dashboard/dashboard-ts/node_modules/
+Dashboard/dashboard-ts/dist/
+Dashboard/dashboard-ts/.vite/
+Dashboard/dashboard-ts/coverage/
+Dashboard/dashboard-ts/playwright-report/
+Dashboard/dashboard-ts/test-results/
+.ghissues/

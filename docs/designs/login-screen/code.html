@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vitalis Clinical - Secure Access</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#d1daff",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#6bd8cb",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "surface-bright": "#f7f9fb",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-container": "#eceef0",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-tint": "#0053db",
+                    "on-secondary-container": "#54647a",
+                    "on-secondary-fixed": "#0b1c30",
+                    "primary-fixed": "#dbe1ff",
+                    "on-tertiary-fixed-variant": "#005049",
+                    "error-container": "#ffdad6",
+                    "on-background": "#191c1e",
+                    "on-secondary": "#ffffff",
+                    "background": "#f7f9fb",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#89f5e7",
+                    "surface-container-highest": "#e0e3e5",
+                    "inverse-primary": "#b4c5ff",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#424752",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-variant": "#e0e3e5",
+                    "outline": "#727783",
+                    "surface-container-high": "#e6e8ea",
+                    "on-primary-fixed": "#00174b",
+                    "surface-dim": "#d8dadc",
+                    "primary": "#003fab",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#81eddf",
+                    "primary-container": "#0354dd",
+                    "inverse-surface": "#2d3133",
+                    "surface-container-low": "#f2f4f6",
+                    "on-surface": "#191c1e",
+                    "tertiary-container": "#006c63",
+                    "on-tertiary-fixed": "#00201d",
+                    "tertiary": "#00524b",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "outline-variant": "#c2c6d4",
+                    "secondary-container": "#d0e1fb",
+                    "secondary": "#505f76"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .clinical-gradient {
+            background: linear-gradient(135deg, #003fab 0%, #0354dd 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shadow-clinical {
+            box-shadow: 0 12px 32px rgba(25, 28, 30, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center p-6 selection:bg-primary-container selection:text-on-primary-container">
+<!-- Brand Header -->
+<header class="mb-12 flex flex-col items-center">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-12 clinical-gradient rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-3xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">health_metrics</span>
+</div>
+<h1 class="text-3xl font-extrabold tracking-tight text-primary">Vitalis Clinical</h1>
+</div>
+<p class="text-secondary font-medium tracking-wide">Secure, passwordless access</p>
+</header>
+<!-- Main Auth Card -->
+<main class="w-full max-w-[480px]">
+<div class="bg-surface-container-lowest rounded-lg p-8 md:p-12 shadow-clinical">
+<!-- Sign In Section -->
+<section class="space-y-8" id="sign-in-flow">
+<div class="text-center">
+<h2 class="text-2xl font-bold mb-2">Welcome Back</h2>
+<p class="text-on-surface-variant text-sm">Access your clinical dashboard using your secure passkey.</p>
+</div>
+<div class="py-6 flex flex-col items-center justify-center space-y-6">
+<button class="w-full clinical-gradient text-white font-semibold py-5 px-8 rounded-full flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">passkey</span>
+                        Sign in with Passkey
+                    </button>
+<div class="flex items-center gap-4 w-full">
+<div class="h-[1px] flex-1 bg-surface-container-highest"></div>
+<span class="text-xs font-bold text-outline uppercase tracking-widest">Security Verified</span>
+<div class="h-[1px] flex-1 bg-surface-container-highest"></div>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<div class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-primary mt-0.5">verified_user</span>
+<div>
+<p class="text-sm font-bold">Encrypted End-to-End</p>
+<p class="text-xs text-on-surface-variant leading-relaxed">Your biometric data never leaves your device. We use industry-standard FIDO2 protocols.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Registration Flow (Initially visible as a toggle) -->
+<div class="mt-10 pt-8 border-t border-surface-container">
+<div class="text-center mb-6">
+<p class="text-sm font-medium text-on-surface-variant">
+                        New to Vitalis? 
+                        <button class="text-primary font-bold hover:underline underline-offset-4 ml-1">Create an account</button>
+</p>
+</div>
+<!-- Registration Form - Simplified clinical approach -->
+<form class="space-y-5 hidden group-[.registration-active]:block">
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-widest text-outline ml-1">Full Name</label>
+<input class="w-full bg-surface-container-highest border-none rounded-lg px-5 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-lowest transition-all" placeholder="Dr. Sarah Johnson" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-widest text-outline ml-1">Work Email</label>
+<input class="w-full bg-surface-container-highest border-none rounded-lg px-5 py-4 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-lowest transition-all" placeholder="s.johnson@hospital.org" type="email"/>
+</div>
+<button class="w-full bg-secondary-container text-on-secondary-container font-bold py-4 rounded-full mt-4 hover:bg-secondary-fixed transition-colors" type="submit">
+                        Continue to Passkey Setup
+                    </button>
+</form>
+</div>
+</div>
+<!-- Supportive Visual/Context -->
+<div class="mt-8 grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-6 rounded-lg flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary text-3xl">shield_lock</span>
+<p class="text-xs font-medium leading-relaxed text-on-surface-variant">HIPAA &amp; GDPR compliant architecture for clinical data security.</p>
+</div>
+<div class="relative overflow-hidden rounded-lg aspect-square">
+<img alt="Clinical Environment" class="absolute inset-0 w-full h-full object-cover opacity-80 brightness-90" data-alt="Modern medical laboratory or clean room with soft blue lighting and high-tech clinical equipment in soft focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjq5CJKRC-Nt4lt8Y3XXkOa2dh2xFk_o4pP_DXe7Jjlvr_EQiR-BX5y2EIlT5LtNiN1H6RNqQjWaityqSrl0Di5bkENDRaDHQyl8ZSPoCi4it8nLy_eKo6P-VmJiQUepjaOzI3jdv04DjiVsPfKNcAEMC7kHb2Y9OnBcSwfaQDOG8ll8mCbFQ-5BRdnEjTgNd6egjQECt-95fjCA9q8H7Z-A5bvarsq5udZM6XGxYKQkXfCto38t1Pcjvg7pmEF1nwUy8CBY6Ot-wj"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-overlay"></div>
+<div class="absolute bottom-4 left-4 right-4 text-white">
+<p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Trust Status</p>
+<p class="text-sm font-semibold">99.9% System Uptime</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="mt-16 w-full max-w-screen-xl py-8 flex flex-col md:flex-row justify-between items-center px-8 gap-4">
+<p class="text-xs font-medium tracking-wide uppercase text-slate-600 dark:text-slate-400">© 2024 VITALIS CLINICAL. SECURE DATA ENVIRONMENT.</p>
+<nav class="flex gap-6">
+<a class="text-xs font-medium tracking-wide uppercase text-slate-500 hover:text-blue-700 underline-offset-4 hover:underline transition-colors" href="#">Privacy Policy</a>
+<a class="text-xs font-medium tracking-wide uppercase text-slate-500 hover:text-blue-700 underline-offset-4 hover:underline transition-colors" href="#">Terms of Service</a>
+<a class="text-xs font-medium tracking-wide uppercase text-slate-500 hover:text-blue-700 underline-offset-4 hover:underline transition-colors" href="#">Security Whitepaper</a>
+</nav>
+</footer>
+</body></html>

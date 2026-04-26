@@ -31,6 +31,23 @@ public sealed class CliTestFixture : IDisposable
         ApiUrl = _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "http://localhost";
     }
 
+    /// <summary>
+    /// Runs the CLI with the given input lines (each pushed with Enter) and returns the captured console output.
+    /// </summary>
+    public async Task<string> RunCliAsync(params string[] inputs)
+    {
+        var console = new TestConsole();
+        console.Profile.Capabilities.Interactive = true;
+        foreach (var input in inputs)
+        {
+            console.Input.PushTextWithEnter(input);
+        }
+
+        using var cli = new Icd10Cli(ApiUrl, console, HttpClient);
+        await cli.RunAsync();
+        return console.Output;
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {

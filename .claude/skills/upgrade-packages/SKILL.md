@@ -3,7 +3,7 @@ name: upgrade-packages
 description: Upgrade all dependencies/packages to their latest versions for C#/.NET and Python. Use when the user says "upgrade packages", "update dependencies", "bump versions", "update packages", or "upgrade deps".
 argument-hint: "[--check-only] [--major] [package-name]"
 ---
-<!-- agent-pmo:29b9dcf -->
+<!-- agent-pmo:2efd847 -->
 
 # Upgrade Packages
 
@@ -24,12 +24,15 @@ Inspect the repo for these manifest files:
 | `*.csproj` / `*.sln` | C# / .NET | NuGet (dotnet) |
 | `Directory.Build.props` | C# / .NET | NuGet (dotnet) — central version pinning |
 | `requirements.txt` | Python (ICD10/embedding-service, ICD10/scripts/CreateDb) | pip |
+| `package.json` | TypeScript (Dashboard/dashboard-ts) | pnpm (check lockfile) |
 
-This repo uses both. Process .NET first, then Python.
+This repo uses all three. Process .NET first, then Python, then TypeScript.
+
+**If you cannot detect any manifest file, stop and tell the user.**
 
 ## Step 2 — List outdated packages
 
-Run the appropriate command BEFORE upgrading anything. Show the user what will change.
+Run the appropriate command to list what's outdated BEFORE upgrading anything. Show the user what will change.
 
 ### C# / .NET (NuGet)
 ```bash
@@ -54,6 +57,13 @@ python -m venv /tmp/scripts-venv
 ```
 
 **Read the docs:** https://pip.pypa.io/en/stable/cli/pip_install/#cmdoption-U
+
+### TypeScript (pnpm)
+```bash
+cd Dashboard/dashboard-ts && pnpm outdated
+```
+
+**Read the docs:** https://pnpm.io/cli/update
 
 If `--check-only` was passed, **stop here** and report the outdated list.
 
@@ -94,6 +104,13 @@ For `requirements.txt`:
 /tmp/scripts-venv/bin/pip freeze > ICD10/scripts/CreateDb/requirements.txt
 ```
 
+### TypeScript (pnpm)
+```bash
+cd Dashboard/dashboard-ts && pnpm update
+# --major flag:
+cd Dashboard/dashboard-ts && pnpm update --latest
+```
+
 ## Step 5 — Verify the upgrade
 
 After upgrading, run the project's build and test suite to confirm nothing broke:
@@ -126,7 +143,7 @@ Provide a summary:
 - **Always run tests after upgrading** to catch breakage immediately
 - **Never remove packages** unless they were explicitly deprecated and replaced
 - **Never downgrade packages** unless rolling back a broken upgrade
-- **Never modify lockfiles manually** — let the package manager regenerate them
+- **Never modify lockfiles manually** (pnpm-lock.yaml, etc.) — let the package manager regenerate them
 - **Commit nothing** — leave changes in the working tree for the user to review
 
 ## Success criteria

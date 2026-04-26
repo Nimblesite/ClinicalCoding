@@ -1,3 +1,5 @@
+using ClinicalCoding.TestSupport;
+
 namespace ICD10.Api.Tests;
 
 /// <summary>
@@ -15,9 +17,7 @@ public sealed class HealthEndpointTests : IClassFixture<ICD10ApiFactory>
     [Fact]
     public async Task Health_ReturnsOk()
     {
-        var response = await _client.GetAsync("/health");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await _client.GetAsync("/health").ShouldHaveStatusAsync(HttpStatusCode.OK);
     }
 
     [Fact]

@@ -22,7 +22,7 @@
 
 ┌─────────────────────────────────────────────────────────┐
 │                     dashboard                           │
-│  nginx:5173 (static H5 files)                          │
+│  nginx:5173 (built TypeScript React dashboard)          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -32,18 +32,12 @@
 |-----------|---------|--------------|
 | db | Postgres | Stateful. Don't rebuild the database. |
 | app | .NET 9 | All APIs tightly coupled. Same codebase, same deploy. |
-| dashboard | nginx | Static files. Different runtime. |
+| dashboard | nginx | Static TypeScript React build. Different runtime. |
 
 ## Dashboard Note
 
-H5 transpiler doesn't work in Docker Linux. Build locally first:
-
-```bash
-cd Samples/Dashboard/Dashboard.Web
-dotnet publish -c Release
-```
-
-Then serve the static files however you want (nginx, python, etc).
+The dashboard image builds `Dashboard/dashboard-ts` with pnpm and serves the
+generated `dist/` assets through nginx.
 
 ## Usage
 
@@ -51,11 +45,12 @@ Then serve the static files however you want (nginx, python, etc).
 # Start everything
 make start-docker
 
-# Fresh start (wipe databases)
-make clean-docker start-docker
-
 # Rebuild containers
 make start-docker BUILD=1
+
+# Fresh start (wipe databases)
+cd docker && docker compose down -v
+make start-docker
 ```
 
 ## Ports

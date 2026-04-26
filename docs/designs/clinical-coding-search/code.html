@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vitalis Clinical - Coding Search</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-primary-container": "#d1daff",
+                    "inverse-on-surface": "#eff1f3",
+                    "outline": "#727783",
+                    "tertiary-fixed": "#89f5e7",
+                    "surface-dim": "#d8dadc",
+                    "surface-container": "#eceef0",
+                    "primary": "#003fab",
+                    "on-tertiary-container": "#81eddf",
+                    "surface-tint": "#0053db",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "surface-bright": "#f7f9fb",
+                    "primary-container": "#0354dd",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#d0e1fb",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#00174b",
+                    "surface-container-highest": "#e0e3e5",
+                    "error": "#ba1a1a",
+                    "secondary": "#505f76",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary-fixed-dim": "#6bd8cb",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "outline-variant": "#c2c6d4",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed": "#00201d",
+                    "surface": "#f7f9fb",
+                    "on-tertiary-fixed-variant": "#005049",
+                    "on-surface-variant": "#424752",
+                    "on-secondary-container": "#54647a",
+                    "surface-container-high": "#e6e8ea",
+                    "on-surface": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "on-background": "#191c1e",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-lowest": "#ffffff",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#0b1c30",
+                    "inverse-surface": "#2d3133",
+                    "tertiary": "#00524b",
+                    "tertiary-container": "#006c63",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed-variant": "#003ea8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm shadow-slate-200/50 dark:shadow-none font-sans antialiased tracking-tight">
+<div class="flex items-center justify-between px-6 h-16 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-blue-800 dark:text-blue-300">Vitalis Clinical</span>
+<div class="hidden md:flex items-center space-x-6">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors" href="#">Dashboard</a>
+<a class="text-blue-700 dark:text-blue-400 font-semibold border-b-2 border-blue-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors" href="#">Coding</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors" href="#">Audit</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-50/50 rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50/50 rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<img alt="Clinical Staff Profile" class="w-8 h-8 rounded-full border-2 border-primary/20" data-alt="portrait of a professional male doctor in clinical attire with a warm and trustworthy expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZWVbkSCOOrcnt4euuKwJmT2RHl-jUeVrjB0SZkgJUzsFauhii7u9yp4RUW2OpO_WXCdRJqntL_VfZHQcJXfj-nd4eY7DCDNLW0czd4wTSkgLQd54Zv0VyQ3t1GEfAt2Sk4ooaLmyH5LM-aQsmGwj2I_AyBnMYZySKpkrCswU3C96HHlGMOj5CbcTsvnmmxRE8QASPLFkQkoxrOyzUHr1AAnG13EhC2WYKTsuHctI_24tVfbUuBbGhzHen2caNyTjjRAyfF3dNHVz3"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-slate-50 dark:bg-slate-950 flex flex-col p-4 space-y-2 pt-20 hidden lg:flex">
+<div class="px-4 py-6 mb-4">
+<h2 class="text-lg font-extrabold text-blue-900 dark:text-blue-100">Vitalis AI</h2>
+<p class="text-xs text-slate-500 font-medium Inter tracking-normal">Clinical Data Curator</p>
+</div>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 rounded-xl hover:translate-x-1 transition-transform duration-200 tap-highlight-transparent" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-sm font-medium Inter">Patients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 rounded-xl shadow-sm hover:translate-x-1 transition-transform duration-200 tap-highlight-transparent" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="text-sm font-medium Inter">Coding</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 rounded-xl hover:translate-x-1 transition-transform duration-200 tap-highlight-transparent" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="text-sm font-medium Inter">Encounters</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 rounded-xl hover:translate-x-1 transition-transform duration-200 tap-highlight-transparent" href="#">
+<span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+<span class="text-sm font-medium Inter">Conditions</span>
+</a>
+</div>
+<div class="mt-8 px-4">
+<button class="w-full py-3 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-xl font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                New Search
+            </button>
+</div>
+<div class="mt-auto space-y-1 pt-4 border-t border-slate-200/50">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 rounded-xl hover:translate-x-1 transition-transform duration-200 tap-highlight-transparent" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-sm font-medium Inter">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900/50 rounded-xl hover:translate-x-1 transition-transform duration-200 tap-highlight-transparent" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="text-sm font-medium Inter">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="lg:ml-64 pt-16 min-h-screen bg-surface-container-low transition-all">
+<div class="max-w-7xl mx-auto px-6 py-8">
+<!-- Hero / Search Section -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase mb-3">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                            Clinical Intelligence
+                        </span>
+<h1 class="text-4xl font-extrabold text-on-surface tracking-tight mb-2">Diagnostic Coding Search</h1>
+<p class="text-secondary body-md">Harness natural language processing to map clinical documentation to precise codes.</p>
+</div>
+</div>
+<!-- Bento-style Search Console -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Search Input Module -->
+<div class="lg:col-span-8 space-y-6">
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-sm">
+<!-- Toggle Tabs -->
+<div class="flex p-1 bg-surface-container-high rounded-xl w-fit mb-6">
+<button class="px-6 py-2 bg-white text-primary font-bold rounded-lg shadow-sm text-sm">AI Search</button>
+<button class="px-6 py-2 text-secondary font-medium hover:text-on-surface text-sm transition-colors">Keyword Search</button>
+<button class="px-6 py-2 text-secondary font-medium hover:text-on-surface text-sm transition-colors">Code Lookup</button>
+</div>
+<!-- Search Input -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-primary/50" data-icon="clinical_notes">clinical_notes</span>
+</div>
+<textarea class="w-full pl-14 pr-32 py-5 bg-surface-container-high border-none rounded-lg focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-lowest text-lg font-medium placeholder:text-outline-variant resize-none transition-all" placeholder="Describe symptoms or diagnosis in natural language (e.g., 'Acute myocardial infarction of anterior wall')" rows="3"></textarea>
+<div class="absolute bottom-4 right-4 flex items-center gap-3">
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2 rounded-lg font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                                        Analyze
+                                    </button>
+</div>
+</div>
+<!-- Search Options -->
+<div class="flex items-center gap-6 mt-6">
+<label class="flex items-center cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 transition-all cursor-pointer" type="checkbox"/>
+<span class="ml-3 text-sm font-semibold text-secondary group-hover:text-on-surface transition-colors">Include ACHI procedure codes</span>
+</label>
+<div class="h-4 w-px bg-outline-variant/30"></div>
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-[18px]" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="text-xs font-bold uppercase tracking-wider">Verified AI-Powered Engine</span>
+</div>
+</div>
+</div>
+<!-- Search Results Section (NEWLY REDESIGNED) -->
+<div class="space-y-4">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-sm font-black text-on-surface uppercase tracking-[0.2em]">20 AI-Matched Results</h2>
+<div class="flex gap-2">
+<button class="p-1.5 text-secondary hover:text-on-surface hover:bg-surface-container-high rounded-full transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="filter_list">filter_list</span>
+</button>
+<button class="p-1.5 text-secondary hover:text-on-surface hover:bg-surface-container-high rounded-full transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="sort">sort</span>
+</button>
+</div>
+</div>
+<!-- Results List -->
+<div class="space-y-3">
+<!-- Result Card 1 -->
+<div class="group bg-surface-container-lowest p-5 rounded-lg border border-transparent hover:border-primary/20 hover:shadow-md transition-all duration-300">
+<div class="flex flex-col md:flex-row md:items-start gap-6">
+<div class="flex flex-col gap-2 min-w-[140px]">
+<div class="flex items-center gap-2">
+<span class="bg-primary text-white text-sm font-black px-3 py-1.5 rounded-md tracking-wider">L02.32</span>
+</div>
+<span class="text-[10px] font-black text-secondary tracking-widest uppercase px-1">ICD-10-AM</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-lg font-bold text-on-surface mb-2 leading-snug">Furuncle of buttock</h3>
+<p class="text-sm text-secondary font-medium leading-relaxed max-w-2xl">Localized skin infection (abscess) of the gluteal region, involving the hair follicle and surrounding tissue.</p>
+</div>
+<div class="flex flex-col items-end gap-4 min-w-[180px]">
+<div class="flex flex-col items-end gap-1.5">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-black text-tertiary uppercase tracking-tighter">AI Match</span>
+<span class="text-sm font-bold text-on-surface">71%</span>
+</div>
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 71%"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-xs font-bold hover:bg-surface-container-low transition-all">View Details</button>
+<button class="p-2 text-primary hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="bookmark">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Result Card 2 -->
+<div class="group bg-surface-container-lowest p-5 rounded-lg border border-transparent hover:border-primary/20 hover:shadow-md transition-all duration-300">
+<div class="flex flex-col md:flex-row md:items-start gap-6">
+<div class="flex flex-col gap-2 min-w-[140px]">
+<div class="flex items-center gap-2">
+<span class="bg-primary text-white text-sm font-black px-3 py-1.5 rounded-md tracking-wider">K62.0</span>
+</div>
+<span class="text-[10px] font-black text-secondary tracking-widest uppercase px-1">ICD-10-AM</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-lg font-bold text-on-surface mb-2 leading-snug">Anal polyp</h3>
+<p class="text-sm text-secondary font-medium leading-relaxed max-w-2xl">A small growth on the lining of the anal canal or at the anal margin.</p>
+</div>
+<div class="flex flex-col items-end gap-4 min-w-[180px]">
+<div class="flex flex-col items-end gap-1.5">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-black text-tertiary uppercase tracking-tighter">AI Match</span>
+<span class="text-sm font-bold text-on-surface">70%</span>
+</div>
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 70%"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-xs font-bold hover:bg-surface-container-low transition-all">View Details</button>
+<button class="p-2 text-primary hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="bookmark">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Result Card 3 (ACHI Procedure) -->
+<div class="group bg-surface-container-lowest p-5 rounded-lg border border-transparent hover:border-primary/20 hover:shadow-md transition-all duration-300">
+<div class="flex flex-col md:flex-row md:items-start gap-6">
+<div class="flex flex-col gap-2 min-w-[140px]">
+<div class="flex items-center gap-2">
+<span class="bg-secondary text-white text-sm font-black px-3 py-1.5 rounded-md tracking-wider">30071-00</span>
+</div>
+<span class="text-[10px] font-black text-secondary tracking-widest uppercase px-1">ACHI</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-lg font-bold text-on-surface mb-2 leading-snug">Diagnostic biopsy of skin</h3>
+<p class="text-sm text-secondary font-medium leading-relaxed max-w-2xl">Procedural intervention to remove a sample of skin for pathological examination.</p>
+</div>
+<div class="flex flex-col items-end gap-4 min-w-[180px]">
+<div class="flex flex-col items-end gap-1.5">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-black text-tertiary uppercase tracking-tighter">AI Match</span>
+<span class="text-sm font-bold text-on-surface">69%</span>
+</div>
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 69%"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-xs font-bold hover:bg-surface-container-low transition-all">View Details</button>
+<button class="p-2 text-primary hover:bg-primary/10 rounded-full transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="bookmark">bookmark</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar: Saved Codes & History -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Saved Codes Section -->
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm h-fit">
+<div class="flex items-center justify-between mb-6">
+<h3 class="label-md font-bold text-on-surface flex items-center gap-2 uppercase tracking-widest">
+<span class="material-symbols-outlined text-primary" data-icon="bookmarks" style="font-variation-settings: 'FILL' 1;">bookmarks</span>
+                                    Saved Codes
+                                </h3>
+<span class="bg-primary/10 text-primary text-[10px] font-black px-2 py-0.5 rounded">12 CODES</span>
+</div>
+<div class="space-y-4">
+<div class="p-4 bg-surface rounded-lg border-l-4 border-tertiary">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-black text-tertiary uppercase tracking-tighter">ICD-10-AM</span>
+<button class="text-outline-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+</button>
+</div>
+<p class="text-sm font-extrabold text-on-surface mb-1">E11.9</p>
+<p class="text-xs text-secondary font-medium leading-relaxed">Type 2 diabetes mellitus without complications</p>
+</div>
+<div class="p-4 bg-surface rounded-lg border-l-4 border-primary">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-black text-primary uppercase tracking-tighter">ICD-10-AM</span>
+<button class="text-outline-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+</button>
+</div>
+<p class="text-sm font-extrabold text-on-surface mb-1">I48.0</p>
+<p class="text-xs text-secondary font-medium leading-relaxed">Paroxysmal atrial fibrillation</p>
+</div>
+<div class="p-4 bg-surface rounded-lg border-l-4 border-outline-variant">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-black text-secondary uppercase tracking-tighter">ACHI</span>
+<button class="text-outline-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+</button>
+</div>
+<p class="text-sm font-extrabold text-on-surface mb-1">30071-00</p>
+<p class="text-xs text-secondary font-medium leading-relaxed">Diagnostic biopsy of skin</p>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border-2 border-dashed border-outline-variant rounded-xl text-outline text-sm font-bold hover:bg-surface-container-low hover:border-primary/50 transition-all">
+                                + View All Saved
+                            </button>
+</div>
+<!-- Coding Guide Highlight -->
+<div class="relative overflow-hidden p-6 rounded-lg bg-primary-container text-on-primary shadow-xl">
+<div class="relative z-10">
+<h4 class="text-lg font-bold mb-2">Need assistance?</h4>
+<p class="text-xs text-on-primary/80 leading-relaxed mb-4">Our clinical coding specialists are online to help with complex diagnostic mapping.</p>
+<button class="bg-white text-primary text-xs font-black px-4 py-2 rounded-lg shadow-sm hover:bg-primary-fixed transition-colors uppercase">
+                                    Start Live Chat
+                                </button>
+</div>
+<!-- Background Decoration -->
+<div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Navigation for Mobile -->
+<div class="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center py-3">
+<a class="flex flex-col items-center gap-1 text-slate-600" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-blue-700" href="#">
+<span class="material-symbols-outlined" data-icon="search" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="text-[10px] font-bold uppercase">Coding</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-600" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="text-[10px] font-bold uppercase">Activity</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-600" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] font-bold uppercase">Profile</span>
+</a>
+</div>
+</div>
+</main>
+</body></html>

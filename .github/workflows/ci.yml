@@ -1,4 +1,4 @@
-# agent-pmo:29b9dcf
+# agent-pmo:2efd847
 name: CI
 
 on:
@@ -15,6 +15,7 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
+    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load, and 5 test projects with coverage require ~20 min.
     timeout-minutes: 30
     env:
       DB_PASSWORD: changeme
@@ -27,13 +28,17 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
       - run: dotnet restore
       - run: dotnet tool restore
-
-      # csharpier needs no DB -- run it first so format issues fail
-      # before paying the cost of docker, codegen, or Playwright.
-      - name: Format check
-        run: make fmt-check
 
       - name: Start Postgres (pgvector) via docker compose
         run: make db-up
@@ -44,7 +49,10 @@ jobs:
       # `make lint` runs the full Release build, which triggers
       # `dotnet DataProvider postgres` codegen against the live database,
       # so it has to come after db-up + db-migrate. Still kept ahead of
-      # the embedding service / Playwright steps to fail fast on warnings.
+      # the embedding service steps to fail fast on warnings.
+      - name: Format check
+        run: make fmt CHECK=1
+
       - name: Lint
         run: make lint
 
@@ -64,20 +72,8 @@ jobs:
           docker compose logs
           exit 1
 
-      - name: Install Playwright browsers
-        run: |
-          dotnet build Dashboard/Dashboard.Integration.Tests/Dashboard.Integration.Tests.csproj --configuration Release
-          dotnet tool install --global Microsoft.Playwright.CLI || true
-          export PATH="$PATH:$HOME/.dotnet/tools"
-          playwright install --with-deps chromium
-
       - name: Test
         run: make test
-
-      # Per-project thresholds live in coverage-thresholds.json (default 80%).
-      # Bump entries by floor(measured) - 1 whenever real coverage improves.
-      - name: Coverage check
-        run: make coverage-check
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4

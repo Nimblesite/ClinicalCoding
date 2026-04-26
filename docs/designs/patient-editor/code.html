@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ClinicalCurator | Patient Record Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#424752",
+                        "secondary": "#505f76",
+                        "background": "#f7f9fb",
+                        "surface-variant": "#e0e3e5",
+                        "secondary-container": "#d0e1fb",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "tertiary": "#00524b",
+                        "on-primary-fixed": "#00174b",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-tint": "#0053db",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#006c63",
+                        "surface-container-high": "#e6e8ea",
+                        "surface": "#f7f9fb",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-dim": "#d8dadc",
+                        "tertiary-fixed-dim": "#6bd8cb",
+                        "surface-container": "#eceef0",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-tertiary-fixed-variant": "#005049",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "inverse-surface": "#2d3133",
+                        "error": "#ba1a1a",
+                        "primary-container": "#0354dd",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-background": "#191c1e",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary-container": "#81eddf",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-container-low": "#f2f4f6",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#b4c5ff",
+                        "outline-variant": "#c2c6d4",
+                        "outline": "#727783",
+                        "on-primary-container": "#d1daff",
+                        "on-secondary-container": "#54647a",
+                        "on-secondary-fixed": "#0b1c30",
+                        "primary": "#003fab",
+                        "on-tertiary-fixed": "#00201d",
+                        "tertiary-fixed": "#89f5e7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; color: #191c1e; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); }
+        .primary-gradient { background: linear-gradient(135deg, #003fab 0%, #0354dd 100%); }
+    </style>
+</head>
+<body class="antialiased overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-[#f7f9fb] text-[#005FB8] font-['Inter'] antialiased tracking-tight text-sm flex justify-between items-center px-8 h-16 w-full fixed top-0 z-50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tighter text-[#003fab]">ClinicalCurator</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-[#003fab] font-bold border-b-2 border-[#003fab] py-5" href="#">Patients</a>
+<a class="text-[#505f76] font-medium hover:bg-[#f2f4f6] transition-colors py-5 px-2 rounded-t-lg" href="#">Analytics</a>
+<a class="text-[#505f76] font-medium hover:bg-[#f2f4f6] transition-colors py-5 px-2 rounded-t-lg" href="#">Compliance</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-secondary text-lg">search</span>
+<input class="bg-surface-container-highest border-none rounded-full pl-10 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-primary/30 w-64" placeholder="Search patient MRN..." type="text"/>
+</div>
+<button class="p-2 rounded-full hover:bg-[#f2f4f6] transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#f2f4f6] transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden bg-primary-fixed ml-2">
+<img alt="Provider Profile" class="w-full h-full object-cover" data-alt="professional portrait of a male doctor in clinical attire with a warm and trustworthy expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDegZ_go6J0nBXOu9WMa1Dv9PPPRluC3tefYpdYHWkI8zzpa6POI_24Tjd98yvB_tOlHP3x3R8XGYTExl2zngFn6Ftz1bmJc0Y1TJFaDFTEAg9PsGCAT09t-ju_wZRYTOugEJ1e4meOAAduHSaSE69xRic0TLKjsPihSfSFS7WPu61mewAE4-K1ChCyEOfSIytFN_TrURjR_fOWmofDGCZUshrEG_oM8CoI9romIx7XzTCip-67xBRlNrnmUaqKOj9z5FcIpqhCHmNM"/>
+</div>
+</div>
+</header>
+<div class="flex h-screen pt-16">
+<!-- SideNavBar -->
+<aside class="bg-[#f2f4f6] font-['Inter'] text-sm font-medium tracking-wide h-screen w-72 flex flex-col p-6 space-y-2 shrink-0">
+<div class="mb-8 px-2">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-12 h-12 rounded-2xl overflow-hidden bg-white shadow-sm">
+<img alt="Patient Photo" class="w-full h-full object-cover" data-alt="high-quality medical portrait of a middle-aged woman for clinical records identification" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpAOm8W0eJOyP3hO804rAdrR1MM4gD2T7hwSRWVR1vQWaCFS1DGrMPh3gdYfU7IMYsZpkzcoaNFfDOMgKaJQ92OylbEDk9Khn57fFIxwJkF8dz65Dk12C-MArUhfGMmxXoq8H6V54yGXcfy6-5hsXT6zPnnLq_ryotu8dN-O5RnJ2GUvaS2IVno5SgK0t_7FZNlaBghMnXVIBSNSK8TueF-Mpn02oBFmAmZSR_xvZAIvGJ_rD7pxXSSLasjh2A77LbQ_KmGnEjSxw2"/>
+</div>
+<div>
+<h2 class="text-lg font-bold text-[#003fab] leading-none mb-1">Evelyn Harper</h2>
+<p class="text-[10px] uppercase tracking-widest text-secondary font-bold">MRN: 882910-X</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-xl">
+<p class="text-[11px] text-secondary mb-1">FHIR Resource Status</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-xs font-semibold text-tertiary">Validated v4.0.1</span>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#505f76] hover:bg-[#ffffff]/50 transition-all rounded-full group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-[#ffffff] text-[#003fab] rounded-full shadow-sm translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span>Demographics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#505f76] hover:bg-[#ffffff]/50 transition-all rounded-full group" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span>Clinical History</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#505f76] hover:bg-[#ffffff]/50 transition-all rounded-full group" href="#">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+<span>Vitals</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#505f76] hover:bg-[#ffffff]/50 transition-all rounded-full group" href="#">
+<span class="material-symbols-outlined" data-icon="medication">medication</span>
+<span>Medications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#505f76] hover:bg-[#ffffff]/50 transition-all rounded-full group" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>Observations</span>
+</a>
+</nav>
+<button class="primary-gradient text-white w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="save">save</span>
+                Save Changes
+            </button>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-surface p-8">
+<div class="max-w-5xl mx-auto">
+<!-- Editor Header -->
+<div class="flex justify-between items-end mb-10">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[10px] font-bold tracking-widest uppercase">Patient Record</span>
+<span class="text-secondary text-sm font-medium">Last synced: 14 mins ago</span>
+</div>
+<h1 class="text-4xl font-extrabold text-on-surface tracking-tight mb-2">Edit Demographics</h1>
+<p class="text-secondary body-md">Update the patient's identity and contact resources following HL7 FHIR standards.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-secondary-container font-semibold text-sm hover:bg-surface-container-highest transition-colors">Cancel</button>
+<button class="px-6 py-2.5 rounded-full border-2 border-primary/20 text-primary font-semibold text-sm hover:bg-primary/5 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="verified">verified</span>
+                            Verify FHIR
+                        </button>
+</div>
+</div>
+<!-- Bento Grid Layout for FHIR Resources -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Core Identity Card -->
+<section class="col-span-8 bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0_12px_32px_rgba(25,28,30,0.02)]">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="badge">badge</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Identity &amp; Personal Details</h3>
+</div>
+<div class="grid grid-cols-2 gap-x-8 gap-y-6">
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">Family Name</label>
+<input class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium" type="text" value="Harper"/>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">Given Name(s)</label>
+<input class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium" type="text" value="Evelyn Rose"/>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">Administrative Gender</label>
+<select class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium appearance-none">
+<option>Female</option>
+<option>Male</option>
+<option>Other</option>
+<option>Unknown</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">Birth Date</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium" type="date" value="1978-05-12"/>
+</div>
+</div>
+</div>
+<div class="mt-10 pt-8 border-t border-outline-variant/15">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="location_on">location_on</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface">Address &amp; Residence</h3>
+</div>
+<div class="grid grid-cols-3 gap-6">
+<div class="col-span-3 space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">Street Address</label>
+<input class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium" type="text" value="4282 Clinical Dr, Suite 200"/>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">City</label>
+<input class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium" type="text" value="San Francisco"/>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">State</label>
+<input class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium" type="text" value="CA"/>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] uppercase tracking-wider font-bold text-secondary ml-1">Postal Code</label>
+<input class="w-full bg-surface-container-low border-none rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium" type="text" value="94107"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Sidebar Cards (Contact & Metadata) -->
+<div class="col-span-4 space-y-8">
+<!-- Telecom Resource Card -->
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-on-surface">Communication</h3>
+<button class="text-primary text-xs font-bold hover:underline">+ Add</button>
+</div>
+<div class="space-y-4">
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-outline-variant/10">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-black text-secondary uppercase tracking-widest">Mobile</span>
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="check_circle">check_circle</span>
+</div>
+<p class="text-sm font-bold text-on-surface">+1 (555) 293-0192</p>
+</div>
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-outline-variant/10">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-black text-secondary uppercase tracking-widest">Email</span>
+<span class="text-[10px] bg-secondary-container text-secondary px-2 py-0.5 rounded-full">Primary</span>
+</div>
+<p class="text-sm font-bold text-on-surface">e.harper@healthcare.io</p>
+</div>
+</div>
+</div>
+<!-- Data Integrity Module -->
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0_12px_32px_rgba(25,28,30,0.02)] border border-outline-variant/10">
+<h3 class="text-lg font-bold text-on-surface mb-6">Verification Insights</h3>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="w-1 h-12 bg-tertiary rounded-full"></div>
+<div>
+<p class="text-xs font-bold text-on-surface">Resource Completeness</p>
+<p class="text-[11px] text-secondary">All required FHIR elements are present for this patient profile.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-1 h-12 bg-secondary-container rounded-full"></div>
+<div>
+<p class="text-xs font-bold text-on-surface">Address Validated</p>
+<p class="text-[11px] text-secondary">USPS database match confirmed via internal API sync.</p>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant/15">
+<div class="flex justify-between items-center mb-2">
+<span class="text-xs font-medium text-secondary">Profile Score</span>
+<span class="text-xs font-bold text-on-surface">98%</span>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[98%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Clinical Alerts (Ghost Card) -->
+<div class="bg-error-container/20 rounded-[2rem] p-8 border border-error/10">
+<div class="flex items-center gap-2 mb-4 text-error">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-bold text-sm">Critical Allergies</span>
+</div>
+<ul class="space-y-2">
+<li class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span class="text-xs font-semibold text-on-surface">Penicillin G</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span class="text-xs font-semibold text-on-surface">Sulfa Drugs</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Floating Save Bar (Mobile Responsive Context) -->
+<div class="fixed bottom-8 right-8 flex gap-4 md:hidden">
+<button class="w-14 h-14 rounded-full bg-surface-container-lowest shadow-xl flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<button class="w-14 h-14 rounded-full primary-gradient shadow-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="check">check</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

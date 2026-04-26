@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Force huggingface libraries to use only the model cache baked into the
+# image. The container has no outbound network, so any HTTP call to
+# huggingface.co fails with a DNS error. The model is pre-downloaded in the
+# Dockerfile, so offline mode is safe.
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_HOME=/root/.cache/huggingface
+
 echo "Starting all services..."
 
 # Start embedding service first (needed by ICD10 API for AI search)

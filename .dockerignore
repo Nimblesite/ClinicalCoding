@@ -1,0 +1,14 @@
+# agent-pmo:2efd847
+
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.vite/
+**/coverage/
+**/playwright-report/
+**/test-results/
+TestResults/
+.git/
+.too_many_cooks/
+.DS_Store
