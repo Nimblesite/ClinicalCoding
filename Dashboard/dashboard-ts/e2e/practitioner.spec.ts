@@ -3,16 +3,12 @@
  * Ported from PractitionerE2ETests.cs
  */
 
-import { test, expect, Page } from './support/fixture';
-import { SchedulingUrl } from './support/fixture';
+import { expect, Page, SchedulingUrl, test } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL
  */
-async function createAuthenticatedPage(
-  page: Page,
-  navigateTo?: string
-): Promise<Page> {
+async function createAuthenticatedPage(page: Page, navigateTo?: string): Promise<Page> {
   if (navigateTo) {
     await page.goto(navigateTo);
   }
@@ -20,8 +16,10 @@ async function createAuthenticatedPage(
 }
 
 test.describe('Practitioner E2E Tests', () => {
-  test('Dashboard displays practitioner data from Scheduling API', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Dashboard displays practitioner data from Scheduling API', async ({
+    authenticatedPage: page,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Practitioners');
@@ -38,7 +36,10 @@ test.describe('Practitioner E2E Tests', () => {
     await page.close();
   });
 
-  test('Practitioners page loads from Scheduling API with FHIR compliant data', async ({ authenticatedPage: page, request }) => {
+  test('Practitioners page loads from Scheduling API with FHIR compliant data', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     const apiResponse = await request.get(`${SchedulingUrl}/Practitioner`);
     expect(apiResponse.ok()).toBeTruthy();
     const apiResponseText = await apiResponse.text();
@@ -70,8 +71,8 @@ test.describe('Practitioner E2E Tests', () => {
         Qualification: 'MD',
         Specialty: 'Testing',
         TelecomEmail: 'test@hospital.org',
-        TelecomPhone: '+1-555-9999'
-      }
+        TelecomPhone: '+1-555-9999',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
 
@@ -80,8 +81,11 @@ test.describe('Practitioner E2E Tests', () => {
     expect(listResponseText).toContain(uniqueId);
   });
 
-  test('Add Practitioner button opens modal and creates practitioner via API', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Add Practitioner button opens modal and creates practitioner via API', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Practitioners');
@@ -106,9 +110,12 @@ test.describe('Practitioner E2E Tests', () => {
     await page.close();
   });
 
-  test('Edit Practitioner button opens edit page and updates practitioner', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
-    
+  test('Edit Practitioner button opens edit page and updates practitioner', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
+
     // Create practitioner via API
     const uniqueIdentifier = `DREdit${Date.now() % 100000}`;
     const uniqueGivenName = `EditTest${Date.now() % 100000}`;
@@ -119,11 +126,11 @@ test.describe('Practitioner E2E Tests', () => {
         NameFamily: 'OriginalFamily',
         NameGiven: uniqueGivenName,
         Qualification: 'MD',
-        Specialty: 'Original Specialty'
-      }
+        Specialty: 'Original Specialty',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
-    
+
     const createdJson = await createResponse.text();
     const practitionerIdMatch = createdJson.match(/"Id"\s*:\s*"([^"]+)"/);
     const practitionerId = practitionerIdMatch![1];
@@ -145,7 +152,9 @@ test.describe('Practitioner E2E Tests', () => {
     await page.waitForSelector("[data-testid='edit-practitioner-success']", { timeout: 10000 });
 
     // Verify via API
-    const updatedPractitionerJson = await request.get(`${SchedulingUrl}/Practitioner/${practitionerId}`);
+    const updatedPractitionerJson = await request.get(
+      `${SchedulingUrl}/Practitioner/${practitionerId}`,
+    );
     expect(await updatedPractitionerJson.text()).toContain(newSpecialty);
 
     await page.close();
@@ -160,11 +169,11 @@ test.describe('Practitioner E2E Tests', () => {
         NameFamily: 'ApiOriginal',
         NameGiven: 'TestDoc',
         Qualification: 'MD',
-        Specialty: 'Original'
-      }
+        Specialty: 'Original',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
-    
+
     const createdPractitionerJson = await createResponse.text();
     const practitionerIdMatch = createdPractitionerJson.match(/"Id"\s*:\s*"([^"]+)"/);
     const practitionerId = practitionerIdMatch![1];
@@ -180,8 +189,8 @@ test.describe('Practitioner E2E Tests', () => {
         Qualification: 'DO',
         Specialty: updatedSpecialty,
         TelecomEmail: 'updated@hospital.com',
-        TelecomPhone: '555-1234'
-      }
+        TelecomPhone: '555-1234',
+      },
     });
     expect(updateResponse.ok()).toBeTruthy();
 
@@ -191,9 +200,12 @@ test.describe('Practitioner E2E Tests', () => {
     expect(getResponseText).toContain('ApiUpdated');
   });
 
-  test('Browser back button from Edit Practitioner page returns to Practitioners page', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
-    
+  test('Browser back button from Edit Practitioner page returns to Practitioners page', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
+
     // Create practitioner via API
     const uniqueIdentifier = `DRBack${Date.now() % 100000}`;
     const uniqueGivenName = `BackTest${Date.now() % 100000}`;
@@ -204,11 +216,11 @@ test.describe('Practitioner E2E Tests', () => {
         NameFamily: 'BackButtonTest',
         NameGiven: uniqueGivenName,
         Qualification: 'MD',
-        Specialty: 'Testing'
-      }
+        Specialty: 'Testing',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
-    
+
     const createdJson = await createResponse.text();
     const practitionerIdMatch = createdJson.match(/"Id"\s*:\s*"([^"]+)"/);
     const practitionerId = practitionerIdMatch![1];

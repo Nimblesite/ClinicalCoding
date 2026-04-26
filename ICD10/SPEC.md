@@ -84,7 +84,7 @@ Direct code lookup and hierarchical browsing with both simple JSON and FHIR-comp
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Dashboard.Web  │────▶│  icd10.Api     │────▶│  PostgreSQL     │
+│  Dashboard      │────▶│  icd10.Api     │────▶│  PostgreSQL     │
 │  (Clinical UI)  │     │  (This Service)  │     │  (Vector DB)    │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
                                │

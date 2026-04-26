@@ -3,8 +3,7 @@
  * Ported from DashboardApiCorsTests.cs
  */
 
-import { test, expect } from './support/fixture';
-import { ClinicalUrl, SchedulingUrl, GatekeeperUrl, DashboardUrl } from './support/fixture';
+import { ClinicalUrl, DashboardUrl, expect, SchedulingUrl, test } from './support/fixture';
 
 test.describe('Dashboard API CORS Tests', () => {
   // Dashboard origin - this is where the frontend runs
@@ -15,10 +14,10 @@ test.describe('Dashboard API CORS Tests', () => {
     const response = await request.fetch(`${ClinicalUrl}/fhir/Patient`, {
       method: 'OPTIONS',
       headers: {
-        'Origin': DashboardOrigin,
+        Origin: DashboardOrigin,
         'Access-Control-Request-Method': 'GET',
         'Access-Control-Request-Headers': 'Accept',
-      }
+      },
     });
 
     // CORS headers must be present
@@ -32,9 +31,9 @@ test.describe('Dashboard API CORS Tests', () => {
     // Note: Clinical API uses /fhir/Patient/ (with trailing slash) for list
     const response = await request.get(`${ClinicalUrl}/fhir/Patient/`, {
       headers: {
-        'Origin': DashboardOrigin,
-        'Accept': 'application/json',
-      }
+        Origin: DashboardOrigin,
+        Accept: 'application/json',
+      },
     });
 
     // Must succeed AND have CORS header
@@ -52,8 +51,8 @@ test.describe('Dashboard API CORS Tests', () => {
         Active: true,
         GivenName: 'Test',
         FamilyName: 'Patient',
-        Gender: 'other'
-      }
+        Gender: 'other',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const patientJson = await createResponse.json();
@@ -62,9 +61,9 @@ test.describe('Dashboard API CORS Tests', () => {
     // Now test the encounters endpoint with CORS
     const response = await request.get(`${ClinicalUrl}/fhir/Patient/${patientId}/Encounter`, {
       headers: {
-        'Origin': DashboardOrigin,
-        'Accept': 'application/json',
-      }
+        Origin: DashboardOrigin,
+        Accept: 'application/json',
+      },
     });
 
     expect(response.ok()).toBeTruthy();
@@ -79,10 +78,10 @@ test.describe('Dashboard API CORS Tests', () => {
     const response = await request.fetch(`${SchedulingUrl}/Appointment`, {
       method: 'OPTIONS',
       headers: {
-        'Origin': DashboardOrigin,
+        Origin: DashboardOrigin,
         'Access-Control-Request-Method': 'GET',
         'Access-Control-Request-Headers': 'Accept',
-      }
+      },
     });
 
     // CORS headers must be present
@@ -95,9 +94,9 @@ test.describe('Dashboard API CORS Tests', () => {
     // Scheduling API doesn't use /fhir/ prefix
     const response = await request.get(`${SchedulingUrl}/Appointment`, {
       headers: {
-        'Origin': DashboardOrigin,
-        'Accept': 'application/json',
-      }
+        Origin: DashboardOrigin,
+        Accept: 'application/json',
+      },
     });
 
     expect(response.ok()).toBeTruthy();
@@ -110,9 +109,9 @@ test.describe('Dashboard API CORS Tests', () => {
     // Scheduling API doesn't use /fhir/ prefix
     const response = await request.get(`${SchedulingUrl}/Practitioner`, {
       headers: {
-        'Origin': DashboardOrigin,
-        'Accept': 'application/json',
-      }
+        Origin: DashboardOrigin,
+        Accept: 'application/json',
+      },
     });
 
     expect(response.ok()).toBeTruthy();
@@ -127,14 +126,14 @@ test.describe('Dashboard API CORS Tests', () => {
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
       headers: {
         'Content-Type': 'application/json',
-        'Origin': DashboardOrigin,
+        Origin: DashboardOrigin,
       },
       data: {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'IntegrationCreated',
-        Gender: 'female'
-      }
+        Gender: 'female',
+      },
     });
 
     // Create patient
@@ -143,8 +142,8 @@ test.describe('Dashboard API CORS Tests', () => {
     // Verify - Fetch all patients and confirm the new one is there
     const listResponse = await request.get(`${ClinicalUrl}/fhir/Patient/`, {
       headers: {
-        'Origin': DashboardOrigin,
-      }
+        Origin: DashboardOrigin,
+      },
     });
     const listBody = await listResponse.text();
 
@@ -158,7 +157,7 @@ test.describe('Dashboard API CORS Tests', () => {
     const createResponse = await request.post(`${SchedulingUrl}/Practitioner`, {
       headers: {
         'Content-Type': 'application/json',
-        'Origin': DashboardOrigin,
+        Origin: DashboardOrigin,
       },
       data: {
         Identifier: uniqueId,
@@ -168,8 +167,8 @@ test.describe('Dashboard API CORS Tests', () => {
         Qualification: 'MD',
         Specialty: 'Testing',
         TelecomEmail: 'inttest@hospital.org',
-        TelecomPhone: '+1-555-8888'
-      }
+        TelecomPhone: '+1-555-8888',
+      },
     });
 
     // Create practitioner
@@ -178,8 +177,8 @@ test.describe('Dashboard API CORS Tests', () => {
     // Verify - Fetch all practitioners and confirm the new one is there
     const listResponse = await request.get(`${SchedulingUrl}/Practitioner`, {
       headers: {
-        'Origin': DashboardOrigin,
-      }
+        Origin: DashboardOrigin,
+      },
     });
     const listBody = await listResponse.text();
 
@@ -193,7 +192,7 @@ test.describe('Dashboard API CORS Tests', () => {
     const createResponse = await request.post(`${SchedulingUrl}/Appointment`, {
       headers: {
         'Content-Type': 'application/json',
-        'Origin': DashboardOrigin,
+        Origin: DashboardOrigin,
       },
       data: {
         ServiceCategory: 'General',
@@ -202,8 +201,8 @@ test.describe('Dashboard API CORS Tests', () => {
         End: '2025-12-25T11:00:00Z',
         PatientReference: 'Patient/test',
         PractitionerReference: 'Practitioner/test',
-        Priority: 'routine'
-      }
+        Priority: 'routine',
+      },
     });
 
     // Create appointment
@@ -212,8 +211,8 @@ test.describe('Dashboard API CORS Tests', () => {
     // Verify - Fetch all appointments and confirm the new one is there
     const listResponse = await request.get(`${SchedulingUrl}/Appointment`, {
       headers: {
-        'Origin': DashboardOrigin,
-      }
+        Origin: DashboardOrigin,
+      },
     });
     const listBody = await listResponse.text();
 

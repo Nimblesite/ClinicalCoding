@@ -3,16 +3,20 @@
  * Ported from DashboardE2ETests.cs
  */
 
-import { test, expect, Page } from './support/fixture';
-import { ClinicalUrl, SchedulingUrl, GatekeeperUrl, DashboardUrl } from './support/fixture';
+import {
+  ClinicalUrl,
+  DashboardUrl,
+  expect,
+  GatekeeperUrl,
+  Page,
+  SchedulingUrl,
+  test,
+} from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL
  */
-async function createAuthenticatedPage(
-  page: Page,
-  navigateTo?: string
-): Promise<Page> {
+async function createAuthenticatedPage(page: Page, navigateTo?: string): Promise<Page> {
   if (navigateTo) {
     await page.goto(navigateTo);
   }
@@ -31,8 +35,11 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Add Patient button opens modal and creates patient via API', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Add Patient button opens modal and creates patient via API', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
 
     await page.waitForSelector('.sidebar', { timeout: 20000 });
@@ -66,8 +73,11 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Add Appointment button opens modal and creates appointment via API', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Add Appointment button opens modal and creates appointment via API', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
 
     await page.waitForSelector('.sidebar', { timeout: 20000 });
@@ -99,7 +109,9 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Patient Search button navigates to search and finds patients', async ({ authenticatedPage: page }) => {
+  test('Patient Search button navigates to search and finds patients', async ({
+    authenticatedPage: page,
+  }) => {
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -149,8 +161,8 @@ test.describe('Dashboard Core E2E Tests', () => {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'ApiCreated',
-        Gender: 'female'
-      }
+        Gender: 'female',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
 
@@ -174,8 +186,8 @@ test.describe('Dashboard Core E2E Tests', () => {
         Qualification: 'MD',
         Specialty: 'Testing',
         TelecomEmail: 'test@hospital.org',
-        TelecomPhone: '+1-555-9999'
-      }
+        TelecomPhone: '+1-555-9999',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
 
@@ -186,7 +198,10 @@ test.describe('Dashboard Core E2E Tests', () => {
     expect(listBody).toContain('ApiDoctor');
   });
 
-  test('Edit Patient button opens edit page and updates patient via API', async ({ authenticatedPage: page, request }) => {
+  test('Edit Patient button opens edit page and updates patient via API', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     // First create a patient to edit
     const uniqueName = `EditTest${Date.now() % 100000}`;
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
@@ -195,14 +210,14 @@ test.describe('Dashboard Core E2E Tests', () => {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'ToBeEdited',
-        Gender: 'female'
-      }
+        Gender: 'female',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const patientJson = await createResponse.json();
     const patientId = patientJson.Id;
 
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -245,7 +260,7 @@ test.describe('Dashboard Core E2E Tests', () => {
   });
 
   test('Browser back button navigates to previous view', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -277,7 +292,7 @@ test.describe('Dashboard Core E2E Tests', () => {
 
   test('Deep linking loads correct view', async ({ authenticatedPage: page }) => {
     // Navigate directly to patients page via hash with auth
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page, `${DashboardUrl}#patients`);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.waitForSelector("[data-testid='add-patient-btn']", { timeout: 10000 });
@@ -296,7 +311,10 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Edit Patient Cancel button uses history back', async ({ authenticatedPage: page, request }) => {
+  test('Edit Patient Cancel button uses history back', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     // Create a patient to edit
     const uniqueName = `CancelTest${Date.now() % 100000}`;
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
@@ -305,14 +323,14 @@ test.describe('Dashboard Core E2E Tests', () => {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'CancelTestPatient',
-        Gender: 'male'
-      }
+        Gender: 'male',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const patientJson = await createResponse.json();
     const patientId = patientJson.Id;
 
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -341,7 +359,10 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Browser back button from Edit Patient page returns to Patients page', async ({ authenticatedPage: page, request }) => {
+  test('Browser back button from Edit Patient page returns to Patients page', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     // Create a patient to edit
     const uniqueName = `BackBtnTest${Date.now() % 100000}`;
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
@@ -350,14 +371,14 @@ test.describe('Dashboard Core E2E Tests', () => {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'BackButtonTest',
-        Gender: 'female'
-      }
+        Gender: 'female',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const patientJson = await createResponse.json();
     const patientId = patientJson.Id;
 
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     expect(page.url()).toContain('#dashboard');
@@ -401,7 +422,7 @@ test.describe('Dashboard Core E2E Tests', () => {
   });
 
   test('Forward button works after going back', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -439,8 +460,8 @@ test.describe('Dashboard Core E2E Tests', () => {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'Original',
-        Gender: 'male'
-      }
+        Gender: 'male',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const patientJson = await createResponse.json();
@@ -455,8 +476,8 @@ test.describe('Dashboard Core E2E Tests', () => {
         GivenName: uniqueName,
         FamilyName: updatedFamilyName,
         Gender: 'male',
-        Email: 'updated@test.com'
-      }
+        Email: 'updated@test.com',
+      },
     });
     expect(updateResponse.ok()).toBeTruthy();
 
@@ -467,8 +488,11 @@ test.describe('Dashboard Core E2E Tests', () => {
     expect(getResponseText).toContain('updated@test.com');
   });
 
-  test('Add Practitioner button opens modal and creates practitioner via API', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Add Practitioner button opens modal and creates practitioner via API', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -503,7 +527,10 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Edit Practitioner button opens edit page and updates practitioner', async ({ authenticatedPage: page, request }) => {
+  test('Edit Practitioner button opens edit page and updates practitioner', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     // Create a practitioner to edit
     const uniqueIdentifier = `DREdit${Date.now() % 100000}`;
     const uniqueGivenName = `EditTest${Date.now() % 100000}`;
@@ -514,14 +541,14 @@ test.describe('Dashboard Core E2E Tests', () => {
         NameFamily: 'OriginalFamily',
         NameGiven: uniqueGivenName,
         Qualification: 'MD',
-        Specialty: 'Original Specialty'
-      }
+        Specialty: 'Original Specialty',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const practitionerJson = await createResponse.json();
     const practitionerId = practitionerJson.Id;
 
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -552,7 +579,9 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.waitForSelector("[data-testid='edit-practitioner-success']", { timeout: 10000 });
 
     // Verify via API that practitioner was actually updated
-    const updatedPractitionerJson = await request.get(`${SchedulingUrl}/Practitioner/${practitionerId}`);
+    const updatedPractitionerJson = await request.get(
+      `${SchedulingUrl}/Practitioner/${practitionerId}`,
+    );
     expect(await updatedPractitionerJson.text()).toContain(newSpecialty);
 
     await page.close();
@@ -568,8 +597,8 @@ test.describe('Dashboard Core E2E Tests', () => {
         NameFamily: 'ApiOriginal',
         NameGiven: 'TestDoc',
         Qualification: 'MD',
-        Specialty: 'Original'
-      }
+        Specialty: 'Original',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const practitionerJson = await createResponse.json();
@@ -587,8 +616,8 @@ test.describe('Dashboard Core E2E Tests', () => {
         Qualification: 'DO',
         Specialty: updatedSpecialty,
         TelecomEmail: 'updated@hospital.com',
-        TelecomPhone: '555-1234'
-      }
+        TelecomPhone: '555-1234',
+      },
     });
     expect(updateResponse.ok()).toBeTruthy();
 
@@ -601,7 +630,10 @@ test.describe('Dashboard Core E2E Tests', () => {
     expect(getResponseText).toContain('updated@hospital.com');
   });
 
-  test('Browser back button from Edit Practitioner page returns to Practitioners page', async ({ authenticatedPage: page, request }) => {
+  test('Browser back button from Edit Practitioner page returns to Practitioners page', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     // Create a practitioner to edit
     const uniqueIdentifier = `DRBack${Date.now() % 100000}`;
     const uniqueGivenName = `BackTest${Date.now() % 100000}`;
@@ -612,14 +644,14 @@ test.describe('Dashboard Core E2E Tests', () => {
         NameFamily: 'BackButtonTest',
         NameGiven: uniqueGivenName,
         Qualification: 'MD',
-        Specialty: 'Testing'
-      }
+        Specialty: 'Testing',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const practitionerJson = await createResponse.json();
     const practitionerId = practitionerJson.Id;
 
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     expect(page.url()).toContain('#dashboard');
@@ -663,7 +695,7 @@ test.describe('Dashboard Core E2E Tests', () => {
 
   test('Login page uses discoverable credentials', async ({ browser }) => {
     const page = await browser.newPage();
-    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
 
     // Navigate to Dashboard without auth - should show login page
     await page.goto(DashboardUrl);
@@ -691,7 +723,7 @@ test.describe('Dashboard Core E2E Tests', () => {
 
   test('Registration page requires email and display name', async ({ browser }) => {
     const page = await browser.newPage();
-    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
 
     // Navigate to Dashboard without auth
     await page.goto(DashboardUrl);
@@ -709,7 +741,7 @@ test.describe('Dashboard Core E2E Tests', () => {
 
     // Registration mode SHOULD have email and display name fields
     const emailInput = page.locator("input[type='email']");
-    const displayNameInput = page.locator("input#displayName");
+    const displayNameInput = page.locator('input#displayName');
 
     expect(await emailInput.isVisible()).toBeTruthy();
     expect(await displayNameInput.isVisible()).toBeTruthy();
@@ -717,11 +749,13 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Gatekeeper API login begin returns valid discoverable credential options', async ({ request }) => {
+  test('Gatekeeper API login begin returns valid discoverable credential options', async ({
+    request,
+  }) => {
     // Call /auth/login/begin with empty body (discoverable credentials flow)
     const response = await request.post(`${GatekeeperUrl}/auth/login/begin`, {
       headers: { 'Content-Type': 'application/json' },
-      data: {}
+      data: {},
     });
 
     // Should return 200 OK
@@ -749,7 +783,9 @@ test.describe('Dashboard Core E2E Tests', () => {
     if (options.allowCredentials) {
       expect(Array.isArray(options.allowCredentials)).toBeTruthy();
       expect(options.allowCredentials.length).toBe(0);
-      console.log('[API TEST] allowCredentials is empty array - correct for discoverable credentials!');
+      console.log(
+        '[API TEST] allowCredentials is empty array - correct for discoverable credentials!',
+      );
     }
   });
 
@@ -759,8 +795,8 @@ test.describe('Dashboard Core E2E Tests', () => {
       headers: { 'Content-Type': 'application/json' },
       data: {
         Email: 'test-e2e@example.com',
-        DisplayName: 'E2E Test User'
-      }
+        DisplayName: 'E2E Test User',
+      },
     });
 
     // Should return 200 OK
@@ -797,13 +833,12 @@ test.describe('Dashboard Core E2E Tests', () => {
     const consoleErrors: string[] = [];
     const networkRequests: string[] = [];
 
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`);
-      if (msg.type() === 'error')
-        consoleErrors.push(msg.text());
+      if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
 
-    page.on('request', request => {
+    page.on('request', (request) => {
       if (request.url().includes('/auth/')) {
         networkRequests.push(`${request.method()} ${request.url()}`);
         console.log(`[NETWORK] ${request.method()} ${request.url()}`);
@@ -823,11 +858,12 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.waitForTimeout(3000);
 
     // Verify the API was called
-    expect(networkRequests.some(r => r.includes('/auth/login/begin'))).toBeTruthy();
+    expect(networkRequests.some((r) => r.includes('/auth/login/begin'))).toBeTruthy();
 
     // Check for JSON parse errors in console
-    const hasJsonParseError = consoleErrors.some(e =>
-      e.includes('undefined') || e.includes('is not valid JSON') || e.includes('SyntaxError')
+    const hasJsonParseError = consoleErrors.some(
+      (e) =>
+        e.includes('undefined') || e.includes('is not valid JSON') || e.includes('SyntaxError'),
     );
 
     // Check for JSON parse errors in UI
@@ -849,7 +885,7 @@ test.describe('Dashboard Core E2E Tests', () => {
   });
 
   test('User menu click shows dropdown with Sign Out', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
 
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -874,7 +910,7 @@ test.describe('Dashboard Core E2E Tests', () => {
   });
 
   test('Sign Out button click shows login page', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
 
     // Wait for the sidebar to appear (authenticated state)
     await page.waitForSelector('.sidebar', { timeout: 20000 });
@@ -905,7 +941,7 @@ test.describe('Dashboard Core E2E Tests', () => {
     // Test 1: Without a Bearer token, should return 401 Unauthorized
     const unauthResponse = await request.post(`${GatekeeperUrl}/auth/logout`, {
       headers: { 'Content-Type': 'application/json' },
-      data: {}
+      data: {},
     });
     expect(unauthResponse.status()).toBe(401);
 
@@ -925,16 +961,23 @@ test.describe('Dashboard Core E2E Tests', () => {
 
     // Set up specific user auth
     const token = generateTestToken('test-user', 'Alice Smith', 'alice@example.com');
-    const userJson = JSON.stringify({ userId: 'test-user', displayName: 'Alice Smith', email: 'alice@example.com' });
+    const userJson = JSON.stringify({
+      userId: 'test-user',
+      displayName: 'Alice Smith',
+      email: 'alice@example.com',
+    });
 
-    await page.evaluate(({ token, userJson }) => {
-      localStorage.setItem('gatekeeper_token', token);
-      localStorage.setItem('gatekeeper_user', userJson);
-    }, { token, userJson });
+    await page.evaluate(
+      ({ token, userJson }) => {
+        localStorage.setItem('gatekeeper_token', token);
+        localStorage.setItem('gatekeeper_user', userJson);
+      },
+      { token, userJson },
+    );
 
     await page.reload();
 
-    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
 
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -959,8 +1002,10 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Clinical Coding navigates to page and displays search options', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+  test('Clinical Coding navigates to page and displays search options', async ({
+    authenticatedPage: page,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
     // Navigate to Clinical Coding page
@@ -979,7 +1024,7 @@ test.describe('Dashboard Core E2E Tests', () => {
   });
 
   test('Clinical Coding deep linking works', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
 
     // Navigate directly to clinical coding page
     await createAuthenticatedPage(page, `${DashboardUrl}#clinical-coding`);
@@ -1000,12 +1045,16 @@ test.describe('Dashboard Core E2E Tests', () => {
 function generateTestToken(
   userId: string = 'e2e-test-user',
   displayName: string = 'E2E Test User',
-  email: string = 'e2etest@example.com'
+  email: string = 'e2etest@example.com',
 ): string {
   const signingKey = Buffer.alloc(32, 0);
 
   const base64UrlEncode = (input: string): string => {
-    return Buffer.from(input).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return Buffer.from(input)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
   };
 
   const computeHmacSignature = (header: string, payload: string, key: Buffer): string => {
@@ -1019,14 +1068,16 @@ function generateTestToken(
   const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
 
   const expiration = Math.floor(Date.now() / 1000) + 3600;
-  const payload = base64UrlEncode(JSON.stringify({
-    sub: userId,
-    name: displayName,
-    email,
-    jti: `${Date.now()}-${Math.random()}`,
-    exp: expiration,
-    roles: ['admin', 'user'],
-  }));
+  const payload = base64UrlEncode(
+    JSON.stringify({
+      sub: userId,
+      name: displayName,
+      email,
+      jti: `${Date.now()}-${Math.random()}`,
+      exp: expiration,
+      roles: ['admin', 'user'],
+    }),
+  );
 
   const signature = computeHmacSignature(header, payload, signingKey);
   return `${header}.${payload}.${signature}`;

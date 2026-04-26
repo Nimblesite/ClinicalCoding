@@ -13,7 +13,7 @@
 
 ## Project Overview
 
-Agentic clinical coding platform built on Nimblesite DataProvider. Four FHIR R5-compliant microservices (Clinical, Scheduling, ICD-10, Gatekeeper) with bidirectional sync, semantic search via pgvector embeddings, passkey auth, and a React dashboard (H5 transpiler). The ICD-10 RAG service is the foundation for AI-assisted clinical coding from patient encounters and notes.
+Agentic clinical coding platform built on Nimblesite DataProvider. Four FHIR R5-compliant microservices (Clinical, Scheduling, ICD-10, Gatekeeper) with bidirectional sync, semantic search via pgvector embeddings, passkey auth, and a TypeScript React dashboard. The ICD-10 RAG service is the foundation for AI-assisted clinical coding from patient encounters and notes.
 
 **Primary language:** C# (.NET 10.0)
 **Build:** `make ci` | **Test:** `make test` | **Lint:** `make lint`
@@ -114,9 +114,7 @@ Gatekeeper/
   Gatekeeper.Api/           # Passkey auth, RBAC authorization
   Gatekeeper.Api.Tests/
 Dashboard/
-  Dashboard.Web/            # Legacy React UI (H5 transpiler C# -> JS) — preserved during TS rewrite
-  Dashboard.Integration.Tests/   # Legacy E2E for the H5 dashboard
-  dashboard-ts/             # NEW TypeScript + React + Vite dashboard rewrite (in progress)
+  dashboard-ts/             # TypeScript + React + Vite dashboard
 Shared/
   Authorization/            # Shared authorization library
 docker/                     # Docker compose and configuration

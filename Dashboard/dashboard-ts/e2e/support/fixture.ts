@@ -3,9 +3,9 @@
  * Provides authenticated page fixture and API URL constants
  */
 
-import { test as base, expect, type Page, type APIRequestContext } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 import { generateTestToken } from './jwt';
-import { CLINICAL_URL, SCHEDULING_URL, GATEKEEPER_URL, ICD10_URL, DASHBOARD_URL } from './urls';
+import { CLINICAL_URL, DASHBOARD_URL, GATEKEEPER_URL, ICD10_URL, SCHEDULING_URL } from './urls';
 
 // Re-export URLs for test files
 export const ClinicalUrl = CLINICAL_URL;
@@ -22,7 +22,7 @@ export async function createAuthenticatedPage(
   navigateTo?: string,
   userId: string = 'e2e-test-user',
   displayName: string = 'E2E Test User',
-  email: string = 'e2etest@example.com'
+  email: string = 'e2etest@example.com',
 ): Promise<Page> {
   const token = generateTestToken(userId, displayName, email);
   const userJson = JSON.stringify({ userId, displayName, email });
@@ -36,7 +36,7 @@ export async function createAuthenticatedPage(
       localStorage.setItem('gatekeeper_token', token);
       localStorage.setItem('gatekeeper_user', userJson);
     },
-    { token, userJson }
+    { token, userJson },
   );
 
   // Reload to pick up auth state
@@ -62,12 +62,12 @@ export const test = base.extend<{
 }>({
   authenticatedPage: async ({ browser }, use) => {
     const page = await browser.newPage();
-    
+
     // Setup auth before each test
     await createAuthenticatedPage(page);
-    
+
     await use(page);
-    
+
     await page.close();
   },
 });

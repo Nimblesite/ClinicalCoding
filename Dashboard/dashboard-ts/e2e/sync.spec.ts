@@ -3,16 +3,12 @@
  * Ported from SyncE2ETests.cs
  */
 
-import { test, expect, Page } from './support/fixture';
-import { ClinicalUrl, SchedulingUrl, DashboardUrl } from './support/fixture';
+import { ClinicalUrl, DashboardUrl, expect, Page, SchedulingUrl, test } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL
  */
-async function createAuthenticatedPage(
-  page: Page,
-  navigateTo?: string
-): Promise<Page> {
+async function createAuthenticatedPage(page: Page, navigateTo?: string): Promise<Page> {
   if (navigateTo) {
     await page.goto(navigateTo);
   }
@@ -20,8 +16,10 @@ async function createAuthenticatedPage(
 }
 
 test.describe('Sync E2E Tests', () => {
-  test('Sync Dashboard navigates to sync page and displays status', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Sync Dashboard navigates to sync page and displays status', async ({
+    authenticatedPage: page,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Sync Dashboard');
@@ -44,8 +42,11 @@ test.describe('Sync E2E Tests', () => {
     await page.close();
   });
 
-  test('Sync Dashboard service filter shows only selected service', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Sync Dashboard service filter shows only selected service', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
 
     // Create data in both services to ensure we have records from both
     const uniqueId = `FilterTest${Date.now() % 1000000}`;
@@ -57,8 +58,8 @@ test.describe('Sync E2E Tests', () => {
         Active: true,
         GivenName: `FilterPatient${uniqueId}`,
         FamilyName: 'ClinicalTest',
-        Gender: 'other'
-      }
+        Gender: 'other',
+      },
     });
 
     // Create practitioner in Scheduling.Api
@@ -70,8 +71,8 @@ test.describe('Sync E2E Tests', () => {
         NameGiven: `FilterDoc${uniqueId}`,
         NameFamily: 'SchedulingTest',
         Qualification: 'MD',
-        Specialty: 'Testing'
-      }
+        Specialty: 'Testing',
+      },
     });
 
     await createAuthenticatedPage(page, `${DashboardUrl}#sync`);
@@ -116,8 +117,11 @@ test.describe('Sync E2E Tests', () => {
     await page.close();
   });
 
-  test('Sync Dashboard action filter shows only selected operation', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Sync Dashboard action filter shows only selected operation', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
 
     // Create a patient (Insert operation = 0)
     const uniqueId = `ActionTest${Date.now() % 1000000}`;
@@ -127,8 +131,8 @@ test.describe('Sync E2E Tests', () => {
         Active: true,
         GivenName: `ActionPatient${uniqueId}`,
         FamilyName: 'InsertTest',
-        Gender: 'female'
-      }
+        Gender: 'female',
+      },
     });
 
     await createAuthenticatedPage(page, `${DashboardUrl}#sync`);
@@ -138,10 +142,13 @@ test.describe('Sync E2E Tests', () => {
     await page.waitForTimeout(1000); // Allow data to load
 
     // Wait for sync records to appear in the table
-    await page.waitForFunction(() => {
-      const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
-      return rows.length > 0;
-    }, { timeout: 20000 });
+    await page.waitForFunction(
+      () => {
+        const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
+        return rows.length > 0;
+      },
+      { timeout: 20000 },
+    );
 
     // Log initial state before filtering
     const initialRows = await page.locator("[data-testid='sync-records-table'] tbody tr").all();
@@ -157,17 +164,20 @@ test.describe('Sync E2E Tests', () => {
 
     // Wait for React to apply the filter - wait until ALL visible rows have operation=0
     // OR there are no rows (which is valid if no Insert operations exist)
-    await page.waitForFunction(() => {
-      const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
-      console.log('[Filter] Row count after filter: ' + rows.length);
-      if (rows.length === 0) return true;
-      const allMatch = Array.from(rows).every(row => {
-        const op = row.getAttribute('data-operation');
-        console.log('[Filter] Row operation: ' + op);
-        return op === '0';
-      });
-      return allMatch;
-    }, { timeout: 20000 });
+    await page.waitForFunction(
+      () => {
+        const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
+        console.log('[Filter] Row count after filter: ' + rows.length);
+        if (rows.length === 0) return true;
+        const allMatch = Array.from(rows).every((row) => {
+          const op = row.getAttribute('data-operation');
+          console.log('[Filter] Row operation: ' + op);
+          return op === '0';
+        });
+        return allMatch;
+      },
+      { timeout: 20000 },
+    );
 
     const insertRows = await page.locator("[data-testid='sync-records-table'] tbody tr").all();
     console.log(`[TEST] Insert filter row count: ${insertRows.length}`);
@@ -189,10 +199,13 @@ test.describe('Sync E2E Tests', () => {
     await page.selectOption("[data-testid='action-filter']", 'all');
 
     // Wait for React to apply the reset filter
-    await page.waitForFunction(() => {
-      const el = document.querySelector('[data-testid="action-filter"]') as HTMLSelectElement;
-      return el?.value === 'all';
-    }, { timeout: 5000 });
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('[data-testid="action-filter"]') as HTMLSelectElement;
+        return el?.value === 'all';
+      },
+      { timeout: 5000 },
+    );
     await page.waitForTimeout(300); // Small buffer for React re-render
 
     const allRows = await page.locator("[data-testid='sync-records-table'] tbody tr").all();
@@ -201,8 +214,11 @@ test.describe('Sync E2E Tests', () => {
     await page.close();
   });
 
-  test('Sync Dashboard combined filters work together', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Sync Dashboard combined filters work together', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
 
     // Create data in Clinical.Api
     const uniqueId = `ComboTest${Date.now() % 1000000}`;
@@ -212,8 +228,8 @@ test.describe('Sync E2E Tests', () => {
         Active: true,
         GivenName: `ComboPatient${uniqueId}`,
         FamilyName: 'ComboTest',
-        Gender: 'male'
-      }
+        Gender: 'male',
+      },
     });
 
     await createAuthenticatedPage(page, `${DashboardUrl}#sync`);
@@ -226,14 +242,18 @@ test.describe('Sync E2E Tests', () => {
     await page.selectOption("[data-testid='action-filter']", '0');
 
     // Wait for React to apply both filters
-    await page.waitForFunction(() => {
-      const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
-      if (rows.length === 0) return true;
-      return Array.from(rows).every(row =>
-        row.getAttribute('data-service') === 'clinical' &&
-        row.getAttribute('data-operation') === '0'
-      );
-    }, { timeout: 5000 });
+    await page.waitForFunction(
+      () => {
+        const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
+        if (rows.length === 0) return true;
+        return Array.from(rows).every(
+          (row) =>
+            row.getAttribute('data-service') === 'clinical' &&
+            row.getAttribute('data-operation') === '0',
+        );
+      },
+      { timeout: 5000 },
+    );
 
     const filteredRows = await page.locator("[data-testid='sync-records-table'] tbody tr").all();
     console.log(`[TEST] Combined filter (Clinical + Insert) row count: ${filteredRows.length}`);
@@ -250,16 +270,22 @@ test.describe('Sync E2E Tests', () => {
     await page.selectOption("[data-testid='service-filter']", 'scheduling');
 
     // Wait for React to apply the service filter change
-    await page.waitForFunction(() => {
-      const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
-      if (rows.length === 0) return true;
-      return Array.from(rows).every(row =>
-        row.getAttribute('data-service') === 'scheduling' &&
-        row.getAttribute('data-operation') === '0'
-      );
-    }, { timeout: 5000 });
+    await page.waitForFunction(
+      () => {
+        const rows = document.querySelectorAll('[data-testid="sync-records-table"] tbody tr');
+        if (rows.length === 0) return true;
+        return Array.from(rows).every(
+          (row) =>
+            row.getAttribute('data-service') === 'scheduling' &&
+            row.getAttribute('data-operation') === '0',
+        );
+      },
+      { timeout: 5000 },
+    );
 
-    const schedulingInsertRows = await page.locator("[data-testid='sync-records-table'] tbody tr").all();
+    const schedulingInsertRows = await page
+      .locator("[data-testid='sync-records-table'] tbody tr")
+      .all();
     for (const row of schedulingInsertRows) {
       const serviceAttr = await row.getAttribute('data-service');
       const operationAttr = await row.getAttribute('data-operation');
@@ -270,7 +296,10 @@ test.describe('Sync E2E Tests', () => {
     await page.close();
   });
 
-  test('Sync Dashboard search filter filters correctly', async ({ authenticatedPage: page, request }) => {
+  test('Sync Dashboard search filter filters correctly', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     // Create a patient BEFORE loading the sync page so data is fresh
     const uniqueId = `SearchTest${Date.now() % 1000000}`;
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
@@ -279,8 +308,8 @@ test.describe('Sync E2E Tests', () => {
         Active: true,
         GivenName: `SearchPatient${uniqueId}`,
         FamilyName: 'SearchTest',
-        Gender: 'male'
-      }
+        Gender: 'male',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const patientJson = await createResponse.json();
@@ -288,7 +317,7 @@ test.describe('Sync E2E Tests', () => {
 
     // Navigate to sync page AFTER patient exists in sync log
     await createAuthenticatedPage(page, `${DashboardUrl}#sync`);
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
 
     await page.waitForSelector("[data-testid='sync-page']", { timeout: 20000 });
     await page.waitForSelector("[data-testid='service-status-clinical']", { timeout: 15000 });
@@ -313,7 +342,7 @@ test.describe('Sync E2E Tests', () => {
   });
 
   test('Deep linking to sync page works', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page, `${DashboardUrl}#sync`);
     await page.waitForSelector("[data-testid='sync-page']", { timeout: 20000 });
 
@@ -332,12 +361,12 @@ test.describe('Sync E2E Tests', () => {
       FamilyName: 'ToScheduling',
       Gender: 'other',
       Phone: '+1-555-SYNC',
-      Email: `sync${uniqueId}@test.com`
+      Email: `sync${uniqueId}@test.com`,
     };
 
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
       headers: { 'Content-Type': 'application/json' },
-      data: patientRequest
+      data: patientRequest,
     });
     expect(createResponse.ok()).toBeTruthy();
     const patientJson = await createResponse.json();
@@ -348,7 +377,7 @@ test.describe('Sync E2E Tests', () => {
 
     let syncedToScheduling = false;
     for (let i = 0; i < 18; i++) {
-      await new Promise(r => setTimeout(r, 5000));
+      await new Promise((r) => setTimeout(r, 5000));
 
       const syncPatientsResponse = await request.get(`${SchedulingUrl}/sync/patients`);
       if (syncPatientsResponse.ok()) {
@@ -373,23 +402,25 @@ test.describe('Sync E2E Tests', () => {
       Qualification: 'MD',
       Specialty: 'Sync Testing',
       TelecomEmail: `syncdoc${uniqueId}@hospital.org`,
-      TelecomPhone: '+1-555-SYNC'
+      TelecomPhone: '+1-555-SYNC',
     };
 
     const createResponse = await request.post(`${SchedulingUrl}/Practitioner`, {
       headers: { 'Content-Type': 'application/json' },
-      data: practitionerRequest
+      data: practitionerRequest,
     });
     expect(createResponse.ok()).toBeTruthy();
     const practitionerJson = await createResponse.json();
     const practitionerId = practitionerJson.Id;
 
-    const schedulingGetResponse = await request.get(`${SchedulingUrl}/Practitioner/${practitionerId}`);
+    const schedulingGetResponse = await request.get(
+      `${SchedulingUrl}/Practitioner/${practitionerId}`,
+    );
     expect(schedulingGetResponse.ok()).toBeTruthy();
 
     let syncedToClinical = false;
     for (let i = 0; i < 30; i++) {
-      await new Promise(r => setTimeout(r, 5000));
+      await new Promise((r) => setTimeout(r, 5000));
 
       const syncProvidersResponse = await request.get(`${ClinicalUrl}/sync/providers`);
       if (syncProvidersResponse.ok()) {
@@ -404,20 +435,23 @@ test.describe('Sync E2E Tests', () => {
     expect(syncedToClinical).toBeTruthy();
   });
 
-  test('Sync changes appear in Dashboard UI seamlessly', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Sync changes appear in Dashboard UI seamlessly', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
 
     const uniqueId = `DashSync${Date.now() % 1000000}`;
     const patientRequest = {
       Active: true,
       GivenName: `DashboardSync${uniqueId}`,
       FamilyName: 'TestPatient',
-      Gender: 'male'
+      Gender: 'male',
     };
 
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
       headers: { 'Content-Type': 'application/json' },
-      data: patientRequest
+      data: patientRequest,
     });
     expect(createResponse.ok()).toBeTruthy();
 
@@ -450,12 +484,12 @@ test.describe('Sync E2E Tests', () => {
       Active: true,
       GivenName: `LogPatient${uniqueId}`,
       FamilyName: 'TestSync',
-      Gender: 'female'
+      Gender: 'female',
     };
 
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
       headers: { 'Content-Type': 'application/json' },
-      data: patientRequest
+      data: patientRequest,
     });
     expect(createResponse.ok()).toBeTruthy();
 

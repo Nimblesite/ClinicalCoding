@@ -15,7 +15,10 @@ function authHeaders(extra?: Record<string, string>): Record<string, string> {
   };
 }
 
-export async function apiGet(url: string, extraHeaders?: Record<string, string>): Promise<ApiResponse> {
+export async function apiGet(
+  url: string,
+  extraHeaders?: Record<string, string>,
+): Promise<ApiResponse> {
   const res = await fetch(url, { method: 'GET', headers: authHeaders(extraHeaders) });
   const body = await res.text();
   return { status: res.status, ok: res.ok, headers: res.headers, body };
@@ -35,7 +38,11 @@ export async function apiPost(
   extraHeaders?: Record<string, string>,
 ): Promise<ApiResponse> {
   const payload = typeof body === 'string' ? body : JSON.stringify(body);
-  const res = await fetch(url, { method: 'POST', headers: authHeaders(extraHeaders), body: payload });
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: authHeaders(extraHeaders),
+    body: payload,
+  });
   const text = await res.text();
   return { status: res.status, ok: res.ok, headers: res.headers, body: text };
 }

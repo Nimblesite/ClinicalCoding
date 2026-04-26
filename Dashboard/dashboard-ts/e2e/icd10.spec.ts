@@ -3,16 +3,12 @@
  * Ported from Icd10E2ETests.cs
  */
 
-import { test, expect, Page } from './support/fixture';
-import { DashboardUrl } from './support/fixture';
+import { DashboardUrl, expect, Page, test } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL
  */
-async function createAuthenticatedPage(
-  page: Page,
-  navigateTo?: string
-): Promise<Page> {
+async function createAuthenticatedPage(page: Page, navigateTo?: string): Promise<Page> {
   if (navigateTo) {
     await page.goto(navigateTo);
   }
@@ -21,7 +17,7 @@ async function createAuthenticatedPage(
 
 async function navigateToClinicalCoding(page: Page): Promise<Page> {
   await createAuthenticatedPage(page, `${DashboardUrl}#clinical-coding`);
-  page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+  page.on('console', (msg) => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
 
   await page.waitForSelector('.clinical-coding-page', { timeout: 20000 });
 
@@ -33,7 +29,9 @@ test.describe('ICD-10 E2E Tests', () => {
   // KEYWORD SEARCH
   // =========================================================================
 
-  test('Keyword search for diabetes returns results with chapter and category', async ({ authenticatedPage: page }) => {
+  test('Keyword search for diabetes returns results with chapter and category', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=Keyword Search');
@@ -55,7 +53,9 @@ test.describe('ICD-10 E2E Tests', () => {
     await page.close();
   });
 
-  test('Keyword search for pneumonia shows billable status', async ({ authenticatedPage: page }) => {
+  test('Keyword search for pneumonia shows billable status', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=Keyword Search');
@@ -96,13 +96,18 @@ test.describe('ICD-10 E2E Tests', () => {
   // RAG / AI SEARCH
   // =========================================================================
 
-  test('AI search for chest pain returns results with confidence', async ({ authenticatedPage: page }) => {
+  test('AI search for chest pain returns results with confidence', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=AI Search');
     await page.waitForTimeout(500);
 
-    await page.fill("input[placeholder*='Describe symptoms']", 'chest pain with shortness of breath');
+    await page.fill(
+      "input[placeholder*='Describe symptoms']",
+      'chest pain with shortness of breath',
+    );
     await page.click("button:has-text('Search')");
 
     try {
@@ -147,7 +152,9 @@ test.describe('ICD-10 E2E Tests', () => {
     await page.close();
   });
 
-  test('AI search shows the Include ACHI procedure codes checkbox', async ({ authenticatedPage: page }) => {
+  test('AI search shows the Include ACHI procedure codes checkbox', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=AI Search');
@@ -207,7 +214,9 @@ test.describe('ICD-10 E2E Tests', () => {
     await page.close();
   });
 
-  test('Code lookup for R07.9 shows chest pain with billable', async ({ authenticatedPage: page }) => {
+  test('Code lookup for R07.9 shows chest pain with billable', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=Code Lookup');
@@ -229,7 +238,9 @@ test.describe('ICD-10 E2E Tests', () => {
     await page.close();
   });
 
-  test('Code lookup with prefix E11 shows multiple results', async ({ authenticatedPage: page }) => {
+  test('Code lookup with prefix E11 shows multiple results', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=Code Lookup');
@@ -253,7 +264,9 @@ test.describe('ICD-10 E2E Tests', () => {
   // DRILL-DOWN: KEYWORD SEARCH -> CODE DETAIL
   // =========================================================================
 
-  test('Drill down keyword search click result shows code detail', async ({ authenticatedPage: page }) => {
+  test('Drill down keyword search click result shows code detail', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=Keyword Search');
@@ -339,13 +352,18 @@ test.describe('ICD-10 E2E Tests', () => {
   // DRILL-DOWN: AI SEARCH -> CODE DETAIL
   // =========================================================================
 
-  test('Drill down AI search click result shows code detail', async ({ authenticatedPage: page }) => {
+  test('Drill down AI search click result shows code detail', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=AI Search');
     await page.waitForTimeout(500);
 
-    await page.fill("input[placeholder*='Describe symptoms']", 'type 2 diabetes with kidney complications');
+    await page.fill(
+      "input[placeholder*='Describe symptoms']",
+      'type 2 diabetes with kidney complications',
+    );
     await page.click("button:has-text('Search')");
 
     try {
@@ -375,7 +393,9 @@ test.describe('ICD-10 E2E Tests', () => {
   // EDGE CASES
   // =========================================================================
 
-  test('Code lookup for nonexistent code shows No codes found', async ({ authenticatedPage: page }) => {
+  test('Code lookup for nonexistent code shows No codes found', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     await page.click('text=Code Lookup');
@@ -392,7 +412,9 @@ test.describe('ICD-10 E2E Tests', () => {
     await page.close();
   });
 
-  test('Switching between search tabs clears previous results', async ({ authenticatedPage: page }) => {
+  test('Switching between search tabs clears previous results', async ({
+    authenticatedPage: page,
+  }) => {
     await navigateToClinicalCoding(page);
 
     // Do a keyword search first

@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-test nuke _reclaim-ports
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-check nuke _reclaim-ports
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -40,6 +40,7 @@ PG_BASE_URL ?= Host=$(DB_HOST);Port=$(DB_PORT);Username=postgres;Password=$(DB_P
 build: db-migrate
 	@echo "==> Building..."
 	dotnet build HealthcareSamples.sln --configuration Release
+	@$(MAKE) dashboard-ts-build
 
 # Test projects in execution order. Cheapest / most foundational first so a
 # break in a lower layer fails the run immediately, before slower E2E suites.
@@ -48,8 +49,7 @@ TEST_PROJECTS = \
   Clinical/Clinical.Api.Tests/Clinical.Api.Tests.csproj \
   Scheduling/Scheduling.Api.Tests/Scheduling.Api.Tests.csproj \
   ICD10/ICD10.Api.Tests/ICD10.Api.Tests.csproj \
-  ICD10/ICD10.Cli.Tests/ICD10.Cli.Tests.csproj \
-  Dashboard/Dashboard.Integration.Tests/Dashboard.Integration.Tests.csproj
+  ICD10/ICD10.Cli.Tests/ICD10.Cli.Tests.csproj
 
 ## test: Run full test suite with coverage (FAIL FAST)
 ##   - Stops at the first failing test inside an assembly (xunit stopOnFail)
@@ -102,20 +102,24 @@ test: db-migrate
 	    printf "OK   %-44s %s%% >= %s%%\n" "$$source_name" "$$pct" "$$threshold"; \
 	  fi; \
 	done
+	@$(MAKE) dashboard-ts-test
 
 ## lint: Run all linters/analyzers (read-only). Does NOT format.
 lint: db-migrate
 	@echo "==> Linting..."
 	dotnet build HealthcareSamples.sln --configuration Release
+	@$(MAKE) dashboard-ts-lint
 
 ## fmt: Format all code in-place. Pass CHECK=1 for read-only verify (CI use).
 fmt:
 ifdef CHECK
 	@echo "==> Checking format..."
 	dotnet csharpier check .
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm format
 else
 	@echo "==> Formatting..."
 	dotnet csharpier format .
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm format:fix
 endif
 
 ## clean: Remove all build artifacts
@@ -142,7 +146,6 @@ nuke: clean
 	-docker volume rm -f docker_db-data 2>/dev/null
 	-docker volume rm -f healthcaresamples_db-data 2>/dev/null
 	-docker image rm -f docker-app docker-dashboard 2>/dev/null
-	$(RM) docker/dashboard-build
 	@echo "==> Nuked. Run 'make start-docker' for a cold start."
 
 ## ci: fmt-check + lint + test + build (full CI simulation)
@@ -157,6 +160,7 @@ setup:
 	@echo "==> Setting up development environment..."
 	dotnet tool restore
 	dotnet restore
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile
 	@echo "==> Setup complete. Run 'make ci' to validate."
 
 # =============================================================================
@@ -239,37 +243,39 @@ resume-docker:
 
 ## dashboard-ts-dev: Run the new TypeScript dashboard dev server (vite)
 dashboard-ts-dev:
-	cd Dashboard/dashboard-ts && pnpm install --silent && pnpm dev
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm dev
 
 ## dashboard-ts-build: Build the new TypeScript dashboard SPA (vite)
 dashboard-ts-build:
-	cd Dashboard/dashboard-ts && pnpm install --silent && pnpm build
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm build
 
-## dashboard-ts-test: Typecheck + lint + test + build for the new TypeScript dashboard
+## dashboard-ts-lint: Typecheck, lint, and format-check the new TypeScript dashboard
+dashboard-ts-lint:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm typecheck && pnpm lint && pnpm format
+
+## dashboard-ts-test: Run unit tests for the new TypeScript dashboard
 dashboard-ts-test:
-	cd Dashboard/dashboard-ts && pnpm install --silent && pnpm check
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm test
 
-## dashboard-ts: Alias for dashboard-ts-test
-dashboard-ts: dashboard-ts-test
+## dashboard-ts-check: Typecheck + lint + test + build for the new TypeScript dashboard
+dashboard-ts-check:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm check
+
+## dashboard-ts: Alias for dashboard-ts-check
+dashboard-ts: dashboard-ts-check
 
 ## deploy-dashboard: Rebuild ONLY the dashboard image and restart ONLY the dashboard
 ##   container. Leaves db/app containers untouched. Use this for CSS/HTML/JS changes
 ##   when the full stack is already running.
 deploy-dashboard:
-	@echo "==> Publishing Dashboard..."
-	cd Dashboard/Dashboard.Web && \
-	  dotnet publish -c Release -o ../../docker/dashboard-build --nologo -v q
-	@echo "==> Rebuilding and restarting dashboard container only..."
+	@echo "==> Building TypeScript dashboard image..."
 	cd docker && docker compose up -d --build --no-deps dashboard
 	@echo "==> Dashboard redeployed at http://localhost:5173"
 
-## start-docker: Build the dashboard locally then start the full docker compose stack
+## start-docker: Start the full docker compose stack
 ##   Always rebuilds images so Dockerfile / start-services.sh changes can't be masked
 ##   by a stale cached image.
 start-docker: _reclaim-ports
-	@echo "==> Building Dashboard locally (H5 requires native build)..."
-	cd Dashboard/Dashboard.Web && \
-	  dotnet publish -c Release -o ../../docker/dashboard-build --nologo -v q
 	@echo "==> Starting docker stack (forced rebuild)..."
 	cd docker && docker compose up --build
 
@@ -364,7 +370,7 @@ ConnectionStrings__Postgres="Host=localhost;Database=icd10;Username=icd10;Passwo
 PIDS+=($$!)
 
 echo "Starting Dashboard on :5173..."
-python3 -m http.server 5173 --directory Dashboard/Dashboard.Web/wwwroot 2>&1 | sed 's/^/  [dashboard]  /' &
+cd Dashboard/dashboard-ts && pnpm dev --host 0.0.0.0 2>&1 | sed 's/^/  [dashboard]  /' &
 PIDS+=($$!)
 
 populate_icd10 &
@@ -387,16 +393,16 @@ endef
 export START_LOCAL_RUNNER
 
 ## start-local: Run all APIs locally against the docker Postgres dev DB
-##   Builds projects in Debug, dashboard in Release, then runs everything in
+##   Builds API projects, installs dashboard packages, then runs everything in
 ##   the foreground with prefixed log output. Ctrl+C cleans up all children.
 start-local: db-up
 	@echo "==> Setting up Python environment..."
 	@if [ ! -d ICD10/.venv ]; then python3 -m venv ICD10/.venv; fi
 	@ICD10/.venv/bin/pip install -q -r ICD10/embedding-service/requirements.txt psycopg2-binary click requests
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent
 	@echo "==> Building all projects..."
 	dotnet build Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj --nologo -v q
 	dotnet build Clinical/Clinical.Api/Clinical.Api.csproj --nologo -v q
 	dotnet build Scheduling/Scheduling.Api/Scheduling.Api.csproj --nologo -v q
 	dotnet build ICD10/ICD10.Api/ICD10.Api.csproj --nologo -v q
-	dotnet build Dashboard/Dashboard.Web/Dashboard.Web.csproj -c Release --nologo -v q
 	@bash -c "$$START_LOCAL_RUNNER"

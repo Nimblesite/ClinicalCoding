@@ -3,16 +3,12 @@
  * Ported from CalendarE2ETests.cs
  */
 
-import { test, expect, Page } from './support/fixture';
-import { SchedulingUrl, DashboardUrl } from './support/fixture';
+import { DashboardUrl, expect, Page, SchedulingUrl, test } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL
  */
-async function createAuthenticatedPage(
-  page: Page,
-  navigateTo?: string
-): Promise<Page> {
+async function createAuthenticatedPage(page: Page, navigateTo?: string): Promise<Page> {
   if (navigateTo) {
     await page.goto(navigateTo);
   }
@@ -20,16 +16,20 @@ async function createAuthenticatedPage(
 }
 
 test.describe('Calendar E2E Tests', () => {
-  test('Calendar page displays appointments in calendar grid', async ({ authenticatedPage: page }) => {
+  test('Calendar page displays appointments in calendar grid', async ({
+    authenticatedPage: page,
+  }) => {
     await createAuthenticatedPage(page, `${DashboardUrl}#calendar`);
-    page.on('console', msg => console.log(`[BROWSER ${msg.type()}] ${msg.text()}`));
-    page.on('pageerror', err => console.log(`[PAGE ERROR] ${err}`));
+    page.on('console', (msg) => console.log(`[BROWSER ${msg.type()}] ${msg.text()}`));
+    page.on('pageerror', (err) => console.log(`[PAGE ERROR] ${err}`));
 
     // Debug: Check auth state
     const hasToken = await page.evaluate(() => !!localStorage.getItem('gatekeeper_token'));
     const hasUser = await page.evaluate(() => !!localStorage.getItem('gatekeeper_user'));
     const currentUrl = page.url();
-    console.log(`[DEBUG] Auth state - hasToken: ${hasToken}, hasUser: ${hasUser}, URL: ${currentUrl}`);
+    console.log(
+      `[DEBUG] Auth state - hasToken: ${hasToken}, hasUser: ${hasUser}, URL: ${currentUrl}`,
+    );
 
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
@@ -44,13 +44,30 @@ test.describe('Calendar E2E Tests', () => {
     await page.close();
   });
 
-  test('Calendar page click on day shows appointment details', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
-    
+  test('Calendar page click on day shows appointment details', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
+
     // Create appointment for today
     const today = new Date();
-    const startTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0, 0).toISOString();
-    const endTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 30, 0).toISOString();
+    const startTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      14,
+      0,
+      0,
+    ).toISOString();
+    const endTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      14,
+      30,
+      0,
+    ).toISOString();
     const uniqueServiceType = `CalTest${Date.now() % 100000}`;
 
     const createResponse = await request.post(`${SchedulingUrl}/Appointment`, {
@@ -62,8 +79,8 @@ test.describe('Calendar E2E Tests', () => {
         Start: startTime,
         End: endTime,
         PatientReference: 'Patient/1',
-        PractitionerReference: 'Practitioner/1'
-      }
+        PractitionerReference: 'Practitioner/1',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
 
@@ -85,13 +102,30 @@ test.describe('Calendar E2E Tests', () => {
     await page.close();
   });
 
-  test('Calendar page Edit button opens edit appointment page', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
-    
+  test('Calendar page Edit button opens edit appointment page', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
+
     // Create appointment for today
     const today = new Date();
-    const startTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 0, 0).toISOString();
-    const endTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 30, 0).toISOString();
+    const startTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      15,
+      0,
+      0,
+    ).toISOString();
+    const endTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      15,
+      30,
+      0,
+    ).toISOString();
     const uniqueServiceType = `CalEdit${Date.now() % 100000}`;
 
     const createResponse = await request.post(`${SchedulingUrl}/Appointment`, {
@@ -103,8 +137,8 @@ test.describe('Calendar E2E Tests', () => {
         Start: startTime,
         End: endTime,
         PatientReference: 'Patient/1',
-        PractitionerReference: 'Practitioner/1'
-      }
+        PractitionerReference: 'Practitioner/1',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
 
@@ -118,7 +152,9 @@ test.describe('Calendar E2E Tests', () => {
     await todayCell.click();
     await page.waitForSelector(`text=${uniqueServiceType}`, { timeout: 10000 });
 
-    const editButton = await page.locator(`.calendar-appointment-item:has-text('${uniqueServiceType}') button:has-text('Edit')`).first;
+    const editButton = await page.locator(
+      `.calendar-appointment-item:has-text('${uniqueServiceType}') button:has-text('Edit')`,
+    ).first;
     expect(editButton).toBeTruthy();
     await editButton.click();
 
@@ -131,7 +167,7 @@ test.describe('Calendar E2E Tests', () => {
   });
 
   test('Calendar navigation buttons change month', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Schedule');
@@ -165,8 +201,8 @@ test.describe('Calendar E2E Tests', () => {
 
   test('Deep linking to calendar page works', async ({ authenticatedPage: page }) => {
     await createAuthenticatedPage(page, `${DashboardUrl}#calendar`);
-    page.on('console', msg => console.log(`[BROWSER ${msg.type()}] ${msg.text()}`));
-    page.on('pageerror', err => console.log(`[PAGE ERROR] ${err}`));
+    page.on('console', (msg) => console.log(`[BROWSER ${msg.type()}] ${msg.text()}`));
+    page.on('pageerror', (err) => console.log(`[PAGE ERROR] ${err}`));
 
     // Debug: Check auth state and hash
     const hasToken = await page.evaluate(() => !!localStorage.getItem('gatekeeper_token'));

@@ -10,7 +10,7 @@ interface ResultRow {
   readonly code: string;
   readonly title: string;
   readonly description: string;
-  readonly source: 'ICD-10-AM' | 'ACHI' | string;
+  readonly source: string;
   readonly score?: number;
 }
 
@@ -198,25 +198,23 @@ export const ClinicalCodingPage = (): ReactElement => {
 
       <div className="coding-results">
         <div className="coding-results-header">
-          <h2>
-            {isBusy ? 'Searching' : `${resultCount} ${resultLabel}`}
-          </h2>
+          <h2>{isBusy ? 'Searching' : `${String(resultCount)} ${resultLabel}`}</h2>
         </div>
 
-        {isBusy && (
+        {isBusy ? (
           <div className="coding-loading">
             <span className="spinner spinner-lg" aria-hidden="true" />
             <p>Searching the ICD-10-AM index…</p>
           </div>
-        )}
+        ) : null}
 
-        {!isBusy && resultCount === 0 && (
+        {!isBusy && resultCount === 0 ? (
           <div className="coding-empty">
             Enter a clinical description and press Search to see matching codes.
           </div>
-        )}
+        ) : null}
 
-        {!isBusy && resultCount > 0 && (
+        {!isBusy && resultCount > 0 ? (
           <div className="results-list">
             {rows.map((r) => {
               const key = `${r.source}-${r.code}`;
@@ -252,7 +250,7 @@ export const ClinicalCodingPage = (): ReactElement => {
                             <span className="ai-match-value">{pct}%</span>
                           </div>
                           <div className="ai-match-bar">
-                            <div className="ai-match-fill" style={{ width: `${pct}%` }} />
+                            <div className="ai-match-fill" style={{ width: `${String(pct)}%` }} />
                           </div>
                         </div>
                       )}
@@ -281,7 +279,7 @@ export const ClinicalCodingPage = (): ReactElement => {
                     </div>
                   </div>
 
-                  {expanded && (
+                  {expanded ? (
                     <div className="coding-result-details" data-testid="coding-detail">
                       <dl>
                         <div>
@@ -305,17 +303,17 @@ export const ClinicalCodingPage = (): ReactElement => {
                         {pct !== undefined && (
                           <div>
                             <dt>Match score</dt>
-                            <dd>{pct}%</dd>
+                            <dd>{String(pct)}%</dd>
                           </div>
                         )}
                       </dl>
                     </div>
-                  )}
+                  ) : null}
                 </article>
               );
             })}
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   );

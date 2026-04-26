@@ -92,7 +92,7 @@ make start-local
 
 ```mermaid
 graph TD
-    Dashboard["Dashboard<br/><sub>React / H5</sub>"]
+    Dashboard["Dashboard<br/><sub>React / TypeScript</sub>"]
 
     Dashboard --> Gatekeeper["Gatekeeper API<br/><sub>Passkey Auth · RBAC</sub>"]
     Dashboard --> Clinical["Clinical API<br/><sub>Patient · Encounter · Condition</sub>"]
@@ -212,7 +212,7 @@ make db-reset       # wipe and recreate databases from scratch
 | Sync | [Nimblesite](https://www.nimblesite.co) Sync Framework (bidirectional) |
 | Query | [Nimblesite](https://www.nimblesite.co) LQL (Lambda Query Language) |
 | Embeddings | MedEmbed via FastAPI |
-| Frontend | H5 transpiler (C# to JS) + React 18 |
+| Frontend | TypeScript + React + Vite |
 | Infrastructure | Docker Compose |
 
 ## License

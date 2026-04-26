@@ -3,8 +3,8 @@
  * TypeScript port of C# AuthE2ETests.cs
  */
 
-import { test, expect, Page, APIRequestContext } from '@playwright/test';
-import { DashboardUrl, GatekeeperUrl, setupAuth, generateTestToken } from './support/fixture';
+import { expect, test } from '@playwright/test';
+import { DashboardUrl, GatekeeperUrl, generateTestToken, setupAuth } from './support/fixture';
 
 test.describe('Auth E2E Tests', () => {
   /**
@@ -58,7 +58,7 @@ test.describe('Auth E2E Tests', () => {
     expect(pageContent).toContain('Create your account');
 
     const emailInput = page.locator("input[type='email']");
-    const displayNameInput = page.locator("input#displayName");
+    const displayNameInput = page.locator('input#displayName');
 
     expect(await emailInput.isVisible()).toBe(true);
     expect(await displayNameInput.isVisible()).toBe(true);
@@ -67,7 +67,9 @@ test.describe('Auth E2E Tests', () => {
   /**
    * Gatekeeper API /auth/login/begin returns valid response for discoverable credentials.
    */
-  test('GatekeeperApi_LoginBegin_ReturnsValidDiscoverableCredentialOptions', async ({ request }) => {
+  test('GatekeeperApi_LoginBegin_ReturnsValidDiscoverableCredentialOptions', async ({
+    request,
+  }) => {
     const response = await request.post(`${GatekeeperUrl}/auth/login/begin`, {
       headers: { 'Content-Type': 'application/json' },
       data: '{}',
@@ -146,7 +148,8 @@ test.describe('Auth E2E Tests', () => {
     expect(networkRequests.some((r) => r.includes('/auth/login/begin'))).toBe(true);
 
     const hasJsonParseError = consoleErrors.some(
-      (e) => e.includes('undefined') || e.includes('is not valid JSON') || e.includes('SyntaxError')
+      (e) =>
+        e.includes('undefined') || e.includes('is not valid JSON') || e.includes('SyntaxError'),
     );
     expect(hasJsonParseError).toBe(false);
   });
@@ -198,9 +201,7 @@ test.describe('Auth E2E Tests', () => {
 
     await page.waitForSelector("[data-testid='login-page']", { timeout: 10000 });
 
-    const tokenAfterLogout = await page.evaluate(() =>
-      localStorage.getItem('gatekeeper_token')
-    );
+    const tokenAfterLogout = await page.evaluate(() => localStorage.getItem('gatekeeper_token'));
     expect(tokenAfterLogout).toBeNull();
 
     await page.close();
@@ -215,7 +216,7 @@ test.describe('Auth E2E Tests', () => {
     const logoutResponse = await request.post(`${GatekeeperUrl}/auth/logout`, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       data: '{}',
     });
@@ -238,11 +239,7 @@ test.describe('Auth E2E Tests', () => {
     });
 
     // Generate valid test token for custom user
-    const testToken = generateTestToken(
-      'test-user',
-      'Alice Smith',
-      'alice@example.com'
-    );
+    const testToken = generateTestToken('test-user', 'Alice Smith', 'alice@example.com');
 
     // Set custom user data BEFORE loading
     await page.goto(DashboardUrl);
@@ -255,10 +252,10 @@ test.describe('Auth E2E Tests', () => {
             userId: 'test-user',
             displayName: 'Alice Smith',
             email: 'alice@example.com',
-          })
+          }),
         );
       },
-      { token: testToken }
+      { token: testToken },
     );
 
     // Reload to pick up custom user data
@@ -300,15 +297,11 @@ test.describe('Auth E2E Tests', () => {
     // Wait for React to mount and set the __triggerLogin hook
     await page.waitForFunction(
       () => typeof (window as { __triggerLogin?: unknown }).__triggerLogin === 'function',
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     // Generate a valid test token
-    const devToken = generateTestToken(
-      'test-user-123',
-      'Test User',
-      'test@example.com'
-    );
+    const devToken = generateTestToken('test-user-123', 'Test User', 'test@example.com');
     await page.evaluate(
       ({ token }: { token: string }) => {
         console.log('[TEST] Setting token and triggering login');
@@ -319,7 +312,7 @@ test.describe('Auth E2E Tests', () => {
             userId: 'test-user-123',
             displayName: 'Test User',
             email: 'test@example.com',
-          })
+          }),
         );
         (window as { __triggerLogin?: (user: unknown) => void }).__triggerLogin!({
           userId: 'test-user-123',
@@ -328,7 +321,7 @@ test.describe('Auth E2E Tests', () => {
         });
         console.log('[TEST] Login triggered, waiting for React state update');
       },
-      { token: devToken }
+      { token: devToken },
     );
 
     // Wait longer for React state update and re-render

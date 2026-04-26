@@ -3,13 +3,8 @@
  * TypeScript port of C# PatientE2ETests.cs
  */
 
-import { test, expect } from '@playwright/test';
-import {
-  DashboardUrl,
-  ClinicalUrl,
-  setupAuth,
-  generateTestToken,
-} from './support/fixture';
+import { expect, test } from '@playwright/test';
+import { ClinicalUrl, generateTestToken, setupAuth } from './support/fixture';
 
 test.describe('Patient E2E Tests', () => {
   /**
@@ -73,9 +68,7 @@ test.describe('Patient E2E Tests', () => {
   /**
    * Patient Search button navigates to search and finds patients.
    */
-  test('PatientSearchButton_NavigatesToSearch_AndFindsPatients', async ({
-    browser,
-  }) => {
+  test('PatientSearchButton_NavigatesToSearch_AndFindsPatients', async ({ browser }) => {
     const page = await browser.newPage();
 
     await setupAuth(page);
@@ -124,9 +117,7 @@ test.describe('Patient E2E Tests', () => {
   /**
    * Edit Patient button opens edit page and updates patient via API.
    */
-  test('EditPatientButton_OpensEditPage_AndUpdatesPatient', async ({
-    browser,
-  }) => {
+  test('EditPatientButton_OpensEditPage_AndUpdatesPatient', async ({ browser }) => {
     const token = generateTestToken();
 
     // Create patient via API first
@@ -177,12 +168,9 @@ test.describe('Patient E2E Tests', () => {
     });
 
     // Verify via API
-    const updatedPatientResponse = await fetch(
-      `${ClinicalUrl}/fhir/Patient/${patientId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const updatedPatientResponse = await fetch(`${ClinicalUrl}/fhir/Patient/${patientId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const updatedPatientJson = await updatedPatientResponse.text();
     expect(updatedPatientJson).toContain(newFamilyName);
 
@@ -217,31 +205,25 @@ test.describe('Patient E2E Tests', () => {
 
     // Update patient
     const updatedFamilyName = `Updated${Date.now() % 100000}`;
-    const updateResponse = await request.put(
-      `${ClinicalUrl}/fhir/Patient/${patientId}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        data: JSON.stringify({
-          Active: true,
-          GivenName: uniqueName,
-          FamilyName: updatedFamilyName,
-          Gender: 'male',
-          Email: 'updated@test.com',
-        }),
-      }
-    );
+    const updateResponse = await request.put(`${ClinicalUrl}/fhir/Patient/${patientId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      data: JSON.stringify({
+        Active: true,
+        GivenName: uniqueName,
+        FamilyName: updatedFamilyName,
+        Gender: 'male',
+        Email: 'updated@test.com',
+      }),
+    });
     expect(updateResponse.ok()).toBe(true);
 
     // Verify update
-    const getResponse = await request.get(
-      `${ClinicalUrl}/fhir/Patient/${patientId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const getResponse = await request.get(`${ClinicalUrl}/fhir/Patient/${patientId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const getText = await getResponse.text();
     expect(getText).toContain(updatedFamilyName);
     expect(getText).toContain('updated@test.com');

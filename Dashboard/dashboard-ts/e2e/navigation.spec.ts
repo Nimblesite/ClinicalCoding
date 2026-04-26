@@ -3,16 +3,12 @@
  * Ported from NavigationE2ETests.cs
  */
 
-import { test, expect, Page } from './support/fixture';
-import { ClinicalUrl, DashboardUrl } from './support/fixture';
+import { ClinicalUrl, DashboardUrl, expect, Page, test } from './support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL
  */
-async function createAuthenticatedPage(
-  page: Page,
-  navigateTo?: string
-): Promise<Page> {
+async function createAuthenticatedPage(page: Page, navigateTo?: string): Promise<Page> {
   if (navigateTo) {
     await page.goto(navigateTo);
   }
@@ -21,7 +17,7 @@ async function createAuthenticatedPage(
 
 test.describe('Navigation E2E Tests', () => {
   test('Browser back button navigates to previous view', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     expect(page.url()).toContain('#dashboard');
@@ -45,8 +41,10 @@ test.describe('Navigation E2E Tests', () => {
     await page.close();
   });
 
-  test('Deep linking works - navigating directly to a hash URL loads correct view', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Deep linking works - navigating directly to a hash URL loads correct view', async ({
+    authenticatedPage: page,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page, `${DashboardUrl}#patients`);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.waitForSelector("[data-testid='add-patient-btn']", { timeout: 10000 });
@@ -63,7 +61,10 @@ test.describe('Navigation E2E Tests', () => {
     await page.close();
   });
 
-  test('Edit Patient Cancel button uses history back', async ({ authenticatedPage: page, request }) => {
+  test('Edit Patient Cancel button uses history back', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     const uniqueName = `CancelTest${Date.now() % 100000}`;
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
       headers: { 'Content-Type': 'application/json' },
@@ -71,15 +72,15 @@ test.describe('Navigation E2E Tests', () => {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'CancelTestPatient',
-        Gender: 'male'
-      }
+        Gender: 'male',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const createdJson = await createResponse.json();
     const patientId = createdJson.Id;
 
     await createAuthenticatedPage(page);
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Patients');
     await page.waitForSelector("[data-testid='add-patient-btn']", { timeout: 10000 });
@@ -98,7 +99,10 @@ test.describe('Navigation E2E Tests', () => {
     await page.close();
   });
 
-  test('Browser back button from Edit Patient page returns to Patients page', async ({ authenticatedPage: page, request }) => {
+  test('Browser back button from Edit Patient page returns to Patients page', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
     const uniqueName = `BackBtnTest${Date.now() % 100000}`;
     const createResponse = await request.post(`${ClinicalUrl}/fhir/Patient/`, {
       headers: { 'Content-Type': 'application/json' },
@@ -106,15 +110,15 @@ test.describe('Navigation E2E Tests', () => {
         Active: true,
         GivenName: uniqueName,
         FamilyName: 'BackButtonTest',
-        Gender: 'female'
-      }
+        Gender: 'female',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
     const createdJson = await createResponse.json();
     const patientId = createdJson.Id;
 
     await createAuthenticatedPage(page);
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Patients');
     await page.waitForSelector("[data-testid='add-patient-btn']", { timeout: 10000 });
@@ -142,7 +146,7 @@ test.describe('Navigation E2E Tests', () => {
   });
 
   test('Forward button works after going back', async ({ authenticatedPage: page }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 

@@ -53,16 +53,16 @@ export const EditPatientPage = ({ id }: EditPatientPageProps): ReactElement => {
         </div>
       </header>
 
-      {save.isError && (
+      {save.isError ? (
         <div className="alert alert-error" role="alert">
           {save.error.message}
         </div>
-      )}
-      {success && (
+      ) : null}
+      {success ? (
         <div className="alert alert-success" data-testid="edit-success" role="status">
           Patient record saved.
         </div>
-      )}
+      ) : null}
 
       <PatientForm
         {...(data !== undefined ? { initial: data } : {})}

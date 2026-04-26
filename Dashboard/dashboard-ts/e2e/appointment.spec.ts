@@ -3,16 +3,12 @@
  * Ported from AppointmentE2ETests.cs
  */
 
-import { test, expect, Page } from '../support/fixture';
-import { SchedulingUrl, ClinicalUrl } from '../support/fixture';
+import { expect, Page, SchedulingUrl, test } from '../support/fixture';
 
 /**
  * Create an authenticated page and optionally navigate to a specific URL
  */
-async function createAuthenticatedPage(
-  page: Page,
-  navigateTo?: string
-): Promise<Page> {
+async function createAuthenticatedPage(page: Page, navigateTo?: string): Promise<Page> {
   // Auth is already set up by the fixture
   if (navigateTo) {
     await page.goto(navigateTo);
@@ -21,7 +17,9 @@ async function createAuthenticatedPage(
 }
 
 test.describe('Appointment E2E Tests', () => {
-  test('Dashboard displays appointment data from Scheduling API', async ({ authenticatedPage: page }) => {
+  test('Dashboard displays appointment data from Scheduling API', async ({
+    authenticatedPage: page,
+  }) => {
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Appointments');
@@ -33,8 +31,11 @@ test.describe('Appointment E2E Tests', () => {
     await page.close();
   });
 
-  test('Add Appointment button opens modal and creates appointment via API', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
+  test('Add Appointment button opens modal and creates appointment via API', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
     await createAuthenticatedPage(page);
     await page.waitForSelector('.sidebar', { timeout: 20000 });
     await page.click('text=Appointments');
@@ -70,14 +71,17 @@ test.describe('Appointment E2E Tests', () => {
     await page.close();
   });
 
-  test('Edit Appointment button opens edit page and updates appointment via API', async ({ authenticatedPage: page, request }) => {
-    page.on('console', msg => console.log(`[BROWSER] ${msg.text()}`));
-    
+  test('Edit Appointment button opens edit page and updates appointment via API', async ({
+    authenticatedPage: page,
+    request,
+  }) => {
+    page.on('console', (msg) => console.log(`[BROWSER] ${msg.text()}`));
+
     // Create appointment via API first
     const uniqueServiceType = `EditApptTest${Date.now() % 100000}`;
     const startTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const endTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString();
-    
+
     const createResponse = await request.post(`${SchedulingUrl}/Appointment`, {
       headers: { 'Content-Type': 'application/json' },
       data: {
@@ -87,11 +91,11 @@ test.describe('Appointment E2E Tests', () => {
         Start: startTime,
         End: endTime,
         PatientReference: 'Patient/1',
-        PractitionerReference: 'Practitioner/1'
-      }
+        PractitionerReference: 'Practitioner/1',
+      },
     });
     expect(createResponse.ok()).toBeTruthy();
-    
+
     const createdAppointmentJson = await createResponse.text();
     const appointmentIdMatch = createdAppointmentJson.match(/"Id"\s*:\s*"([^"]+)"/);
     expect(appointmentIdMatch).toBeTruthy();
@@ -102,7 +106,8 @@ test.describe('Appointment E2E Tests', () => {
     await page.click('text=Appointments');
     await page.waitForSelector(`text=${uniqueServiceType}`, { timeout: 10000 });
 
-    const editButton = await page.locator(`tr:has-text('${uniqueServiceType}') .btn-secondary`).first;
+    const editButton = await page.locator(`tr:has-text('${uniqueServiceType}') .btn-secondary`)
+      .first;
     expect(editButton).toBeTruthy();
     await editButton.click();
 
@@ -115,7 +120,9 @@ test.describe('Appointment E2E Tests', () => {
     await page.waitForSelector('text=Appointment updated successfully', { timeout: 10000 });
 
     // Verify via API
-    const updatedAppointmentJson = await request.get(`${SchedulingUrl}/Appointment/${appointmentId}`);
+    const updatedAppointmentJson = await request.get(
+      `${SchedulingUrl}/Appointment/${appointmentId}`,
+    );
     expect(await updatedAppointmentJson.text()).toContain(newServiceType);
 
     await page.close();

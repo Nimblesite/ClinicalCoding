@@ -15,7 +15,10 @@ const formatRelative = (iso: string): string => {
 };
 
 const initials = (ref: string): string => {
-  const parts = ref.replace(/^Patient\//u, '').split(/[-\s]/u).filter(Boolean);
+  const parts = ref
+    .replace(/^Patient\//u, '')
+    .split(/[-\s]/u)
+    .filter(Boolean);
   return (parts[0]?.[0] ?? '?').toUpperCase() + (parts[1]?.[0] ?? '').toUpperCase();
 };
 
@@ -25,7 +28,9 @@ const AppointmentCard = ({ a }: { readonly a: Appointment }): ReactElement => (
       <div className="appt-avatar">{initials(a.PatientReference)}</div>
       <div>
         <h4>{a.PatientReference.replace(/^Patient\//u, '')}</h4>
-        <p>{a.ServiceType} • {a.Description ?? 'Consultation'}</p>
+        <p>
+          {a.ServiceType} • {a.Description ?? 'Consultation'}
+        </p>
       </div>
     </div>
     <div className="appt-trail">
@@ -51,7 +56,9 @@ export const DashboardPage = (): ReactElement => {
   });
   const patientCount = (patients.data ?? []).length;
   const dateLabel = todayStart.toLocaleDateString(undefined, {
-    month: 'short', day: 'numeric', year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
 
   return (
@@ -59,7 +66,9 @@ export const DashboardPage = (): ReactElement => {
       <header className="dashboard-hero">
         <div>
           <h2 className="welcome-title">Welcome back, Dr. Robert!</h2>
-          <p className="page-description">Here&apos;s what&apos;s happening in your department today.</p>
+          <p className="page-description">
+            Here&apos;s what&apos;s happening in your department today.
+          </p>
         </div>
         <div className="date-chip">
           <span className="material-symbols-outlined">calendar_today</span>
@@ -74,7 +83,9 @@ export const DashboardPage = (): ReactElement => {
             <span className="material-symbols-outlined kpi-icon primary">analytics</span>
           </div>
           <div className="kpi-body">
-            <div className="kpi-donut"><span>64%</span></div>
+            <div className="kpi-donut">
+              <span>64%</span>
+            </div>
             <div>
               <h3 className="kpi-value">Cardiology</h3>
               <p className="kpi-trend">
@@ -132,7 +143,9 @@ export const DashboardPage = (): ReactElement => {
           <div className="kpi-body column">
             <h3 className="kpi-value">{todayAppts.length}</h3>
             <p className="kpi-sub">Scheduled for today</p>
-            <div className="kpi-progress"><span style={{ width: '75%' }} /></div>
+            <div className="kpi-progress">
+              <span style={{ width: '75%' }} />
+            </div>
             <p className="kpi-progress-label">75% capacity</p>
           </div>
         </article>
@@ -142,7 +155,9 @@ export const DashboardPage = (): ReactElement => {
         <section className="appts-column">
           <div className="section-head">
             <h3>Upcoming Appointments</h3>
-            <a className="section-link" href="#calendar">View Calendar</a>
+            <a className="section-link" href="#calendar">
+              View Calendar
+            </a>
           </div>
           {todayAppts.length === 0 ? (
             <p className="empty-state">No appointments scheduled for today.</p>
@@ -162,31 +177,45 @@ export const DashboardPage = (): ReactElement => {
           </div>
           <div className="request-card primary">
             <div className="request-head">
-              <div className="request-icon"><span className="material-symbols-outlined">person_add</span></div>
+              <div className="request-icon">
+                <span className="material-symbols-outlined">person_add</span>
+              </div>
               <div>
                 <h4>Emily Watson</h4>
                 <p>Requested for: Tomorrow, 10:00 AM</p>
               </div>
             </div>
             <div className="request-actions">
-              <button type="button" className="btn btn-primary btn-sm">Approve</button>
-              <button type="button" className="btn btn-ghost btn-sm">Decline</button>
+              <button type="button" className="btn btn-primary btn-sm">
+                Approve
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm">
+                Decline
+              </button>
             </div>
           </div>
           <div className="request-card muted">
             <div className="request-head">
-              <div className="request-icon muted"><span className="material-symbols-outlined">person_add</span></div>
+              <div className="request-icon muted">
+                <span className="material-symbols-outlined">person_add</span>
+              </div>
               <div>
                 <h4>Marcus T.</h4>
                 <p>Requested for: Friday, 02:30 PM</p>
               </div>
             </div>
             <div className="request-actions">
-              <button type="button" className="btn btn-primary btn-sm">Approve</button>
-              <button type="button" className="btn btn-ghost btn-sm">Decline</button>
+              <button type="button" className="btn btn-primary btn-sm">
+                Approve
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm">
+                Decline
+              </button>
             </div>
           </div>
-          <a className="view-all-tile" href="#appointments">View All Requests (14)</a>
+          <a className="view-all-tile" href="#appointments">
+            View All Requests (14)
+          </a>
         </aside>
       </div>
 

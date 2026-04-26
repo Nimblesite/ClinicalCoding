@@ -15,7 +15,7 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load, Playwright install, and 6 test projects with coverage require ~20 min
+    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load, and 5 test projects with coverage require ~20 min.
     timeout-minutes: 30
     env:
       DB_PASSWORD: changeme
@@ -27,6 +27,15 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
 
       - run: dotnet restore
       - run: dotnet tool restore
@@ -40,7 +49,7 @@ jobs:
       # `make lint` runs the full Release build, which triggers
       # `dotnet DataProvider postgres` codegen against the live database,
       # so it has to come after db-up + db-migrate. Still kept ahead of
-      # the embedding service / Playwright steps to fail fast on warnings.
+      # the embedding service steps to fail fast on warnings.
       - name: Format check
         run: make fmt CHECK=1
 
@@ -62,13 +71,6 @@ jobs:
           echo "Embedding service failed to become healthy"
           docker compose logs
           exit 1
-
-      - name: Install Playwright browsers
-        run: |
-          dotnet build Dashboard/Dashboard.Integration.Tests/Dashboard.Integration.Tests.csproj --configuration Release
-          dotnet tool install --global Microsoft.Playwright.CLI || true
-          export PATH="$PATH:$HOME/.dotnet/tools"
-          playwright install --with-deps chromium
 
       - name: Test
         run: make test

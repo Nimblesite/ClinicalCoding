@@ -26,11 +26,6 @@
       "source": "ICD10.Cli",
       "include": "[ICD10.Cli]*",
       "threshold": 67
-    },
-    "Dashboard/Dashboard.Integration.Tests": {
-      "source": "Dashboard.Integration",
-      "include": "[Clinical.Api]*,[Scheduling.Api]*,[Gatekeeper.Api]*,[Clinical.Sync]*,[Scheduling.Sync]*,[ICD10.Api]*",
-      "threshold": 42
     }
   }
 }
