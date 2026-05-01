@@ -2,12 +2,86 @@
 
 ## Overview
 
-Gatekeeper is an independent, deployable authentication and authorization microservice implementing:
-- **Passkey-only authentication** (WebAuthn/FIDO2) - no passwords
-- **Fine-grained RBAC** with record-level permissions
-- **Allows C# attributes to specify permissions or roles at code level** - distinc from .NET ABAC
+Gatekeeper is an independent, production-grade authentication and authorization microservice. It is being hardened for extraction into its own repository and publication as a suite of Nimblesite NuGet packages.
 
-This service is framework-agnostic and can be integrated with any system via REST API.
+**Core capabilities:**
+- Multi-provider authentication via `IAuthProvider` — passkey (WebAuthn/FIDO2) and Supabase JWT, with more providers via the same interface
+- Hybrid RBAC + ABAC authorization with role hierarchy, record-level grants, and policy-based attribute evaluation
+- Distributed rate limiting with per-IP and per-account sliding-window counters
+- Full audit trail — every auth and authz decision is logged without PII
+- Database-independent — `IDbConnection` throughout; LQL queries render to any SQL dialect
+
+**Design principles:**
+- Authentication and authorization are strictly separated
+- Zero `NpgsqlConnection` above the DataProvider-generated layer
+- All queries in LQL (database-portable) except where LQL has known gaps (tracked as GitHub issues)
+- No exceptions — `Result<T,E>` everywhere
+
+---
+
+## Component Specs
+
+| Spec | Description |
+|---|---|
+| [gk-authentication.md](gk-authentication.md) | `IAuthProvider` abstraction, passkey hardening, Supabase provider, session management, JWT hardening, account lockout |
+| [gk-authorization.md](gk-authorization.md) | RBAC + role hierarchy, ABAC policy engine, record/scope grants, decision flow |
+| [gk-rate-limiting.md](gk-rate-limiting.md) | Sliding-window distributed limiter, per-IP + per-account limits, account lockout schema |
+| [gk-audit.md](gk-audit.md) | `gk_audit_log` schema, event catalogue, PII rules, admin query endpoint |
+| [gk-db-independence.md](gk-db-independence.md) | `IDbConnection` rule, SQL→LQL migration table, LQL gap tracking, RLS policy DDL |
+
+## Implementation Plans
+
+| Plan | Description |
+|---|---|
+| [gk-db-independence-plan.md](../plans/gk-db-independence-plan.md) | **Do first** — LQL migration, IDbConnection sweep, gap issues |
+| [gk-authentication-plan.md](../plans/gk-authentication-plan.md) | IAuthProvider extraction, passkey hardening, Supabase, session, JWT |
+| [gk-authorization-plan.md](../plans/gk-authorization-plan.md) | Role hierarchy, ABAC policy engine, scope extension, audit wiring |
+| [gk-rate-limiting-plan.md](../plans/gk-rate-limiting-plan.md) | Port from Gigs, per-endpoint limits, account lockout |
+| [gk-audit-plan.md](../plans/gk-audit-plan.md) | AuditLogger, event wiring, admin endpoint |
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    Client["Client\n(React Dashboard / API Consumer)"]
+
+    subgraph Gatekeeper API
+        Auth["Authentication Layer\n/auth/*\nIAuthProvider dispatch"]
+        Authz["Authorization Layer\n/authz/*\nIAuthorizationService"]
+        Admin["Admin API\n/admin/*\nadmin:* permission required"]
+        RL["Rate Limiting Middleware\nDistributedRateLimiter"]
+        Audit["IAuditLogger\nfire-and-forget"]
+    end
+
+    subgraph Providers
+        Passkey["PasskeyAuthProvider\nWebAuthn / FIDO2"]
+        Supabase["SupabaseAuthProvider\nJWKS + RS256/EdDSA"]
+    end
+
+    subgraph Storage
+        DB["Postgres\n(IDbConnection)"]
+        Generated["DataProvider\nGenerated extensions\n.g.cs"]
+    end
+
+    Client --> RL
+    RL --> Auth
+    RL --> Authz
+    RL --> Admin
+    Auth --> Passkey
+    Auth --> Supabase
+    Passkey --> Generated
+    Supabase --> Generated
+    Authz --> Generated
+    Admin --> Generated
+    Generated --> DB
+    Auth --> Audit
+    Authz --> Audit
+    Audit --> Generated
+```
+
+---
 
 ---
 
