@@ -15,11 +15,13 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load, 5 test projects with coverage,
-    # 4 API processes, dashboard dev server, and Playwright e2e suite require ~35 min.
-    timeout-minutes: 45
+    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load,
+    # full docker stack build (all APIs + dashboard), 5 test projects with coverage,
+    # and Playwright e2e suite require ~45 min.
+    timeout-minutes: 60
     env:
       DB_PASSWORD: changeme
+      # C# integration tests connect to the db-only stack on localhost
       TEST_POSTGRES_CONNECTION: Host=localhost;Database=postgres;Username=postgres;Password=changeme
       ICD10_TEST_CONNECTION_STRING: Host=localhost;Database=icd10;Username=postgres;Password=changeme
     steps:
@@ -41,86 +43,25 @@ jobs:
       - run: dotnet restore
       - run: dotnet tool restore
 
-      - name: Start Postgres (pgvector) via docker compose
-        run: make db-up
-
-      - name: Migrate Postgres schemas
+      - name: Start Postgres and migrate schemas
         run: make db-migrate
 
       # `make lint` runs the full Release build, which triggers
-      # `dotnet DataProvider postgres` codegen against the live database,
-      # so it has to come after db-up + db-migrate. Still kept ahead of
-      # the embedding service steps to fail fast on warnings.
+      # `dotnet DataProvider postgres` codegen against the live database.
       - name: Format check
         run: make fmt CHECK=1
 
       - name: Lint
         run: make lint
 
-      - name: Start embedding service
-        run: |
-          cd ICD10/embedding-service
-          docker compose up -d --build
-          # Wait until /health responds 200 (model load can take ~60s)
-          for i in $(seq 1 60); do
-            if curl -sf http://localhost:8000/health > /dev/null; then
-              echo "Embedding service ready"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Embedding service failed to become healthy"
-          docker compose logs
-          exit 1
-
-      - name: Test
-        run: make test
-
       - name: Install Playwright browsers
         run: cd Dashboard/dashboard-ts && pnpm exec playwright install --with-deps chromium
 
-      - name: Start APIs for e2e tests
-        run: |
-          dotnet build --configuration Release --no-restore
-          ConnectionStrings__Postgres="Host=localhost;Database=gatekeeper;Username=postgres;Password=changeme" \
-            dotnet run --no-build --project Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj \
-            --no-launch-profile --urls "http://localhost:5002" &
-          ConnectionStrings__Postgres="Host=localhost;Database=clinical;Username=postgres;Password=changeme" \
-            dotnet run --no-build --project Clinical/Clinical.Api/Clinical.Api.csproj \
-            --no-launch-profile --urls "http://localhost:5080" &
-          ConnectionStrings__Postgres="Host=localhost;Database=scheduling;Username=postgres;Password=changeme" \
-            dotnet run --no-build --project Scheduling/Scheduling.Api/Scheduling.Api.csproj \
-            --no-launch-profile --urls "http://localhost:5001" &
-          ConnectionStrings__Postgres="Host=localhost;Database=icd10;Username=postgres;Password=changeme" \
-            dotnet run --no-build --project ICD10/ICD10.Api/ICD10.Api.csproj \
-            --no-launch-profile --urls "http://localhost:5090" &
-          # Wait for all 4 APIs to be healthy
-          for url in http://localhost:5002/health http://localhost:5080/health http://localhost:5001/health http://localhost:5090/health; do
-            for i in $(seq 1 60); do
-              if curl -sf "$url" > /dev/null; then
-                echo "$url ready"
-                break
-              fi
-              sleep 2
-            done
-          done
+      - name: Start full stack for e2e (all APIs + embedding service + dashboard)
+        run: make start-stack
 
-      - name: Start dashboard dev server for e2e
-        run: |
-          cd Dashboard/dashboard-ts
-          pnpm dev --host 0.0.0.0 &
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:5173 > /dev/null; then
-              echo "Dashboard ready"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Dashboard failed to start"
-          exit 1
-
-      - name: E2E tests (Playwright)
-        run: make dashboard-ts-e2e
+      - name: Test
+        run: make test
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4

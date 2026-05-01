@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-stack start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -103,6 +103,7 @@ test: db-migrate
 	  fi; \
 	done
 	@$(MAKE) dashboard-ts-test
+	@$(MAKE) dashboard-ts-e2e
 
 ## lint: Run all linters/analyzers (read-only). Does NOT format.
 lint: db-migrate
@@ -239,6 +240,36 @@ _reclaim-ports:
 	    kill -9 $$pids 2>/dev/null || true; \
 	  fi; \
 	done
+
+## start-stack: Build and start the app + dashboard services from docker-compose.yml.
+##   Assumes Postgres is already running (via db-up / db-migrate). Starts only the
+##   app (all APIs + embedding) and dashboard containers, then waits for health endpoints.
+##   Used in CI: run make db-migrate first, then make start-stack, then make test.
+start-stack: db-migrate
+	@echo "==> Starting app + dashboard via docker compose (forced rebuild)..."
+	DB_PASSWORD=$(DB_PASSWORD) docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml up -d --build --no-deps app dashboard
+	@echo "==> Waiting for all services to be healthy..."
+	@for url in \
+	    http://localhost:5002/health \
+	    http://localhost:5080/health \
+	    http://localhost:5001/health \
+	    http://localhost:5090/health \
+	    http://localhost:8000/health; do \
+	  echo "  Waiting for $$url..."; \
+	  for i in $$(seq 1 90); do \
+	    if curl -sf "$$url" > /dev/null 2>&1; then \
+	      echo "  $$url ready"; \
+	      break; \
+	    fi; \
+	    if [ "$$i" = "90" ]; then \
+	      echo "FAIL: $$url did not become healthy after 90 attempts"; \
+	      docker compose -f docker/docker-compose.yml logs app; \
+	      exit 1; \
+	    fi; \
+	    sleep 2; \
+	  done; \
+	done
+	@echo "==> Full stack ready."
 
 ## resume-docker: Start the existing docker stack without rebuilding or reclaiming ports.
 ##   Use this to bring containers back up after they were stopped. No builds, no
