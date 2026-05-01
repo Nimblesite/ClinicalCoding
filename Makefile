@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-stack start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports _reclaim-e2e
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-stack start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports _reclaim-e2e _ensure-embedding-service
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -56,7 +56,7 @@ TEST_PROJECTS = \
 ##   - Stops at the first failing assembly across the suite (set -e)
 ##   - After each project, checks coverage against threshold from $(COVERAGE_THRESHOLDS_FILE)
 ##     and fails immediately if below.
-test: db-migrate
+test: db-migrate _ensure-embedding-service
 	@echo "==> Testing (fail-fast)..."
 	@command -v jq >/dev/null 2>&1 || { echo "FAIL: jq is required (brew install jq / apt-get install jq)"; exit 1; }
 	@if [ ! -f "$(COVERAGE_THRESHOLDS_FILE)" ]; then \
@@ -250,6 +250,26 @@ _reclaim-e2e:
 	  kill -9 $$pids 2>/dev/null || true; \
 	fi
 	@rm -rf Dashboard/dashboard-ts/test-results Dashboard/dashboard-ts/playwright-report
+
+## _ensure-embedding-service: Start the real ICD-10 embedding service required by RAG E2E tests
+_ensure-embedding-service:
+	@echo "==> Ensuring ICD-10 embedding service is healthy on :8000"
+	@if curl -sf http://localhost:8000/health >/dev/null 2>&1; then \
+	  echo "Embedding service ready"; \
+	else \
+	  echo "Starting embedding service container..."; \
+	  cd ICD10/embedding-service && docker compose up -d --build; \
+	  for i in $$(seq 1 120); do \
+	    if curl -sf http://localhost:8000/health >/dev/null 2>&1; then \
+	      echo "Embedding service ready"; \
+	      exit 0; \
+	    fi; \
+	    sleep 2; \
+	  done; \
+	  echo "FAIL: embedding service did not become healthy on :8000"; \
+	  cd ICD10/embedding-service && docker compose logs --tail=120; \
+	  exit 1; \
+	fi
 
 ## start-stack: Build and start the app + dashboard services from docker-compose.yml.
 ##   Reclaims stale default-port listeners before starting only the app
