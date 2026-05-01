@@ -26,7 +26,7 @@ NuGet packages use the `Nimblesite.` prefix (e.g., Nimblesite.DataProvider.Core,
 - **TOTALL CSS MUST < 1.5K LOC** - CSS is cancer and you are the cure for it
 - **MIGRATING ANY DB WITH ANYTHING OTHER THAN DataProvider Migrations is COMPLETELY ILLEGAL**
 - **ZERO DUPLICATION.** Search the codebase before writing. Move code, don't copy it.
-- **NO THROWING EXCEPTIONS.** Return `Result<T,E>` or `Option<T>`. Exceptions are only for unrecoverable bugs.
+- **NO THROWING EXCEPTIONS.** Wrap any code that might fail in a try/catch and Return `Result<T,E>`
 - **NO REGEX on structured data.** Use proper parsers.
 - **NO PLACEHOLDERS.** Unimplemented code must leave a compilation error with TODO.
 - **Functions < 20 lines. Files < 500 lines.** Refactor aggressively.
@@ -49,6 +49,13 @@ NuGet packages use the `Nimblesite.` prefix (e.g., Nimblesite.DataProvider.Core,
 - One type per file (except small records). No commented-out code.
 - Medical data must follow [FHIR R5 spec](https://build.fhir.org/resourcelist.html)
 - Common packages go in Directory.Build.props
+
+## Essential Docs
+
+- [DataProvider Documentation](https://dataprovider.tech/docs/dataprovider/)
+- [DataProvider Full API Reference](https://dataprovider.tech/apidocs/)
+- [Migrations Docs](https://dataprovider.tech/docs/migrations/)
+- [LQL Docs](https://dataprovider.tech/docs/lql/)
 
 ## Multi-Agent Coordination (TMC)
 
