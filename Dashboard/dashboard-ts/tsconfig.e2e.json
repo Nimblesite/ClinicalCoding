@@ -6,6 +6,6 @@
     "noUnusedParameters": false,
     "verbatimModuleSyntax": false
   },
-  "include": ["e2e", "playwright.config.ts"],
+  "include": ["e2e", "support", "playwright.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -339,6 +339,16 @@ const config: Linter.Config[] = [
       'sonarjs/no-duplicate-string': 'off',
     },
   },
+  // E2E support files (re-export aliases used by specs)
+  {
+    files: ['support/**/*.ts', 'e2e/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.e2e.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
   // Playwright E2E tests
   {
     files: ['e2e/**/*.spec.ts', 'e2e/**/*.test.ts'],
