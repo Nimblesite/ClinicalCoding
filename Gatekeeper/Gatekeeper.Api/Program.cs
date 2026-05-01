@@ -658,6 +658,8 @@ authzGroup.MapPost(
     }
 );
 
+app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "Gatekeeper.Api" }));
+
 app.Run();
 
 namespace Gatekeeper.Api

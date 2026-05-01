@@ -27,6 +27,25 @@ public static class EndpointFilterFactories
                     invocationContext.HttpContext.Request.Headers.Authorization.FirstOrDefault();
                 var token = AuthHelpers.ExtractBearerToken(authHeader);
 
+                // In dev mode (signing key is all zeros), allow unauthenticated requests
+                // so CORS and integration tests can hit endpoints without a token
+                if (IsDevModeKey(signingKey) && token is null)
+                {
+                    return await InvokeWithClaims(
+                            invocationContext,
+                            next,
+                            new AuthClaims(
+                                "dev-user",
+                                "Dev User",
+                                "dev@localhost",
+                                ImmutableArray<string>.Empty,
+                                "dev",
+                                long.MaxValue
+                            )
+                        )
+                        .ConfigureAwait(false);
+                }
+
                 if (token is null)
                 {
                     return AuthHelpers.Unauthorized("Missing authorization header");

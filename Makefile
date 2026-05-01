@@ -250,20 +250,19 @@ start-stack: db-migrate
 	DB_PASSWORD=$(DB_PASSWORD) docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml up -d --build --no-deps app dashboard
 	@echo "==> Waiting for all services to respond (any HTTP response = ready)..."
 	@for url in \
-	    http://localhost:5002/auth/login/begin \
-	    http://localhost:5080/fhir/Patient/ \
+	    http://localhost:5002/health \
+	    http://localhost:5080/health \
 	    http://localhost:5001/health \
 	    http://localhost:5090/health \
 	    http://localhost:8000/health; do \
 	  echo "  Waiting for $$url..."; \
 	  for i in $$(seq 1 90); do \
-	    code=$$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 "$$url" 2>/dev/null || echo "000"); \
-	    if [ "$$code" != "000" ]; then \
-	      echo "  $$url ready (HTTP $$code)"; \
+	    if curl -sf "$$url" > /dev/null 2>&1; then \
+	      echo "  $$url ready"; \
 	      break; \
 	    fi; \
 	    if [ "$$i" = "90" ]; then \
-	      echo "FAIL: $$url did not respond after 90 attempts"; \
+	      echo "FAIL: $$url did not become healthy after 90 attempts"; \
 	      docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml logs app; \
 	      exit 1; \
 	    fi; \
