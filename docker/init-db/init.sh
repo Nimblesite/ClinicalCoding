@@ -19,10 +19,13 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     GRANT ALL PRIVILEGES ON DATABASE icd10 TO icd10;
 EOSQL
 
-# Grant schema privileges
+# Grant schema privileges and default privileges so tables created by superuser are accessible
 for db in gatekeeper clinical scheduling icd10; do
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db" <<-EOSQL
         GRANT ALL ON SCHEMA public TO $db;
+        -- Tables created by the postgres superuser (e.g. via db-migrate) are reassigned to $db
+        ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO $db;
+        ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO $db;
 EOSQL
 done
 

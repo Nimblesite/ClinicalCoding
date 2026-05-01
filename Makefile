@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-check nuke _reclaim-ports
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -103,6 +103,7 @@ test: db-migrate
 	  fi; \
 	done
 	@$(MAKE) dashboard-ts-test
+	@$(MAKE) dashboard-ts-e2e
 
 ## lint: Run all linters/analyzers (read-only). Does NOT format.
 lint: db-migrate
@@ -208,6 +209,12 @@ db-migrate: db-up
 	  --output "$(PG_BASE_URL);Database=scheduling" --provider postgres
 	dotnet DataProviderMigrate --schema ICD10/ICD10.Api/icd10-schema.yaml \
 	  --output "$(PG_BASE_URL);Database=icd10" --provider postgres
+	@echo "==> Reassigning table ownership and granting privileges to service users..."
+	@for db in gatekeeper clinical scheduling icd10; do \
+	  PGPASSWORD=$(DB_PASSWORD) psql -h $(DB_HOST) -p $(DB_PORT) -U postgres -d $$db -q \
+	    -c "REASSIGN OWNED BY postgres TO $$db;" \
+	    > /dev/null 2>&1 || true; \
+	done
 
 # =============================================================================
 # RUN THE STACK
@@ -253,9 +260,15 @@ dashboard-ts-build:
 dashboard-ts-lint:
 	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm typecheck && pnpm lint && pnpm format
 
-## dashboard-ts-test: Run unit tests for the new TypeScript dashboard
+## dashboard-ts-test: Run unit tests with coverage for the new TypeScript dashboard
 dashboard-ts-test:
 	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm test
+
+## dashboard-ts-e2e: Run Playwright e2e tests (requires all APIs + dashboard running on default ports)
+##   Set E2E_CLINICAL_URL, E2E_SCHEDULING_URL, E2E_GATEKEEPER_URL, E2E_ICD10_URL, E2E_DASHBOARD_URL
+##   to override the default localhost endpoints.
+dashboard-ts-e2e:
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm e2e
 
 ## dashboard-ts-check: Typecheck + lint + test + build for the new TypeScript dashboard
 dashboard-ts-check:

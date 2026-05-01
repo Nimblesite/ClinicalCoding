@@ -15,8 +15,9 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load, and 5 test projects with coverage require ~20 min.
-    timeout-minutes: 30
+    # TIMEOUT EXCEPTION: Postgres startup, DB migration, embedding service model load, 5 test projects with coverage,
+    # 4 API processes, dashboard dev server, and Playwright e2e suite require ~35 min.
+    timeout-minutes: 45
     env:
       DB_PASSWORD: changeme
       TEST_POSTGRES_CONNECTION: Host=localhost;Database=postgres;Username=postgres;Password=changeme
@@ -75,6 +76,52 @@ jobs:
       - name: Test
         run: make test
 
+      - name: Install Playwright browsers
+        run: cd Dashboard/dashboard-ts && pnpm exec playwright install --with-deps chromium
+
+      - name: Start APIs for e2e tests
+        run: |
+          dotnet build --configuration Release --no-restore
+          ConnectionStrings__Postgres="Host=localhost;Database=gatekeeper;Username=postgres;Password=changeme" \
+            dotnet run --no-build --project Gatekeeper/Gatekeeper.Api/Gatekeeper.Api.csproj \
+            --no-launch-profile --urls "http://localhost:5002" &
+          ConnectionStrings__Postgres="Host=localhost;Database=clinical;Username=postgres;Password=changeme" \
+            dotnet run --no-build --project Clinical/Clinical.Api/Clinical.Api.csproj \
+            --no-launch-profile --urls "http://localhost:5080" &
+          ConnectionStrings__Postgres="Host=localhost;Database=scheduling;Username=postgres;Password=changeme" \
+            dotnet run --no-build --project Scheduling/Scheduling.Api/Scheduling.Api.csproj \
+            --no-launch-profile --urls "http://localhost:5001" &
+          ConnectionStrings__Postgres="Host=localhost;Database=icd10;Username=postgres;Password=changeme" \
+            dotnet run --no-build --project ICD10/ICD10.Api/ICD10.Api.csproj \
+            --no-launch-profile --urls "http://localhost:5090" &
+          # Wait for all 4 APIs to be healthy
+          for url in http://localhost:5002/health http://localhost:5080/health http://localhost:5001/health http://localhost:5090/health; do
+            for i in $(seq 1 60); do
+              if curl -sf "$url" > /dev/null; then
+                echo "$url ready"
+                break
+              fi
+              sleep 2
+            done
+          done
+
+      - name: Start dashboard dev server for e2e
+        run: |
+          cd Dashboard/dashboard-ts
+          pnpm dev --host 0.0.0.0 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5173 > /dev/null; then
+              echo "Dashboard ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Dashboard failed to start"
+          exit 1
+
+      - name: E2E tests (Playwright)
+        run: make dashboard-ts-e2e
+
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         if: always()
@@ -82,6 +129,15 @@ jobs:
           name: coverage-report
           path: |
             TestResults/**/coverage.*
+            Dashboard/dashboard-ts/coverage/**
+          retention-days: 7
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: Dashboard/dashboard-ts/playwright-report/
           retention-days: 7
 
       - name: Build
