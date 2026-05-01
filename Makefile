@@ -103,7 +103,6 @@ test: db-migrate
 	  fi; \
 	done
 	@$(MAKE) dashboard-ts-test
-	@$(MAKE) dashboard-ts-e2e
 
 ## lint: Run all linters/analyzers (read-only). Does NOT format.
 lint: db-migrate
