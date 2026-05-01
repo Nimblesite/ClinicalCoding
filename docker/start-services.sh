@@ -55,26 +55,12 @@ sleep 10
 
 # Import ICD-10 data if not already imported
 echo "Checking ICD-10 data..."
-ICD10_HEALTH=$(curl -s http://localhost:5090/health 2>/dev/null || echo '{"Status":"error"}')
+ICD10_HEALTH=$(curl -s http://localhost:5090/health 2>/dev/null || echo '{"CodesLoaded":0}')
+CODES_LOADED=$(echo "$ICD10_HEALTH" | grep -o '"CodesLoaded":[0-9]*' | grep -o '[0-9]*' || echo "0")
 
-# Check for embeddings via direct database query
-EMBEDDING_COUNT=$(PGPASSWORD=changeme psql -h db -U postgres -d icd10 -t -c "SELECT COUNT(*) FROM icd10_code_embedding;" 2>/dev/null | tr -d ' ' || echo "0")
-CODE_COUNT=$(PGPASSWORD=changeme psql -h db -U postgres -d icd10 -t -c "SELECT COUNT(*) FROM icd10_code;" 2>/dev/null | tr -d ' ' || echo "0")
+echo "  Codes loaded: $CODES_LOADED"
 
-echo "  Codes loaded: $CODE_COUNT"
-echo "  Embeddings: $EMBEDDING_COUNT"
-
-NEED_IMPORT=false
-
-if echo "$ICD10_HEALTH" | grep -q "unhealthy"; then
-    echo "ICD-10 codes not loaded - need full import"
-    NEED_IMPORT=true
-elif [ "$EMBEDDING_COUNT" = "0" ] && [ "$CODE_COUNT" != "0" ]; then
-    echo "ICD-10 codes loaded but no embeddings - need to generate embeddings"
-    NEED_IMPORT=true
-fi
-
-if [ "$NEED_IMPORT" = "true" ]; then
+if [ "${CODES_LOADED:-0}" = "0" ]; then
     echo "Starting ICD-10 import from CDC..."
     echo "This will take several minutes (downloading + generating embeddings)..."
     cd /app

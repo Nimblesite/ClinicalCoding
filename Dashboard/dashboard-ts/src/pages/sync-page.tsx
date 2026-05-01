@@ -16,8 +16,8 @@ interface SyncRecord {
 interface SyncChange {
   readonly Version: number;
   readonly Operation: number;
-  readonly EntityType: string;
-  readonly EntityId: string;
+  readonly TableName: string;
+  readonly PkValue: string;
   readonly Timestamp: string;
 }
 
@@ -63,8 +63,8 @@ export const SyncPage = (): ReactElement => {
       Id: `clinical-${String(c.Version)}`,
       Service: 'clinical',
       Operation: c.Operation,
-      EntityType: c.EntityType,
-      EntityId: c.EntityId,
+      EntityType: c.TableName,
+      EntityId: c.PkValue,
       Timestamp: c.Timestamp,
       Version: c.Version,
     }));
@@ -72,8 +72,8 @@ export const SyncPage = (): ReactElement => {
       Id: `scheduling-${String(c.Version)}`,
       Service: 'scheduling',
       Operation: c.Operation,
-      EntityType: c.EntityType,
-      EntityId: c.EntityId,
+      EntityType: c.TableName,
+      EntityId: c.PkValue,
       Timestamp: c.Timestamp,
       Version: c.Version,
     }));
