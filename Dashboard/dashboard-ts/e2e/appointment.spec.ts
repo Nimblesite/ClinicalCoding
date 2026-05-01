@@ -106,8 +106,7 @@ test.describe('Appointment E2E Tests', () => {
     await page.click('text=Appointments');
     await page.waitForSelector(`text=${uniqueServiceType}`, { timeout: 10000 });
 
-    const editButton = await page.locator(`tr:has-text('${uniqueServiceType}') .btn-secondary`)
-      .first;
+    const editButton = page.locator(`tr:has-text('${uniqueServiceType}') .btn-secondary`).first();
     expect(editButton).toBeTruthy();
     await editButton.click();
 

@@ -27,5 +27,6 @@
       "include": "[ICD10.Cli]*",
       "threshold": 67
     }
-  }
+  },
+  "_dashboard_ts_note": "TS unit test thresholds enforced in vitest.config.ts (scoped to src/auth + src/api/client.ts). Page/component coverage comes from Playwright e2e."
 }

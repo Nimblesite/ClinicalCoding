@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-check nuke _reclaim-ports
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-stack start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports _reclaim-e2e _ensure-embedding-service
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -56,7 +56,7 @@ TEST_PROJECTS = \
 ##   - Stops at the first failing assembly across the suite (set -e)
 ##   - After each project, checks coverage against threshold from $(COVERAGE_THRESHOLDS_FILE)
 ##     and fails immediately if below.
-test: db-migrate
+test: db-migrate _ensure-embedding-service
 	@echo "==> Testing (fail-fast)..."
 	@command -v jq >/dev/null 2>&1 || { echo "FAIL: jq is required (brew install jq / apt-get install jq)"; exit 1; }
 	@if [ ! -f "$(COVERAGE_THRESHOLDS_FILE)" ]; then \
@@ -103,6 +103,7 @@ test: db-migrate
 	  fi; \
 	done
 	@$(MAKE) dashboard-ts-test
+	@$(MAKE) dashboard-ts-e2e
 
 ## lint: Run all linters/analyzers (read-only). Does NOT format.
 lint: db-migrate
@@ -149,7 +150,7 @@ nuke: clean
 	@echo "==> Nuked. Run 'make start-docker' for a cold start."
 
 ## ci: fmt-check + lint + test + build (full CI simulation)
-ci:
+ci: _reclaim-ports _reclaim-e2e
 	$(MAKE) fmt CHECK=1
 	$(MAKE) lint
 	$(MAKE) test
@@ -208,6 +209,12 @@ db-migrate: db-up
 	  --output "$(PG_BASE_URL);Database=scheduling" --provider postgres
 	dotnet DataProviderMigrate --schema ICD10/ICD10.Api/icd10-schema.yaml \
 	  --output "$(PG_BASE_URL);Database=icd10" --provider postgres
+	@echo "==> Reassigning table ownership and granting privileges to service users..."
+	@for db in gatekeeper clinical scheduling icd10; do \
+	  PGPASSWORD=$(DB_PASSWORD) psql -h $(DB_HOST) -p $(DB_PORT) -U postgres -d $$db -q \
+	    -c "REASSIGN OWNED BY postgres TO $$db;" \
+	    > /dev/null 2>&1 || true; \
+	done
 
 # =============================================================================
 # RUN THE STACK
@@ -234,6 +241,65 @@ _reclaim-ports:
 	  fi; \
 	done
 
+## _reclaim-e2e: Kill stale dashboard Playwright runners and remove stale artifacts
+_reclaim-e2e:
+	@echo "==> Reclaiming dashboard E2E runners and artifacts"
+	@pids=$$(ps -axo pid=,command= | awk '(/pnpm exec playwright test/ || /@playwright\/test\/cli\.js test/ || /Dashboard\/dashboard-ts\/node_modules\/.*playwright.*process\.js/) && !/awk/ {print $$1}' | sort -u); \
+	if [ -n "$$pids" ]; then \
+	  echo "  killing Playwright PIDs: $$pids"; \
+	  kill -9 $$pids 2>/dev/null || true; \
+	fi
+	@rm -rf Dashboard/dashboard-ts/test-results Dashboard/dashboard-ts/playwright-report
+
+## _ensure-embedding-service: Start the real ICD-10 embedding service required by RAG E2E tests
+_ensure-embedding-service:
+	@echo "==> Ensuring ICD-10 embedding service is healthy on :8000"
+	@if curl -sf http://localhost:8000/health >/dev/null 2>&1; then \
+	  echo "Embedding service ready"; \
+	else \
+	  echo "Starting embedding service container..."; \
+	  cd ICD10/embedding-service && docker compose up -d --build; \
+	  for i in $$(seq 1 120); do \
+	    if curl -sf http://localhost:8000/health >/dev/null 2>&1; then \
+	      echo "Embedding service ready"; \
+	      exit 0; \
+	    fi; \
+	    sleep 2; \
+	  done; \
+	  echo "FAIL: embedding service did not become healthy on :8000"; \
+	  cd ICD10/embedding-service && docker compose logs --tail=120; \
+	  exit 1; \
+	fi
+
+## start-stack: Build and start the app + dashboard services from docker-compose.yml.
+##   Reclaims stale default-port listeners before starting only the app
+##   (all APIs + embedding) and dashboard containers, then waits for health endpoints.
+start-stack: _reclaim-ports db-migrate
+	@echo "==> Starting app + dashboard via docker compose (forced rebuild)..."
+	DB_PASSWORD=$(DB_PASSWORD) docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml up -d --build --no-deps app dashboard
+	@echo "==> Waiting for all services to respond (any HTTP response = ready)..."
+	@for url in \
+	    http://localhost:5002/health \
+	    http://localhost:5080/health \
+	    http://localhost:5001/health \
+	    http://localhost:5090/health \
+	    http://localhost:8000/health; do \
+	  echo "  Waiting for $$url..."; \
+	  for i in $$(seq 1 90); do \
+	    if curl -sf "$$url" > /dev/null 2>&1; then \
+	      echo "  $$url ready"; \
+	      break; \
+	    fi; \
+	    if [ "$$i" = "90" ]; then \
+	      echo "FAIL: $$url did not become healthy after 90 attempts"; \
+	      docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml logs app; \
+	      exit 1; \
+	    fi; \
+	    sleep 2; \
+	  done; \
+	done
+	@echo "==> Full stack ready."
+
 ## resume-docker: Start the existing docker stack without rebuilding or reclaiming ports.
 ##   Use this to bring containers back up after they were stopped. No builds, no
 ##   port-killing, no data loss -- just `docker compose up -d` on whatever is there.
@@ -253,9 +319,15 @@ dashboard-ts-build:
 dashboard-ts-lint:
 	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm typecheck && pnpm lint && pnpm format
 
-## dashboard-ts-test: Run unit tests for the new TypeScript dashboard
+## dashboard-ts-test: Run unit tests with coverage for the new TypeScript dashboard
 dashboard-ts-test:
 	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm test
+
+## dashboard-ts-e2e: Rebuild/start default stack, then run Playwright e2e tests
+##   Set E2E_CLINICAL_URL, E2E_SCHEDULING_URL, E2E_GATEKEEPER_URL, E2E_ICD10_URL, E2E_DASHBOARD_URL
+##   to override the default localhost endpoints.
+dashboard-ts-e2e: _reclaim-e2e start-stack
+	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm e2e
 
 ## dashboard-ts-check: Typecheck + lint + test + build for the new TypeScript dashboard
 dashboard-ts-check:
@@ -395,7 +467,7 @@ export START_LOCAL_RUNNER
 ## start-local: Run all APIs locally against the docker Postgres dev DB
 ##   Builds API projects, installs dashboard packages, then runs everything in
 ##   the foreground with prefixed log output. Ctrl+C cleans up all children.
-start-local: db-up
+start-local: _reclaim-ports db-up
 	@echo "==> Setting up Python environment..."
 	@if [ ! -d ICD10/.venv ]; then python3 -m venv ICD10/.venv; fi
 	@ICD10/.venv/bin/pip install -q -r ICD10/embedding-service/requirements.txt psycopg2-binary click requests

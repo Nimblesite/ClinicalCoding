@@ -238,5 +238,7 @@
 .tile-cta.on-light { background: var(--primary); color: var(--on-primary); }
 .tile-muted:hover .tile-cta.on-light { background: var(--primary-container); }
 
-/* Legacy quick actions kept off-screen for compatibility with e2e test labels. */
-.quick-actions-legacy { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.quick-actions-legacy {
+  display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center;
+}
+.quick-actions-legacy .btn { min-height: 44px; }

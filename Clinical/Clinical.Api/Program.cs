@@ -818,6 +818,8 @@ app.MapGet(
         )
     );
 
+app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "Clinical.Api" }));
+
 app.Run();
 
 static object BuildSyncRecordsResponse(

@@ -3,6 +3,8 @@ import { useMemo, useState, type ReactElement } from 'react';
 import { apiFetch } from '../api/client';
 import { CLINICAL_API, SCHEDULING_API } from '../api/config';
 
+const SYNC_CHANGE_LIMIT = 10_000;
+
 interface SyncRecord {
   readonly Id: string;
   readonly Service: 'clinical' | 'scheduling';
@@ -16,16 +18,20 @@ interface SyncRecord {
 interface SyncChange {
   readonly Version: number;
   readonly Operation: number;
-  readonly EntityType: string;
-  readonly EntityId: string;
+  readonly TableName?: string;
+  readonly PkValue?: string;
   readonly Timestamp: string;
 }
 
 const fetchClinicalChanges = async (): Promise<SyncChange[]> =>
-  apiFetch<SyncChange[]>(`${CLINICAL_API}/sync/changes?fromVersion=0&limit=100`);
+  apiFetch<SyncChange[]>(
+    `${CLINICAL_API}/sync/changes?fromVersion=0&limit=${String(SYNC_CHANGE_LIMIT)}`,
+  );
 
 const fetchSchedulingChanges = async (): Promise<SyncChange[]> =>
-  apiFetch<SyncChange[]>(`${SCHEDULING_API}/sync/changes?fromVersion=0&limit=100`);
+  apiFetch<SyncChange[]>(
+    `${SCHEDULING_API}/sync/changes?fromVersion=0&limit=${String(SYNC_CHANGE_LIMIT)}`,
+  );
 
 const operationLabel = (op: number): string => {
   switch (op) {
@@ -63,8 +69,8 @@ export const SyncPage = (): ReactElement => {
       Id: `clinical-${String(c.Version)}`,
       Service: 'clinical',
       Operation: c.Operation,
-      EntityType: c.EntityType,
-      EntityId: c.EntityId,
+      EntityType: c.TableName ?? '',
+      EntityId: c.PkValue ?? '',
       Timestamp: c.Timestamp,
       Version: c.Version,
     }));
@@ -72,8 +78,8 @@ export const SyncPage = (): ReactElement => {
       Id: `scheduling-${String(c.Version)}`,
       Service: 'scheduling',
       Operation: c.Operation,
-      EntityType: c.EntityType,
-      EntityId: c.EntityId,
+      EntityType: c.TableName ?? '',
+      EntityId: c.PkValue ?? '',
       Timestamp: c.Timestamp,
       Version: c.Version,
     }));
@@ -85,7 +91,9 @@ export const SyncPage = (): ReactElement => {
     if (actionFilter !== 'all' && String(r.Operation) !== actionFilter) return false;
     if (search !== '') {
       const q = search.toLowerCase();
-      if (!r.EntityType.toLowerCase().includes(q) && !r.EntityId.toLowerCase().includes(q)) {
+      const entityType = r.EntityType.toLowerCase();
+      const entityId = r.EntityId.toLowerCase();
+      if (!entityType.includes(q) && !entityId.includes(q)) {
         return false;
       }
     }

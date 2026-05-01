@@ -77,7 +77,7 @@ export const DashboardPage = (): ReactElement => {
       </header>
 
       <div className="kpi-grid">
-        <article className="kpi-card">
+        <article className="kpi-card metric-card">
           <div className="kpi-head">
             <p className="kpi-label">Top Treatment</p>
             <span className="material-symbols-outlined kpi-icon primary">analytics</span>
@@ -96,7 +96,7 @@ export const DashboardPage = (): ReactElement => {
           </div>
         </article>
 
-        <article className="kpi-card">
+        <article className="kpi-card metric-card">
           <div className="kpi-head">
             <p className="kpi-label">Satisfaction Rate</p>
             <span className="material-symbols-outlined kpi-icon tertiary">sentiment_satisfied</span>
@@ -116,7 +116,7 @@ export const DashboardPage = (): ReactElement => {
           </div>
         </article>
 
-        <article className="kpi-card">
+        <article className="kpi-card metric-card">
           <div className="kpi-head">
             <p className="kpi-label">Total Patients</p>
             <span className="material-symbols-outlined kpi-icon secondary">group</span>
@@ -135,7 +135,7 @@ export const DashboardPage = (): ReactElement => {
           </div>
         </article>
 
-        <article className="kpi-card">
+        <article className="kpi-card metric-card">
           <div className="kpi-head">
             <p className="kpi-label">Appointments</p>
             <span className="material-symbols-outlined kpi-icon primary">bookmark_check</span>

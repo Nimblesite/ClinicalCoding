@@ -63,8 +63,8 @@ const MODE_OPTIONS: readonly ModeOption[] = [
 const toRowsFromIcd10 = (codes: Icd10Code[]): ResultRow[] =>
   codes.map((c) => ({
     code: c.Code,
-    title: c.Title,
-    description: c.Description,
+    title: c.Title ?? c.ShortDescription ?? c.Code,
+    description: c.Description ?? c.LongDescription ?? c.ShortDescription ?? '',
     source: 'ICD-10-AM',
   }));
 
@@ -100,7 +100,8 @@ const ResultCard = ({
   row,
   rowKey,
 }: ResultCardProps): ReactElement => {
-  const hasDescription = row.description !== '' && row.description !== row.title;
+  const detailDescription = row.description === '' ? row.title : row.description;
+  const hasPreviewDescription = row.description !== '' && row.description !== row.title;
   const scorePercent = row.score === undefined ? undefined : Math.round(row.score * 100);
   const scoreLabel = scorePercent === undefined ? '' : `${String(scorePercent)}%`;
 
@@ -116,7 +117,9 @@ const ResultCard = ({
 
         <div className="coding-result-body">
           <h3 className="coding-result-title">{row.title}</h3>
-          {hasDescription ? <p className="coding-result-description">{row.description}</p> : null}
+          {hasPreviewDescription ? (
+            <p className="coding-result-description">{row.description}</p>
+          ) : null}
         </div>
 
         <div className="coding-result-actions">
@@ -171,12 +174,10 @@ const ResultCard = ({
               <dt>Title</dt>
               <dd>{row.title}</dd>
             </div>
-            {hasDescription ? (
-              <div>
-                <dt>Description</dt>
-                <dd>{row.description}</dd>
-              </div>
-            ) : null}
+            <div>
+              <dt>Description</dt>
+              <dd>{detailDescription}</dd>
+            </div>
             {scorePercent === undefined ? null : (
               <div>
                 <dt>Match score</dt>
@@ -244,7 +245,11 @@ const SearchControls = ({
           data-testid="coding-search-input"
           className="search-field"
           type="text"
-          placeholder={mode === 'keyword' ? 'e.g. chest pain' : 'e.g. R07.4'}
+          placeholder={
+            mode === 'keyword'
+              ? 'Search by code or diagnosis, e.g. chest pain'
+              : 'Enter exact ICD-10 code, e.g. R07.4'
+          }
           value={query}
           onChange={(e) => {
             onQueryChange(e.target.value);
@@ -254,22 +259,20 @@ const SearchControls = ({
           }}
         />
       )}
-      {mode === 'semantic' ? (
-        <button
-          type="button"
-          className="search-submit"
-          onClick={onSearch}
-          disabled={isBusy || query.trim() === ''}
-        >
-          {isBusy ? (
-            <>
-              <span className="spinner" aria-hidden="true" /> Searching
-            </>
-          ) : (
-            'Search'
-          )}
-        </button>
-      ) : null}
+      <button
+        type="button"
+        className="search-submit"
+        onClick={onSearch}
+        disabled={isBusy || query.trim() === ''}
+      >
+        {isBusy ? (
+          <>
+            <span className="spinner" aria-hidden="true" /> Searching
+          </>
+        ) : (
+          'Search'
+        )}
+      </button>
     </div>
 
     <label className="achi-toggle">
@@ -379,7 +382,7 @@ export const ClinicalCodingPage = (): ReactElement => {
   const resultLabel = mode === 'lookup' ? 'Result' : 'Results';
 
   return (
-    <section className="page clinical-coding">
+    <section className="page clinical-coding clinical-coding-page">
       <div className="page-header">
         <div>
           <h2 className="welcome-title">Diagnostic Coding Search</h2>

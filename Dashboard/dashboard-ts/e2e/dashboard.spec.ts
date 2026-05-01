@@ -8,6 +8,7 @@ import {
   DashboardUrl,
   expect,
   GatekeeperUrl,
+  generateTestToken,
   Page,
   SchedulingUrl,
   test,
@@ -890,7 +891,7 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.waitForSelector('.sidebar', { timeout: 20000 });
 
     // User menu button should be visible in header
-    const userMenuButton = await page.locator("[data-testid='user-menu-button']").first;
+    const userMenuButton = page.locator("[data-testid='user-menu-button']").first();
     expect(userMenuButton).toBeTruthy();
 
     // Click the user menu button to open dropdown
@@ -900,7 +901,7 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.waitForSelector("[data-testid='user-dropdown']", { timeout: 5000 });
 
     // Sign out button should be visible in the dropdown
-    const signOutButton = await page.locator("[data-testid='logout-button']").first;
+    const signOutButton = page.locator("[data-testid='logout-button']").first();
     expect(signOutButton).toBeTruthy();
 
     const isVisible = await signOutButton.isVisible();
@@ -937,17 +938,20 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 
-  test('Gatekeeper API logout revokes token', async ({ request }) => {
-    // Test 1: Without a Bearer token, should return 401 Unauthorized
-    const unauthResponse = await request.post(`${GatekeeperUrl}/auth/logout`, {
+  test('Gatekeeper API logout revokes token', async ({ playwright, request }) => {
+    const unauthenticatedRequest = await playwright.request.newContext();
+    const unauthResponse = await unauthenticatedRequest.post(`${GatekeeperUrl}/auth/logout`, {
       headers: { 'Content-Type': 'application/json' },
       data: {},
     });
+    await unauthenticatedRequest.dispose();
     expect(unauthResponse.status()).toBe(401);
 
-    // Test 2: With a valid Bearer token, should return 204 NoContent (logout succeeds)
-    // Note: The request fixture doesn't have auth by default, so we need to use a different approach
-    // or the API may allow it in dev mode
+    const authResponse = await request.post(`${GatekeeperUrl}/auth/logout`, {
+      headers: { 'Content-Type': 'application/json' },
+      data: {},
+    });
+    expect(authResponse.status()).toBe(204);
   });
 
   test('User menu displays user initials and name in dropdown', async ({ browser }) => {
@@ -1040,45 +1044,3 @@ test.describe('Dashboard Core E2E Tests', () => {
     await page.close();
   });
 });
-
-// Helper function for generating tokens
-function generateTestToken(
-  userId: string = 'e2e-test-user',
-  displayName: string = 'E2E Test User',
-  email: string = 'e2etest@example.com',
-): string {
-  const signingKey = Buffer.alloc(32, 0);
-
-  const base64UrlEncode = (input: string): string => {
-    return Buffer.from(input)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-  };
-
-  const computeHmacSignature = (header: string, payload: string, key: Buffer): string => {
-    const crypto = require('crypto');
-    const data = Buffer.from(`${header}.${payload}`);
-    const hmac = crypto.createHmac('sha256', key);
-    hmac.update(data);
-    return base64UrlEncode(hmac.digest().toString());
-  };
-
-  const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-
-  const expiration = Math.floor(Date.now() / 1000) + 3600;
-  const payload = base64UrlEncode(
-    JSON.stringify({
-      sub: userId,
-      name: displayName,
-      email,
-      jti: `${Date.now()}-${Math.random()}`,
-      exp: expiration,
-      roles: ['admin', 'user'],
-    }),
-  );
-
-  const signature = computeHmacSignature(header, payload, signingKey);
-  return `${header}.${payload}.${signature}`;
-}

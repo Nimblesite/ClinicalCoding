@@ -13,8 +13,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json-summary'],
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx'],
+      include: ['src/auth/**/*.{ts,tsx}', 'src/api/client.ts'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**'],
+      thresholds: {
+        lines: 60,
+        functions: 50,
+        branches: 55,
+        statements: 60,
+      },
     },
   },
 });
