@@ -1,10 +1,9 @@
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Gatekeeper.Api;
 
 /// <summary>
-/// JWT token generation and validation service.
+/// JWT token generation and validation.
 /// </summary>
 public static class TokenService
 {
@@ -24,17 +23,13 @@ public static class TokenService
     /// <summary>Failed token validation result.</summary>
     public sealed record TokenValidationError(string Reason);
 
-    /// <summary>
-    /// Extracts the token from a Bearer authorization header.
-    /// </summary>
+    /// <summary>Extracts the token from a Bearer authorization header.</summary>
     public static string? ExtractBearerToken(string? authHeader) =>
         authHeader?.StartsWith("Bearer ", StringComparison.Ordinal) == true
             ? authHeader["Bearer ".Length..]
             : null;
 
-    /// <summary>
-    /// Creates a JWT token for the given user.
-    /// </summary>
+    /// <summary>Creates a JWT for the given user.</summary>
     public static string CreateToken(
         string userId,
         string? displayName,
@@ -51,31 +46,18 @@ public static class TokenService
         var header = Base64UrlEncode(
             JsonSerializer.SerializeToUtf8Bytes(new { alg = "HS256", typ = "JWT" })
         );
-
         var payload = Base64UrlEncode(
             JsonSerializer.SerializeToUtf8Bytes(
-                new
-                {
-                    sub = userId,
-                    name = displayName,
-                    email,
-                    roles,
-                    jti,
-                    iat = now.ToUnixTimeSeconds(),
-                    exp = exp.ToUnixTimeSeconds(),
-                }
+                new { sub = userId, name = displayName, email, roles, jti, iat = now.ToUnixTimeSeconds(), exp = exp.ToUnixTimeSeconds() }
             )
         );
-
         var signature = ComputeSignature(header, payload, signingKey);
         return $"{header}.{payload}.{signature}";
     }
 
-    /// <summary>
-    /// Validates a JWT token.
-    /// </summary>
+    /// <summary>Validates a JWT token, optionally checking revocation.</summary>
     public static async Task<object> ValidateTokenAsync(
-        NpgsqlConnection conn,
+        IDbConnection conn,
         string token,
         byte[] signingKey,
         bool checkRevocation,
@@ -86,20 +68,13 @@ public static class TokenService
         {
             var parts = token.Split('.');
             if (parts.Length != 3)
-            {
                 return new TokenValidationError("Invalid token format");
-            }
 
             var expectedSignature = ComputeSignature(parts[0], parts[1], signingKey);
-            if (
-                !CryptographicOperations.FixedTimeEquals(
+            if (!CryptographicOperations.FixedTimeEquals(
                     Encoding.UTF8.GetBytes(expectedSignature),
-                    Encoding.UTF8.GetBytes(parts[2])
-                )
-            )
-            {
+                    Encoding.UTF8.GetBytes(parts[2])))
                 return new TokenValidationError("Invalid signature");
-            }
 
             var payloadBytes = Base64UrlDecode(parts[1]);
             using var doc = JsonDocument.Parse(payloadBytes);
@@ -107,39 +82,25 @@ public static class TokenService
 
             var exp = root.GetProperty("exp").GetInt64();
             if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > exp)
-            {
                 return new TokenValidationError("Token expired");
-            }
 
             var jti = root.GetProperty("jti").GetString() ?? string.Empty;
 
-            if (checkRevocation)
-            {
-                var isRevoked = await IsTokenRevokedAsync(conn, jti).ConfigureAwait(false);
-                if (isRevoked)
-                {
-                    return new TokenValidationError("Token revoked");
-                }
-            }
+            if (checkRevocation && await IsTokenRevokedAsync(conn, jti).ConfigureAwait(false))
+                return new TokenValidationError("Token revoked");
 
-            var roles = root.TryGetProperty("roles", out var rolesElement)
-                ? rolesElement.EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToList()
-                : [];
+            var roles = root.TryGetProperty("roles", out var rolesEl)
+                ? rolesEl.EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToList()
+                : (IReadOnlyList<string>)[];
 
-            var claims = new TokenClaims(
+            return new TokenValidationOk(new TokenClaims(
                 UserId: root.GetProperty("sub").GetString() ?? string.Empty,
-                DisplayName: root.TryGetProperty("name", out var nameElem)
-                    ? nameElem.GetString()
-                    : null,
-                Email: root.TryGetProperty("email", out var emailElem)
-                    ? emailElem.GetString()
-                    : null,
+                DisplayName: root.TryGetProperty("name", out var nameEl) ? nameEl.GetString() : null,
+                Email: root.TryGetProperty("email", out var emailEl) ? emailEl.GetString() : null,
                 Roles: roles,
                 Jti: jti,
                 Exp: exp
-            );
-
-            return new TokenValidationOk(claims);
+            ));
         }
         catch (Exception ex)
         {
@@ -148,15 +109,13 @@ public static class TokenService
         }
     }
 
-    /// <summary>
-    /// Revokes a token by JTI using DataProvider generated method.
-    /// </summary>
-    public static async Task RevokeTokenAsync(NpgsqlConnection conn, string jti) =>
-        _ = await conn.RevokeSessionAsync(jti).ConfigureAwait(false);
+    /// <summary>Revokes a token by JTI.</summary>
+    public static async Task RevokeTokenAsync(IDbConnection conn, string jti) =>
+        _ = await DbExtensions.RevokeSessionAdapterAsync(conn, jti).ConfigureAwait(false);
 
-    private static async Task<bool> IsTokenRevokedAsync(NpgsqlConnection conn, string jti)
+    private static async Task<bool> IsTokenRevokedAsync(IDbConnection conn, string jti)
     {
-        var result = await conn.GetSessionRevokedAsync(jti).ConfigureAwait(false);
+        var result = await DbExtensions.GetSessionRevokedAdapterAsync(conn, jti).ConfigureAwait(false);
         return result switch
         {
             GetSessionRevokedOk ok => ok.Value.FirstOrDefault()?.is_revoked == true,
@@ -164,14 +123,13 @@ public static class TokenService
         };
     }
 
-    private static string Base64UrlEncode(byte[] input) =>
-        Convert
-            .ToBase64String(input)
+    internal static string Base64UrlEncode(byte[] input) =>
+        Convert.ToBase64String(input)
             .Replace("+", "-", StringComparison.Ordinal)
             .Replace("/", "_", StringComparison.Ordinal)
             .TrimEnd('=');
 
-    private static byte[] Base64UrlDecode(string input)
+    internal static byte[] Base64UrlDecode(string input)
     {
         var padded = input
             .Replace("-", "+", StringComparison.Ordinal)
@@ -185,7 +143,6 @@ public static class TokenService
     {
         var data = Encoding.UTF8.GetBytes($"{header}.{payload}");
         using var hmac = new HMACSHA256(key);
-        var hash = hmac.ComputeHash(data);
-        return Base64UrlEncode(hash);
+        return Base64UrlEncode(hmac.ComputeHash(data));
     }
 }

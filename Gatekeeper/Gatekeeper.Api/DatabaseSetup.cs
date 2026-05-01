@@ -7,39 +7,39 @@ using InitResult = Outcome.Result<bool, string>;
 namespace Gatekeeper.Api;
 
 /// <summary>
-/// Database initialization and seeding using Migration library.
+/// Database initialization and seeding.
+/// Accepts IDbConnection; casts to NpgsqlConnection at the migration boundary only.
 /// </summary>
 internal static class DatabaseSetup
 {
-    /// <summary>
-    /// Initializes the database schema and seeds default data.
-    /// </summary>
-    public static InitResult Initialize(NpgsqlConnection conn, ILogger logger)
+    /// <summary>Initializes the database schema and seeds default data.</summary>
+    public static InitResult Initialize(IDbConnection conn, ILogger logger)
     {
-        var schemaResult = CreateSchemaFromMigration(conn, logger);
+        var npgsql = conn as NpgsqlConnection
+            ?? throw new InvalidOperationException("DatabaseSetup requires NpgsqlConnection.");
+
+        var schemaResult = CreateSchema(npgsql, logger);
         if (schemaResult is InitError)
             return schemaResult;
 
-        return SeedDefaultData(conn, logger);
+        return SeedDefaultData(npgsql, logger);
     }
 
-    private static InitResult CreateSchemaFromMigration(NpgsqlConnection conn, ILogger logger)
+    private static InitResult CreateSchema(NpgsqlConnection conn, ILogger logger)
     {
-        logger.LogInformation("Creating database schema from gatekeeper-schema.yaml");
-
+        logger.LogInformation("Applying gatekeeper-schema.yaml");
         try
         {
-            // Load schema from YAML (source of truth)
             var yamlPath = Path.Combine(AppContext.BaseDirectory, "gatekeeper-schema.yaml");
             var schema = SchemaYamlSerializer.FromYamlFile(yamlPath);
             PostgresDdlGenerator.MigrateSchema(conn, schema);
-            logger.LogInformation("Created Gatekeeper database schema from YAML");
+            logger.LogInformation("Gatekeeper schema applied");
             return new InitOk(true);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to create Gatekeeper database schema");
-            return new InitError($"Failed to create Gatekeeper database schema: {ex.Message}");
+            logger.LogError(ex, "Schema migration failed");
+            return new InitError($"Schema migration failed: {ex.Message}");
         }
     }
 
@@ -51,76 +51,57 @@ internal static class DatabaseSetup
 
             using var checkCmd = conn.CreateCommand();
             checkCmd.CommandText = "SELECT COUNT(*) FROM gk_role WHERE is_system = true";
-            var count = Convert.ToInt64(checkCmd.ExecuteScalar(), CultureInfo.InvariantCulture);
-
-            if (count > 0)
+            if (Convert.ToInt64(checkCmd.ExecuteScalar(), CultureInfo.InvariantCulture) > 0)
             {
-                logger.LogInformation("Database already seeded, skipping");
+                logger.LogInformation("Database already seeded");
                 return new InitOk(true);
             }
 
             logger.LogInformation("Seeding default roles and permissions");
 
-            ExecuteNonQuery(
-                conn,
-                """
+            Exec(conn, """
                 INSERT INTO gk_role (id, name, description, is_system, created_at)
                 VALUES ('role-admin', 'admin', 'Full system access', true, @now),
-                       ('role-user', 'user', 'Basic authenticated user', true, @now)
-                """,
-                ("@now", now)
-            );
+                       ('role-user',  'user',  'Basic authenticated user', true, @now)
+                """, ("@now", now));
 
-            ExecuteNonQuery(
-                conn,
-                """
+            Exec(conn, """
                 INSERT INTO gk_permission (id, code, resource_type, action, description, created_at)
-                VALUES ('perm-admin-all', 'admin:*', 'admin', '*', 'Full admin access', @now),
-                       ('perm-user-profile', 'user:profile', 'user', 'read', 'View own profile', @now),
-                       ('perm-user-credentials', 'user:credentials', 'user', 'manage', 'Manage own passkeys', @now),
-                       ('perm-patient-read', 'patient:read', 'patient', 'read', 'Read patient records', @now),
-                       ('perm-order-read', 'order:read', 'order', 'read', 'Read order records', @now),
-                       ('perm-sync-read', 'sync:read', 'sync', 'read', 'Read sync data', @now),
-                       ('perm-sync-write', 'sync:write', 'sync', 'write', 'Write sync data', @now)
-                """,
-                ("@now", now)
-            );
+                VALUES ('perm-admin-all',        'admin:*',           'admin',  '*',      'Full admin access',       @now),
+                       ('perm-user-profile',     'user:profile',      'user',   'read',   'View own profile',        @now),
+                       ('perm-user-credentials', 'user:credentials',  'user',   'manage', 'Manage own passkeys',     @now),
+                       ('perm-sync-read',        'sync:read',         'sync',   'read',   'Read sync data',          @now),
+                       ('perm-sync-write',       'sync:write',        'sync',   'write',  'Write sync data',         @now),
+                       ('perm-record-read',      'record:read',       'record', 'read',   'Read any record',         @now),
+                       ('perm-order-read',       'order:read',        'order',  'read',   'Read order records',      @now),
+                       ('perm-patient-read',     'patient:read',      'patient','read',   'Read patient records',    @now)
+                """, ("@now", now));
 
-            ExecuteNonQuery(
-                conn,
-                """
+            Exec(conn, """
                 INSERT INTO gk_role_permission (role_id, permission_id, granted_at)
-                VALUES ('role-admin', 'perm-admin-all', @now),
-                       ('role-admin', 'perm-sync-read', @now),
-                       ('role-admin', 'perm-sync-write', @now),
-                       ('role-user', 'perm-user-profile', @now),
-                       ('role-user', 'perm-user-credentials', @now)
-                """,
-                ("@now", now)
-            );
+                VALUES ('role-admin', 'perm-admin-all',        @now),
+                       ('role-admin', 'perm-sync-read',        @now),
+                       ('role-admin', 'perm-sync-write',       @now),
+                       ('role-user',  'perm-user-profile',     @now),
+                       ('role-user',  'perm-user-credentials', @now)
+                """, ("@now", now));
 
-            logger.LogInformation("Default data seeded successfully");
+            logger.LogInformation("Seed complete");
             return new InitOk(true);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to seed Gatekeeper default data");
-            return new InitError($"Failed to seed Gatekeeper default data: {ex.Message}");
+            logger.LogError(ex, "Seed failed");
+            return new InitError($"Seed failed: {ex.Message}");
         }
     }
 
-    private static void ExecuteNonQuery(
-        NpgsqlConnection conn,
-        string sql,
-        params (string name, object value)[] parameters
-    )
+    private static void Exec(NpgsqlConnection conn, string sql, params (string Name, object Value)[] parameters)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
         foreach (var (name, value) in parameters)
-        {
             cmd.Parameters.AddWithValue(name, value);
-        }
         cmd.ExecuteNonQuery();
     }
 }

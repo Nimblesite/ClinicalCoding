@@ -1,698 +1,333 @@
-#pragma warning disable IDE0037 // Use inferred member name
+#pragma warning disable IDE0037
 
-using System.Text;
-using Gatekeeper.Api;
 using Microsoft.AspNetCore.Http.Json;
 using InitError = Outcome.Result<bool, string>.Error<bool, string>;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// File logging - use LOG_PATH env var or default to /tmp in containers
 var logPath =
     Environment.GetEnvironmentVariable("LOG_PATH")
-    ?? (
-        Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
-            ? "/tmp/gatekeeper.log"
-            : Path.Combine(AppContext.BaseDirectory, "gatekeeper.log")
-    );
+    ?? (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+        ? "/tmp/gatekeeper.log"
+        : Path.Combine(AppContext.BaseDirectory, "gatekeeper.log"));
 builder.Logging.AddFileLogging(logPath);
 
-builder.Services.Configure<JsonOptions>(options =>
-    options.SerializerOptions.PropertyNamingPolicy = null
-);
+builder.Services.Configure<JsonOptions>(o => o.SerializerOptions.PropertyNamingPolicy = null);
+builder.Services.AddCors(o =>
+    o.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
-builder.Services.AddCors(options =>
-    options.AddPolicy(
-        "Dashboard",
-        policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
-    )
-);
-
+// FIDO2
 var serverDomain = builder.Configuration["Fido2:ServerDomain"] ?? "localhost";
-var serverName = builder.Configuration["Fido2:ServerName"] ?? "Gatekeeper";
-var origin = builder.Configuration["Fido2:Origin"] ?? "http://localhost:5173";
-
-builder.Services.AddFido2(options =>
+var serverName   = builder.Configuration["Fido2:ServerName"]   ?? "Gatekeeper";
+var origin       = builder.Configuration["Fido2:Origin"]       ?? "http://localhost:5173";
+builder.Services.AddFido2(o =>
 {
-    options.ServerDomain = serverDomain;
-    options.ServerName = serverName;
-    options.Origins = new HashSet<string> { origin };
-    options.TimestampDriftTolerance = 300000;
+    o.ServerDomain = serverDomain;
+    o.ServerName   = serverName;
+    o.Origins      = new HashSet<string> { origin };
+    o.TimestampDriftTolerance = 300000;
 });
 
+// Database
 var connectionString =
     builder.Configuration.GetConnectionString("Postgres")
-    ?? throw new InvalidOperationException("PostgreSQL connection string 'Postgres' is required");
-
+    ?? throw new InvalidOperationException("Connection string 'Postgres' is required");
 builder.Services.AddSingleton(new DbConfig(connectionString));
 
+// JWT
 var signingKeyBase64 = builder.Configuration["Jwt:SigningKey"];
 var signingKey = string.IsNullOrEmpty(signingKeyBase64)
-    ? new byte[32] // Default dev key (32 zeros) - MUST match Clinical/Scheduling APIs
+    ? new byte[32]
     : Convert.FromBase64String(signingKeyBase64);
 builder.Services.AddSingleton(new JwtConfig(signingKey, TimeSpan.FromHours(24)));
 
+// Auth providers
+builder.Services.AddScoped<PasskeyAuthProvider>();
+builder.Services.AddHttpClient<SupabaseAuthProvider>(c => c.Timeout = TimeSpan.FromSeconds(10));
+var supabaseUrl = builder.Configuration["Supabase:Url"] ?? "https://placeholder.supabase.co";
+var supabaseAud = builder.Configuration["Supabase:Audience"] ?? "authenticated";
+builder.Services.AddSingleton(sp =>
+    new SupabaseAuthProvider(
+        sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(SupabaseAuthProvider)),
+        new Uri(supabaseUrl),
+        supabaseAud,
+        sp.GetRequiredService<ILogger<SupabaseAuthProvider>>()
+    ));
+
 var app = builder.Build();
 
-using (var conn = new NpgsqlConnection(connectionString))
+// Initialise DB
+using (var conn = OpenNpgsqlConnection(connectionString))
 {
-    conn.Open();
-    if (DatabaseSetup.Initialize(conn, app.Logger) is InitError initErr)
-        Environment.FailFast(initErr.Value);
+    if (DatabaseSetup.Initialize(conn, app.Logger) is InitError err)
+        Environment.FailFast(err.Value);
 }
 
-app.UseCors("Dashboard");
+app.UseCors("AllowAll");
+
+// ── /auth ────────────────────────────────────────────────────────────────────
+
+var auth = app.MapGroup("/auth").WithTags("Authentication");
+
+auth.MapPost("/register/begin",
+    async (RegisterBeginRequest req, PasskeyAuthProvider passkey, DbConfig db) =>
+    {
+        using var conn = OpenConnection(db);
+        var result = await passkey.BeginAsync(conn, new AuthBeginRequest(req.Email, req.DisplayName))
+            .ConfigureAwait(false);
+        return result switch
+        {
+            Result<AuthBeginResult, AuthError>.Ok<AuthBeginResult, AuthError> ok =>
+                Results.Ok(new { ok.Value.ChallengeId, OptionsJson = ok.Value.OptionsJson }),
+            Result<AuthBeginResult, AuthError>.Error<AuthBeginResult, AuthError> err =>
+                Results.BadRequest(new { Error = err.Value.Reason }),
+        };
+    });
+
+auth.MapPost("/register/complete",
+    async (RegisterCompleteRequest req, PasskeyAuthProvider passkey, DbConfig db, JwtConfig jwt) =>
+    {
+        using var conn = OpenConnection(db);
+        var result = await passkey.CompleteAsync(
+                conn,
+                new AuthCompleteRequest(req.ChallengeId, req.OptionsJson, req.AttestationResponse, req.DeviceName),
+                jwt)
+            .ConfigureAwait(false);
+        return ToResult(result);
+    });
+
+auth.MapPost("/login/begin",
+    async (PasskeyAuthProvider passkey, DbConfig db) =>
+    {
+        using var conn = OpenConnection(db);
+        var result = await passkey.BeginLoginAsync(conn).ConfigureAwait(false);
+        return result switch
+        {
+            Result<AuthBeginResult, AuthError>.Ok<AuthBeginResult, AuthError> ok =>
+                Results.Ok(new { ok.Value.ChallengeId, OptionsJson = ok.Value.OptionsJson }),
+            Result<AuthBeginResult, AuthError>.Error<AuthBeginResult, AuthError> err =>
+                Results.BadRequest(new { Error = err.Value.Reason }),
+        };
+    });
+
+auth.MapPost("/login/complete",
+    async (LoginCompleteRequest req, PasskeyAuthProvider passkey, DbConfig db, JwtConfig jwt) =>
+    {
+        using var conn = OpenConnection(db);
+        var result = await passkey.CompleteLoginAsync(
+                conn,
+                new AuthCompleteRequest(req.ChallengeId, req.OptionsJson, req.AssertionResponse),
+                jwt)
+            .ConfigureAwait(false);
+        return ToResult(result);
+    });
+
+// Supabase token exchange — fully independent of passkey
+auth.MapPost("/supabase/exchange",
+    async (SupabaseExchangeRequest req, SupabaseAuthProvider supabase, DbConfig db, JwtConfig jwt) =>
+    {
+        if (string.IsNullOrEmpty(supabase.ProviderName) || string.IsNullOrEmpty(req.SupabaseToken))
+            return Results.BadRequest(new { Error = "Missing token" });
+        using var conn = OpenConnection(db);
+        var result = await supabase.ExchangeAsync(conn, req.SupabaseToken, jwt).ConfigureAwait(false);
+        return ToResult(result);
+    });
+
+// Link a Supabase identity to an existing passkey account (or vice-versa).
+// Requires a valid Gatekeeper token (the user must already be authenticated).
+auth.MapPost("/identity/link/supabase",
+    async (LinkSupabaseRequest req, HttpContext ctx, SupabaseAuthProvider supabase, DbConfig db, JwtConfig jwt) =>
+    {
+        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
+        if (string.IsNullOrEmpty(token))
+            return Results.Unauthorized();
+
+        using var conn = OpenConnection(db);
+        var validateResult = await TokenService
+            .ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true)
+            .ConfigureAwait(false);
+        if (validateResult is not TokenService.TokenValidationOk ok)
+            return Results.Unauthorized();
+
+        // Validate the Supabase token and extract the sub
+        var exchangeResult = await supabase.ExchangeAsync(conn, req.SupabaseToken, jwt).ConfigureAwait(false);
+        if (exchangeResult is not Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError>)
+            return Results.BadRequest(new { Error = "Invalid Supabase token" });
+
+        // The exchange already handled identity linking via ResolveUserAsync.
+        // If the Supabase sub resolved to a *different* user we do not merge accounts —
+        // providers are decoupled and account merging is an admin operation.
+        return Results.Ok(new { Linked = true });
+    });
+
+auth.MapGet("/session",
+    async (HttpContext ctx, DbConfig db, JwtConfig jwt) =>
+    {
+        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
+        if (string.IsNullOrEmpty(token))
+            return Results.Unauthorized();
+
+        using var conn = OpenConnection(db);
+        var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true)
+            .ConfigureAwait(false);
+        if (result is not TokenService.TokenValidationOk ok)
+            return Results.Unauthorized();
+
+        return Results.Ok(new
+        {
+            ok.Claims.UserId,
+            ok.Claims.DisplayName,
+            ok.Claims.Email,
+            ok.Claims.Roles,
+            ExpiresAt = DateTimeOffset.FromUnixTimeSeconds(ok.Claims.Exp)
+                .ToString("o", CultureInfo.InvariantCulture),
+        });
+    });
+
+auth.MapPost("/logout",
+    async (HttpContext ctx, DbConfig db, JwtConfig jwt) =>
+    {
+        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
+        if (string.IsNullOrEmpty(token))
+            return Results.Unauthorized();
+
+        using var conn = OpenConnection(db);
+        var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: false)
+            .ConfigureAwait(false);
+        if (result is TokenService.TokenValidationOk ok)
+            await TokenService.RevokeTokenAsync(conn, ok.Claims.Jti).ConfigureAwait(false);
+
+        return Results.NoContent();
+    });
+
+// Dev-only token (returns 404 when a real signing key is configured)
+auth.MapGet("/dev-token",
+    (JwtConfig jwt) =>
+    {
+        if (!IsDevKey(jwt.SigningKey))
+            return Results.NotFound();
+
+        var token = TokenService.CreateToken(
+            "e2e-test-user", "E2E Test User", "e2etest@example.com",
+            ["admin", "user"], jwt.SigningKey, TimeSpan.FromHours(1));
+        return Results.Ok(new { Token = token });
+    });
+
+// ── /authz ───────────────────────────────────────────────────────────────────
+
+var authz = app.MapGroup("/authz").WithTags("Authorization");
+
+authz.MapGet("/check",
+    async (string permission, string? resourceType, string? resourceId, HttpContext ctx, DbConfig db, JwtConfig jwt) =>
+    {
+        var claims = await ValidateRequestAsync(ctx, db, jwt).ConfigureAwait(false);
+        if (claims is null)
+            return Results.Unauthorized();
+
+        using var conn = OpenConnection(db);
+        var (allowed, reason) = await AuthorizationService
+            .CheckPermissionAsync(conn, claims.UserId, permission, resourceType, resourceId, Now())
+            .ConfigureAwait(false);
+        return Results.Ok(new { Allowed = allowed, Reason = reason });
+    });
+
+authz.MapGet("/permissions",
+    async (HttpContext ctx, DbConfig db, JwtConfig jwt) =>
+    {
+        var claims = await ValidateRequestAsync(ctx, db, jwt).ConfigureAwait(false);
+        if (claims is null)
+            return Results.Unauthorized();
+
+        using var conn = OpenConnection(db);
+        var npgsql = (NpgsqlConnection)conn;
+        var result = await npgsql.GetUserPermissionsAsync(claims.UserId, Now()).ConfigureAwait(false);
+        var perms = result is GetUserPermissionsOk ok
+            ? ok.Value.Select(p => new { p.code, p.source_name, p.source_type, p.scope_type, p.scope_value }).ToList()
+            : [];
+        return Results.Ok(new { Permissions = perms });
+    });
+
+authz.MapPost("/evaluate",
+    async (EvaluateRequest request, HttpContext ctx, DbConfig db, JwtConfig jwt) =>
+    {
+        var claims = await ValidateRequestAsync(ctx, db, jwt).ConfigureAwait(false);
+        if (claims is null)
+            return Results.Unauthorized();
+
+        if (request.Checks.Count > 50)
+            return Results.BadRequest(new { Error = "Maximum 50 checks per request" });
+
+        using var conn = OpenConnection(db);
+        var now = Now();
+        var results = new List<object>();
+        foreach (var check in request.Checks)
+        {
+            var (allowed, _) = await AuthorizationService
+                .CheckPermissionAsync(conn, claims.UserId, check.Permission, check.ResourceType, check.ResourceId, now)
+                .ConfigureAwait(false);
+            results.Add(new { check.Permission, check.ResourceId, Allowed = allowed });
+        }
+        return Results.Ok(new { Results = results });
+    });
+
+// ── /health ──────────────────────────────────────────────────────────────────
+
+app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "Gatekeeper.Api" }));
+
+app.Run();
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 static string Now() => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
 
-static NpgsqlConnection OpenConnection(DbConfig db)
+static NpgsqlConnection OpenNpgsqlConnection(string cs)
+{
+    var conn = new NpgsqlConnection(cs);
+    conn.Open();
+    return conn;
+}
+
+static IDbConnection OpenConnection(DbConfig db)
 {
     var conn = new NpgsqlConnection(db.ConnectionString);
     conn.Open();
     return conn;
 }
 
-var authGroup = app.MapGroup("/auth").WithTags("Authentication");
-
-authGroup.MapPost(
-    "/register/begin",
-    async (RegisterBeginRequest request, IFido2 fido2, DbConfig db, ILogger<Program> logger) =>
-    {
-        try
-        {
-            using var conn = OpenConnection(db);
-            var now = Now();
-
-            var existingUser = await conn.GetUserByEmailAsync(request.Email).ConfigureAwait(false);
-            var isNewUser = existingUser is not GetUserByEmailOk { Value.Count: > 0 };
-            var userId = isNewUser
-                ? Guid.NewGuid().ToString()
-                : ((GetUserByEmailOk)existingUser).Value[0].id ?? Guid.NewGuid().ToString();
-
-            if (isNewUser)
-            {
-                await using var tx = await conn.BeginTransactionAsync().ConfigureAwait(false);
-                _ = await tx.Insertgk_userAsync(
-                        userId,
-                        request.DisplayName,
-                        request.Email,
-                        now,
-                        null,
-                        true,
-                        null
-                    )
-                    .ConfigureAwait(false);
-                await tx.CommitAsync().ConfigureAwait(false);
-            }
-
-            var existingCredentials = await conn.GetUserCredentialsAsync(userId!)
-                .ConfigureAwait(false);
-            var excludeCredentials = existingCredentials switch
-            {
-                GetUserCredentialsOk ok => ok
-                    .Value.Where(c => c.id is not null)
-                    .Select(c => new PublicKeyCredentialDescriptor(Base64Url.Decode(c.id!)))
-                    .ToList(),
-                GetUserCredentialsError _ => [],
-            };
-
-            var user = new Fido2User
-            {
-                Id = Encoding.UTF8.GetBytes(userId!),
-                Name = request.Email,
-                DisplayName = request.DisplayName,
-            };
-            // Don't restrict to platform authenticators only - allows security keys too
-            // Chrome on macOS can timeout with Platform-only restriction
-            var authSelector = new AuthenticatorSelection
-            {
-                ResidentKey = ResidentKeyRequirement.Required,
-                UserVerification = UserVerificationRequirement.Required,
-            };
-
-            var options = fido2.RequestNewCredential(
-                new RequestNewCredentialParams
-                {
-                    User = user,
-                    ExcludeCredentials = excludeCredentials,
-                    AuthenticatorSelection = authSelector,
-                    AttestationPreference = AttestationConveyancePreference.None,
-                }
-            );
-            var challengeId = Guid.NewGuid().ToString();
-            var challengeExpiry = DateTime
-                .UtcNow.AddMinutes(5)
-                .ToString("o", CultureInfo.InvariantCulture);
-
-            await using var tx2 = await conn.BeginTransactionAsync().ConfigureAwait(false);
-            _ = await tx2.Insertgk_challengeAsync(
-                    challengeId,
-                    userId,
-                    options.Challenge,
-                    "registration",
-                    now,
-                    challengeExpiry
-                )
-                .ConfigureAwait(false);
-            await tx2.CommitAsync().ConfigureAwait(false);
-
-            return Results.Ok(new { ChallengeId = challengeId, OptionsJson = options.ToJson() });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Registration begin failed");
-            return Results.Problem("Registration failed");
-        }
-    }
-);
-
-authGroup.MapPost(
-    "/login/begin",
-    async (IFido2 fido2, DbConfig db, ILogger<Program> logger) =>
-    {
-        try
-        {
-            using var conn = OpenConnection(db);
-            var now = Now();
-
-            // Discoverable credentials: empty allowCredentials lets browser show all stored passkeys
-            // The credential contains userHandle which we use in /login/complete to identify the user
-            // See: https://webauthn.guide/ and fido2-net-lib docs
-            var options = fido2.GetAssertionOptions(
-                new GetAssertionOptionsParams
-                {
-                    AllowedCredentials = [], // Empty = discoverable credentials
-                    UserVerification = UserVerificationRequirement.Required,
-                }
-            );
-            var challengeId = Guid.NewGuid().ToString();
-            var challengeExpiry = DateTime
-                .UtcNow.AddMinutes(5)
-                .ToString("o", CultureInfo.InvariantCulture);
-
-            await using var tx = await conn.BeginTransactionAsync().ConfigureAwait(false);
-            _ = await tx.Insertgk_challengeAsync(
-                    challengeId,
-                    null, // No user ID - discovered from credential in /login/complete
-                    options.Challenge,
-                    "authentication",
-                    now,
-                    challengeExpiry
-                )
-                .ConfigureAwait(false);
-            await tx.CommitAsync().ConfigureAwait(false);
-
-            return Results.Ok(new { ChallengeId = challengeId, OptionsJson = options.ToJson() });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Login begin failed");
-            return Results.Problem("Login failed");
-        }
-    }
-);
-
-authGroup.MapPost(
-    "/register/complete",
-    async (
-        RegisterCompleteRequest request,
-        IFido2 fido2,
-        DbConfig db,
-        JwtConfig jwtConfig,
-        ILogger<Program> logger
-    ) =>
-    {
-        try
-        {
-            using var conn = OpenConnection(db);
-            var now = Now();
-
-            // Get the stored challenge
-            var challengeResult = await conn.GetChallengeByIdAsync(request.ChallengeId, now)
-                .ConfigureAwait(false);
-            if (challengeResult is not GetChallengeByIdOk { Value.Count: > 0 } challengeOk)
-            {
-                return Results.BadRequest(new { Error = "Challenge not found or expired" });
-            }
-
-            var storedChallenge = challengeOk.Value[0];
-            if (string.IsNullOrEmpty(storedChallenge.user_id))
-            {
-                return Results.BadRequest(new { Error = "Invalid challenge" });
-            }
-
-            // Parse the authenticator response
-            var options = CredentialCreateOptions.FromJson(request.OptionsJson);
-
-            // Verify the attestation
-            var credentialResult = await fido2
-                .MakeNewCredentialAsync(
-                    new MakeNewCredentialParams
-                    {
-                        AttestationResponse = request.AttestationResponse,
-                        OriginalOptions = options,
-                        IsCredentialIdUniqueToUserCallback = async (args, ct) =>
-                        {
-                            var existing = await conn.GetCredentialByIdAsync(
-                                    Base64Url.Encode(args.CredentialId)
-                                )
-                                .ConfigureAwait(false);
-                            return existing is not GetCredentialByIdOk { Value.Count: > 0 };
-                        },
-                    }
-                )
-                .ConfigureAwait(false);
-
-            var cred = credentialResult;
-
-            // Store the credential - use base64url encoding to match WebAuthn spec
-            await using var tx = await conn.BeginTransactionAsync().ConfigureAwait(false);
-            _ = await tx.Insertgk_credentialAsync(
-                    Base64Url.Encode(cred.Id),
-                    storedChallenge.user_id,
-                    cred.PublicKey,
-                    (int?)cred.SignCount,
-                    cred.AaGuid.ToString(),
-                    cred.Type.ToString(),
-                    cred.Transports != null ? string.Join(",", cred.Transports) : null,
-                    cred.AttestationFormat,
-                    now,
-                    null,
-                    request.DeviceName,
-                    cred.IsBackupEligible,
-                    cred.IsBackedUp
-                )
-                .ConfigureAwait(false);
-
-            // Assign default user role
-            _ = await tx.Insertgk_user_roleAsync(
-                    storedChallenge.user_id,
-                    "role-user",
-                    now,
-                    null,
-                    null
-                )
-                .ConfigureAwait(false);
-
-            await tx.CommitAsync().ConfigureAwait(false);
-
-            // Get user info for token
-            var userResult = await conn.GetUserByIdAsync(storedChallenge.user_id)
-                .ConfigureAwait(false);
-            var user = userResult is GetUserByIdOk { Value.Count: > 0 } userOk
-                ? userOk.Value[0]
-                : null;
-
-            // Get user roles
-            var rolesResult = await conn.GetUserRolesAsync(storedChallenge.user_id, now)
-                .ConfigureAwait(false);
-            var roles = rolesResult is GetUserRolesOk rolesOk
-                ? rolesOk
-                    .Value.Select(r => r.name)
-                    .Where(n => n is not null)
-                    .Select(n => n!)
-                    .ToList()
-                : new List<string>();
-
-            // Generate JWT
-            var token = TokenService.CreateToken(
-                storedChallenge.user_id ?? string.Empty,
-                user?.display_name,
-                user?.email,
-                roles,
-                jwtConfig.SigningKey,
-                jwtConfig.TokenLifetime
-            );
-
-            return Results.Ok(
-                new
-                {
-                    Token = token,
-                    UserId = storedChallenge.user_id,
-                    DisplayName = user?.display_name,
-                    Email = user?.email,
-                    Roles = roles,
-                }
-            );
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Registration complete failed");
-            return Results.Problem("Registration failed");
-        }
-    }
-);
-
-authGroup.MapPost(
-    "/login/complete",
-    async (
-        LoginCompleteRequest request,
-        IFido2 fido2,
-        DbConfig db,
-        JwtConfig jwtConfig,
-        ILogger<Program> logger
-    ) =>
-    {
-        try
-        {
-            using var conn = OpenConnection(db);
-            var now = Now();
-
-            // Get the stored challenge
-            var challengeResult = await conn.GetChallengeByIdAsync(request.ChallengeId, now)
-                .ConfigureAwait(false);
-            if (challengeResult is not GetChallengeByIdOk { Value.Count: > 0 } challengeOk)
-            {
-                return Results.BadRequest(new { Error = "Challenge not found or expired" });
-            }
-
-            var storedChallenge = challengeOk.Value[0];
-
-            var credentialId = request.AssertionResponse.Id;
-            logger.LogInformation("Login attempt - credential ID: {CredentialId}", credentialId);
-            var credResult = await conn.GetCredentialByIdAsync(credentialId).ConfigureAwait(false);
-            if (credResult is not GetCredentialByIdOk { Value.Count: > 0 } credOk)
-            {
-                logger.LogWarning("Credential not found for ID: {CredentialId}", credentialId);
-                return Results.BadRequest(new { Error = "Credential not found" });
-            }
-
-            var storedCred = credOk.Value[0];
-
-            // Parse the assertion options
-            var options = AssertionOptions.FromJson(request.OptionsJson);
-
-            // Verify the assertion
-            var assertionResult = await fido2
-                .MakeAssertionAsync(
-                    new MakeAssertionParams
-                    {
-                        AssertionResponse = request.AssertionResponse,
-                        OriginalOptions = options,
-                        StoredPublicKey = storedCred.public_key ?? Array.Empty<byte>(),
-                        StoredSignatureCounter = (uint)(storedCred.sign_count ?? 0),
-                        IsUserHandleOwnerOfCredentialIdCallback = (args, _) =>
-                        {
-                            var userIdFromHandle = Encoding.UTF8.GetString(args.UserHandle);
-                            return Task.FromResult(storedCred.user_id == userIdFromHandle);
-                        },
-                    }
-                )
-                .ConfigureAwait(false);
-
-            // Update sign count and last used
-            using var updateCmd = conn.CreateCommand();
-            updateCmd.CommandText =
-                @"
-                UPDATE gk_credential
-                SET sign_count = @signCount, last_used_at = @now
-                WHERE id = @id";
-            updateCmd.Parameters.AddWithValue("@signCount", (long)assertionResult.SignCount);
-            updateCmd.Parameters.AddWithValue("@now", now);
-            updateCmd.Parameters.AddWithValue("@id", credentialId);
-            await updateCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-            // Update user last login
-            using var userUpdateCmd = conn.CreateCommand();
-            userUpdateCmd.CommandText = "UPDATE gk_user SET last_login_at = @now WHERE id = @id";
-            userUpdateCmd.Parameters.AddWithValue("@now", now);
-            userUpdateCmd.Parameters.AddWithValue(
-                "@id",
-                (object?)storedCred.user_id ?? DBNull.Value
-            );
-            await userUpdateCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-            // Get user info for token
-            var userResult = await conn.GetUserByIdAsync(storedCred.user_id ?? string.Empty)
-                .ConfigureAwait(false);
-            var user = userResult is GetUserByIdOk { Value.Count: > 0 } userOk
-                ? userOk.Value[0]
-                : null;
-
-            // Get user roles
-            var rolesResult = await conn.GetUserRolesAsync(storedCred.user_id ?? string.Empty, now)
-                .ConfigureAwait(false);
-            var roles = rolesResult is GetUserRolesOk rolesOk
-                ? rolesOk
-                    .Value.Select(r => r.name)
-                    .Where(n => n is not null)
-                    .Select(n => n!)
-                    .ToList()
-                : new List<string>();
-
-            // Generate JWT
-            var token = TokenService.CreateToken(
-                storedCred.user_id ?? string.Empty,
-                user?.display_name,
-                user?.email,
-                roles,
-                jwtConfig.SigningKey,
-                jwtConfig.TokenLifetime
-            );
-
-            return Results.Ok(
-                new
-                {
-                    Token = token,
-                    UserId = storedCred.user_id,
-                    DisplayName = user?.display_name,
-                    Email = user?.email,
-                    Roles = roles,
-                }
-            );
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Login complete failed");
-            return Results.Problem("Login failed");
-        }
-    }
-);
-
-authGroup.MapGet(
-    "/session",
-    async (HttpContext ctx, DbConfig db, JwtConfig jwtConfig) =>
-    {
-        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
-        if (string.IsNullOrEmpty(token))
-        {
-            return Results.Unauthorized();
-        }
-
-        using var conn = OpenConnection(db);
-
-        var result = await TokenService
-            .ValidateTokenAsync(conn, token, jwtConfig.SigningKey, checkRevocation: true)
-            .ConfigureAwait(false);
-        if (result is not TokenService.TokenValidationOk ok)
-        {
-            return Results.Unauthorized();
-        }
-
-        return Results.Ok(
-            new
-            {
-                ok.Claims.UserId,
-                ok.Claims.DisplayName,
-                ok.Claims.Email,
-                ok.Claims.Roles,
-                ExpiresAt = DateTimeOffset
-                    .FromUnixTimeSeconds(ok.Claims.Exp)
-                    .ToString("o", CultureInfo.InvariantCulture),
-            }
-        );
-    }
-);
-
-authGroup.MapPost(
-    "/logout",
-    async (HttpContext ctx, DbConfig db, JwtConfig jwtConfig) =>
-    {
-        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
-        if (string.IsNullOrEmpty(token))
-        {
-            return Results.Unauthorized();
-        }
-
-        using var conn = OpenConnection(db);
-
-        var result = await TokenService
-            .ValidateTokenAsync(conn, token, jwtConfig.SigningKey, checkRevocation: false)
-            .ConfigureAwait(false);
-        if (result is TokenService.TokenValidationOk ok)
-        {
-            await TokenService.RevokeTokenAsync(conn, ok.Claims.Jti).ConfigureAwait(false);
-        }
-
-        return Results.NoContent();
-    }
-);
-
-var authzGroup = app.MapGroup("/authz").WithTags("Authorization");
-
-authzGroup.MapGet(
-    "/check",
-    async (
-        string permission,
-        string? resourceType,
-        string? resourceId,
-        HttpContext ctx,
-        DbConfig db,
-        JwtConfig jwtConfig
-    ) =>
-    {
-        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
-        if (string.IsNullOrEmpty(token))
-        {
-            return Results.Unauthorized();
-        }
-
-        using var conn = OpenConnection(db);
-
-        var validateResult = await TokenService
-            .ValidateTokenAsync(conn, token, jwtConfig.SigningKey, checkRevocation: true)
-            .ConfigureAwait(false);
-        if (validateResult is not TokenService.TokenValidationOk ok)
-        {
-            return Results.Unauthorized();
-        }
-
-        var (allowed, reason) = await AuthorizationService
-            .CheckPermissionAsync(
-                conn,
-                ok.Claims.UserId,
-                permission,
-                resourceType,
-                resourceId,
-                Now()
-            )
-            .ConfigureAwait(false);
-        return Results.Ok(new { Allowed = allowed, Reason = reason });
-    }
-);
-
-authzGroup.MapGet(
-    "/permissions",
-    async (HttpContext ctx, DbConfig db, JwtConfig jwtConfig) =>
-    {
-        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
-        if (string.IsNullOrEmpty(token))
-        {
-            return Results.Unauthorized();
-        }
-
-        using var conn = OpenConnection(db);
-
-        var validateResult = await TokenService
-            .ValidateTokenAsync(conn, token, jwtConfig.SigningKey, checkRevocation: true)
-            .ConfigureAwait(false);
-        if (validateResult is not TokenService.TokenValidationOk ok)
-        {
-            return Results.Unauthorized();
-        }
-
-        var permissionsResult = await conn.GetUserPermissionsAsync(ok.Claims.UserId, Now())
-            .ConfigureAwait(false);
-        var permissions = permissionsResult is GetUserPermissionsOk permOk
-            ? permOk
-                .Value.Select(p => new
-                {
-                    p.code,
-                    p.source_name,
-                    p.source_type,
-                    p.scope_type,
-                    p.scope_value,
-                })
-                .ToList()
-            : [];
-
-        return Results.Ok(new { Permissions = permissions });
-    }
-);
-
-authzGroup.MapPost(
-    "/evaluate",
-    async (EvaluateRequest request, HttpContext ctx, DbConfig db, JwtConfig jwtConfig) =>
-    {
-        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
-        if (string.IsNullOrEmpty(token))
-        {
-            return Results.Unauthorized();
-        }
-
-        using var conn = OpenConnection(db);
-
-        var validateResult = await TokenService
-            .ValidateTokenAsync(conn, token, jwtConfig.SigningKey, checkRevocation: true)
-            .ConfigureAwait(false);
-        if (validateResult is not TokenService.TokenValidationOk ok)
-        {
-            return Results.Unauthorized();
-        }
-
-        var now = Now();
-        var results = new List<object>();
-        foreach (var check in request.Checks)
-        {
-            var (allowed, _) = await AuthorizationService
-                .CheckPermissionAsync(
-                    conn,
-                    ok.Claims.UserId,
-                    check.Permission,
-                    check.ResourceType,
-                    check.ResourceId,
-                    now
-                )
-                .ConfigureAwait(false);
-            results.Add(
-                new
-                {
-                    check.Permission,
-                    check.ResourceId,
-                    Allowed = allowed,
-                }
-            );
-        }
-
-        return Results.Ok(new { Results = results });
-    }
-);
-
-// Dev-mode only: issues a real JWT signed with the dev key so E2E tests can
-// authenticate without WebAuthn. Returns 404 when a non-dev signing key is in use.
-authGroup.MapGet(
-    "/dev-token",
-    (JwtConfig jwtConfig) =>
-    {
-        if (!IsDevKey(jwtConfig.SigningKey))
-        {
-            return Results.NotFound();
-        }
-
-        var token = TokenService.CreateToken(
-            userId: "e2e-test-user",
-            displayName: "E2E Test User",
-            email: "e2etest@example.com",
-            roles: ["admin", "user"],
-            signingKey: jwtConfig.SigningKey,
-            lifetime: TimeSpan.FromHours(1)
-        );
-
-        return Results.Ok(new { Token = token });
-    }
-);
-
 static bool IsDevKey(byte[] key) => key.Length == 32 && key.All(b => b == 0);
 
-app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "Gatekeeper.Api" }));
+static IResult ToResult(Result<AuthCompleteResult, AuthError> result) =>
+    result switch
+    {
+        Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok => Results.Ok(new
+        {
+            ok.Value.Token,
+            ok.Value.UserId,
+            ok.Value.DisplayName,
+            ok.Value.Email,
+            ok.Value.Roles,
+        }),
+        Result<AuthCompleteResult, AuthError>.Error<AuthCompleteResult, AuthError> err =>
+            Results.BadRequest(new { Error = err.Value.Reason }),
+    };
 
-app.Run();
+static async Task<TokenService.TokenClaims?> ValidateRequestAsync(HttpContext ctx, DbConfig db, JwtConfig jwt)
+{
+    var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
+    if (string.IsNullOrEmpty(token))
+        return null;
+
+    using var conn = OpenConnection(db);
+    var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true)
+        .ConfigureAwait(false);
+    return result is TokenService.TokenValidationOk ok ? ok.Claims : null;
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 namespace Gatekeeper.Api
 {
-    /// <summary>
-    /// Program entry point marker for WebApplicationFactory.
-    /// </summary>
+    /// <summary>Program entry point marker for WebApplicationFactory.</summary>
     public partial class Program { }
 
     /// <summary>Database connection configuration.</summary>
@@ -703,19 +338,6 @@ namespace Gatekeeper.Api
 
     /// <summary>Request to begin passkey registration.</summary>
     public sealed record RegisterBeginRequest(string Email, string DisplayName);
-
-    /// <summary>Request to begin passkey login.</summary>
-    public sealed record LoginBeginRequest(string? Email);
-
-    /// <summary>Request to evaluate multiple permissions.</summary>
-    public sealed record EvaluateRequest(List<PermissionCheck> Checks);
-
-    /// <summary>Single permission check.</summary>
-    public sealed record PermissionCheck(
-        string Permission,
-        string? ResourceType,
-        string? ResourceId
-    );
 
     /// <summary>Request to complete passkey registration.</summary>
     public sealed record RegisterCompleteRequest(
@@ -732,13 +354,24 @@ namespace Gatekeeper.Api
         AuthenticatorAssertionRawResponse AssertionResponse
     );
 
+    /// <summary>Request to exchange a Supabase JWT for a Gatekeeper token.</summary>
+    public sealed record SupabaseExchangeRequest(string SupabaseToken);
+
+    /// <summary>Request to link a Supabase identity to the current authenticated user.</summary>
+    public sealed record LinkSupabaseRequest(string SupabaseToken);
+
+    /// <summary>Bulk permission evaluation request.</summary>
+    public sealed record EvaluateRequest(List<PermissionCheck> Checks);
+
+    /// <summary>Single permission check item.</summary>
+    public sealed record PermissionCheck(string Permission, string? ResourceType, string? ResourceId);
+
     /// <summary>Base64URL encoding utilities for WebAuthn credential IDs.</summary>
     public static class Base64Url
     {
         /// <summary>Encodes bytes to base64url string.</summary>
         public static string Encode(byte[] input) =>
-            Convert
-                .ToBase64String(input)
+            Convert.ToBase64String(input)
                 .Replace("+", "-", StringComparison.Ordinal)
                 .Replace("/", "_", StringComparison.Ordinal)
                 .TrimEnd('=');

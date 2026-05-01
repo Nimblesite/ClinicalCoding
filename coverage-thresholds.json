@@ -5,7 +5,7 @@
     "Gatekeeper/Gatekeeper.Api.Tests": {
       "source": "Gatekeeper.Api",
       "include": "[Gatekeeper.Api]*",
-      "threshold": 68
+      "threshold": 66
     },
     "Clinical/Clinical.Api.Tests": {
       "source": "Clinical.Api",

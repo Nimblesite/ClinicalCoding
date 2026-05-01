@@ -1,27 +1,18 @@
 // Hand-written replacements for junction-table insert extensions.
 //
 // The DataProvider Postgres code generator unconditionally appends
-// "RETURNING id" to every generated INSERT, but `gk_user_role` and
-// `gk_role_permission` use composite primary keys and do not have an
-// `id` column. The generated code therefore throws at runtime
-// ("column 'id' does not exist"), the error is silently swallowed
-// into a Result.Error by the generated try/catch, and dependent
-// queries (e.g. /authz/permissions) return empty data.
-//
+// "RETURNING id" to every generated INSERT, but gk_user_role and
+// gk_role_permission use composite primary keys and have no id column.
 // We disable generateInsert for these tables in DataProvider.json and
-// provide drop-in replacements here so existing call sites continue
-// to compile against the same `Insertgk_user_roleAsync` /
-// `Insertgk_role_permissionAsync` extension method names.
+// provide drop-in replacements using IDbConnection/IDbCommand/IDbTransaction
+// so no Npgsql types leak above the generated layer.
 
 #nullable enable
-
-using System.Data;
 
 namespace Generated;
 
 /// <summary>
 /// Hand-written extension methods for inserting into <c>gk_user_role</c>.
-/// Replaces the broken DataProvider-generated version.
 /// </summary>
 public static class gk_user_roleExtensions
 {
@@ -30,9 +21,9 @@ public static class gk_user_roleExtensions
           VALUES (@user_id, @role_id, @granted_at, @granted_by, @expires_at)
           ON CONFLICT DO NOTHING";
 
-    /// <summary>Inserts a row into <c>gk_user_role</c>.</summary>
+    /// <summary>Inserts a row into <c>gk_user_role</c> using a plain connection.</summary>
     public static async Task<Result<Guid?, SqlError>> Insertgk_user_roleAsync(
-        this NpgsqlConnection conn,
+        this IDbConnection conn,
         string user_id,
         string role_id,
         string? granted_at,
@@ -42,9 +33,10 @@ public static class gk_user_roleExtensions
     {
         try
         {
-            await using var cmd = new NpgsqlCommand(Sql, conn);
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = Sql;
             BindParameters(cmd, user_id, role_id, granted_at, granted_by, expires_at);
-            _ = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            _ = await ((System.Data.Common.DbCommand)cmd).ExecuteNonQueryAsync().ConfigureAwait(false);
             return new Result<Guid?, SqlError>.Ok<Guid?, SqlError>(null);
         }
         catch (Exception ex)
@@ -53,7 +45,7 @@ public static class gk_user_roleExtensions
         }
     }
 
-    /// <summary>Transaction overload of <see cref="Insertgk_user_roleAsync(NpgsqlConnection, string, string, string?, string?, string?)"/>.</summary>
+    /// <summary>Transaction overload.</summary>
     public static async Task<Result<Guid?, SqlError>> Insertgk_user_roleAsync(
         this IDbTransaction transaction,
         string user_id,
@@ -63,18 +55,18 @@ public static class gk_user_roleExtensions
         string? expires_at
     )
     {
-        if (transaction.Connection is not NpgsqlConnection conn)
-        {
+        if (transaction.Connection is not IDbConnection conn)
             return new Result<Guid?, SqlError>.Error<Guid?, SqlError>(
-                new SqlError("Transaction.Connection must be NpgsqlConnection")
+                new SqlError("Transaction has no connection")
             );
-        }
 
         try
         {
-            await using var cmd = new NpgsqlCommand(Sql, conn, (NpgsqlTransaction)transaction);
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = Sql;
+            cmd.Transaction = transaction;
             BindParameters(cmd, user_id, role_id, granted_at, granted_by, expires_at);
-            _ = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            _ = await ((System.Data.Common.DbCommand)cmd).ExecuteNonQueryAsync().ConfigureAwait(false);
             return new Result<Guid?, SqlError>.Ok<Guid?, SqlError>(null);
         }
         catch (Exception ex)
@@ -84,7 +76,7 @@ public static class gk_user_roleExtensions
     }
 
     private static void BindParameters(
-        NpgsqlCommand cmd,
+        IDbCommand cmd,
         string user_id,
         string role_id,
         string? granted_at,
@@ -92,17 +84,24 @@ public static class gk_user_roleExtensions
         string? expires_at
     )
     {
-        cmd.Parameters.AddWithValue("user_id", user_id);
-        cmd.Parameters.AddWithValue("role_id", role_id);
-        cmd.Parameters.AddWithValue("granted_at", (object?)granted_at ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("granted_by", (object?)granted_by ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("expires_at", (object?)expires_at ?? DBNull.Value);
+        AddParam(cmd, "user_id", user_id);
+        AddParam(cmd, "role_id", role_id);
+        AddParam(cmd, "granted_at", (object?)granted_at ?? DBNull.Value);
+        AddParam(cmd, "granted_by", (object?)granted_by ?? DBNull.Value);
+        AddParam(cmd, "expires_at", (object?)expires_at ?? DBNull.Value);
+    }
+
+    private static void AddParam(IDbCommand cmd, string name, object value)
+    {
+        var p = cmd.CreateParameter();
+        p.ParameterName = name;
+        p.Value = value;
+        cmd.Parameters.Add(p);
     }
 }
 
 /// <summary>
 /// Hand-written extension methods for inserting into <c>gk_role_permission</c>.
-/// Replaces the broken DataProvider-generated version.
 /// </summary>
 public static class gk_role_permissionExtensions
 {
@@ -111,9 +110,9 @@ public static class gk_role_permissionExtensions
           VALUES (@role_id, @permission_id, @granted_at)
           ON CONFLICT DO NOTHING";
 
-    /// <summary>Inserts a row into <c>gk_role_permission</c>.</summary>
+    /// <summary>Inserts a row into <c>gk_role_permission</c> using a plain connection.</summary>
     public static async Task<Result<Guid?, SqlError>> Insertgk_role_permissionAsync(
-        this NpgsqlConnection conn,
+        this IDbConnection conn,
         string role_id,
         string permission_id,
         string? granted_at
@@ -121,9 +120,10 @@ public static class gk_role_permissionExtensions
     {
         try
         {
-            await using var cmd = new NpgsqlCommand(Sql, conn);
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = Sql;
             BindParameters(cmd, role_id, permission_id, granted_at);
-            _ = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            _ = await ((System.Data.Common.DbCommand)cmd).ExecuteNonQueryAsync().ConfigureAwait(false);
             return new Result<Guid?, SqlError>.Ok<Guid?, SqlError>(null);
         }
         catch (Exception ex)
@@ -132,7 +132,7 @@ public static class gk_role_permissionExtensions
         }
     }
 
-    /// <summary>Transaction overload of <see cref="Insertgk_role_permissionAsync(NpgsqlConnection, string, string, string?)"/>.</summary>
+    /// <summary>Transaction overload.</summary>
     public static async Task<Result<Guid?, SqlError>> Insertgk_role_permissionAsync(
         this IDbTransaction transaction,
         string role_id,
@@ -140,18 +140,18 @@ public static class gk_role_permissionExtensions
         string? granted_at
     )
     {
-        if (transaction.Connection is not NpgsqlConnection conn)
-        {
+        if (transaction.Connection is not IDbConnection conn)
             return new Result<Guid?, SqlError>.Error<Guid?, SqlError>(
-                new SqlError("Transaction.Connection must be NpgsqlConnection")
+                new SqlError("Transaction has no connection")
             );
-        }
 
         try
         {
-            await using var cmd = new NpgsqlCommand(Sql, conn, (NpgsqlTransaction)transaction);
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = Sql;
+            cmd.Transaction = transaction;
             BindParameters(cmd, role_id, permission_id, granted_at);
-            _ = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            _ = await ((System.Data.Common.DbCommand)cmd).ExecuteNonQueryAsync().ConfigureAwait(false);
             return new Result<Guid?, SqlError>.Ok<Guid?, SqlError>(null);
         }
         catch (Exception ex)
@@ -160,15 +160,18 @@ public static class gk_role_permissionExtensions
         }
     }
 
-    private static void BindParameters(
-        NpgsqlCommand cmd,
-        string role_id,
-        string permission_id,
-        string? granted_at
-    )
+    private static void BindParameters(IDbCommand cmd, string role_id, string permission_id, string? granted_at)
     {
-        cmd.Parameters.AddWithValue("role_id", role_id);
-        cmd.Parameters.AddWithValue("permission_id", permission_id);
-        cmd.Parameters.AddWithValue("granted_at", (object?)granted_at ?? DBNull.Value);
+        AddParam(cmd, "role_id", role_id);
+        AddParam(cmd, "permission_id", permission_id);
+        AddParam(cmd, "granted_at", (object?)granted_at ?? DBNull.Value);
+    }
+
+    private static void AddParam(IDbCommand cmd, string name, object value)
+    {
+        var p = cmd.CreateParameter();
+        p.ParameterName = name;
+        p.Value = value;
+        cmd.Parameters.Add(p);
     }
 }

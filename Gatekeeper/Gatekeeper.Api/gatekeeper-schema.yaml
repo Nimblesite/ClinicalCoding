@@ -15,6 +15,14 @@ tables:
   - name: is_active
     type: Boolean
     defaultValue: "true"
+  - name: token_version
+    type: Int
+    defaultValue: "0"
+  - name: failed_login_count
+    type: Int
+    defaultValue: "0"
+  - name: locked_until
+    type: Text
   - name: metadata
     type: Json
   indexes:
@@ -393,5 +401,41 @@ tables:
     isUnique: true
   primaryKey:
     name: PK_gk_policy
+    columns:
+    - id
+# Links a gk_user to an external identity from any auth provider.
+# A user can have multiple identities (passkey + Supabase) without providers
+# knowing about each other. Providers write to this table independently.
+- name: gk_user_identity
+  columns:
+  - name: id
+    type: Text
+  - name: user_id
+    type: Text
+  - name: provider
+    type: Text
+  - name: external_id
+    type: Text
+  - name: linked_at
+    type: Text
+  indexes:
+  - name: idx_user_identity_user
+    columns:
+    - user_id
+  - name: idx_user_identity_provider_external
+    columns:
+    - provider
+    - external_id
+    isUnique: true
+  foreignKeys:
+  - name: FK_gk_user_identity_user_id
+    columns:
+    - user_id
+    referencedTable: gk_user
+    referencedColumns:
+    - id
+    onDelete: Cascade
+  primaryKey:
+    name: PK_gk_user_identity
     columns:
     - id

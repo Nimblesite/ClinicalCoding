@@ -1,10 +1,15 @@
 #pragma warning disable IDE0005 // Using directive is unnecessary (some are unused but needed for tests)
 
 global using System;
+global using System.Collections.Generic;
+global using System.Data;
 global using System.Globalization;
+global using System.Text;
+global using System.Linq;
 global using System.Text.Json;
 global using Fido2NetLib;
 global using Fido2NetLib.Objects;
+global using Gatekeeper.Api;
 global using Generated;
 global using Microsoft.Extensions.Logging;
 global using Nimblesite.Sql.Model;
