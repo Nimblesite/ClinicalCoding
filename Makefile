@@ -4,7 +4,7 @@
 # Cross-platform: Linux, macOS, Windows (via GNU Make)
 # =============================================================================
 
-.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-stack start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports
+.PHONY: build test lint fmt clean ci setup db-up db-down db-reset db-wait db-migrate start-stack start-local start-docker resume-docker deploy-dashboard dashboard-ts dashboard-ts-dev dashboard-ts-build dashboard-ts-lint dashboard-ts-test dashboard-ts-e2e dashboard-ts-check nuke _reclaim-ports _reclaim-e2e
 
 # -----------------------------------------------------------------------------
 # OS Detection
@@ -150,7 +150,7 @@ nuke: clean
 	@echo "==> Nuked. Run 'make start-docker' for a cold start."
 
 ## ci: fmt-check + lint + test + build (full CI simulation)
-ci:
+ci: _reclaim-ports _reclaim-e2e
 	$(MAKE) fmt CHECK=1
 	$(MAKE) lint
 	$(MAKE) test
@@ -241,11 +241,20 @@ _reclaim-ports:
 	  fi; \
 	done
 
+## _reclaim-e2e: Kill stale dashboard Playwright runners and remove stale artifacts
+_reclaim-e2e:
+	@echo "==> Reclaiming dashboard E2E runners and artifacts"
+	@pids=$$(ps -axo pid=,command= | awk '(/pnpm exec playwright test/ || /@playwright\/test\/cli\.js test/ || /Dashboard\/dashboard-ts\/node_modules\/.*playwright.*process\.js/) && !/awk/ {print $$1}' | sort -u); \
+	if [ -n "$$pids" ]; then \
+	  echo "  killing Playwright PIDs: $$pids"; \
+	  kill -9 $$pids 2>/dev/null || true; \
+	fi
+	@rm -rf Dashboard/dashboard-ts/test-results Dashboard/dashboard-ts/playwright-report
+
 ## start-stack: Build and start the app + dashboard services from docker-compose.yml.
-##   Assumes Postgres is already running (via db-up / db-migrate). Starts only the
-##   app (all APIs + embedding) and dashboard containers, then waits for health endpoints.
-##   Used in CI: run make db-migrate first, then make start-stack, then make test.
-start-stack: db-migrate
+##   Reclaims stale default-port listeners before starting only the app
+##   (all APIs + embedding) and dashboard containers, then waits for health endpoints.
+start-stack: _reclaim-ports db-migrate
 	@echo "==> Starting app + dashboard via docker compose (forced rebuild)..."
 	DB_PASSWORD=$(DB_PASSWORD) docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml up -d --build --no-deps app dashboard
 	@echo "==> Waiting for all services to respond (any HTTP response = ready)..."
@@ -294,10 +303,10 @@ dashboard-ts-lint:
 dashboard-ts-test:
 	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm test
 
-## dashboard-ts-e2e: Run Playwright e2e tests (requires all APIs + dashboard running on default ports)
+## dashboard-ts-e2e: Rebuild/start default stack, then run Playwright e2e tests
 ##   Set E2E_CLINICAL_URL, E2E_SCHEDULING_URL, E2E_GATEKEEPER_URL, E2E_ICD10_URL, E2E_DASHBOARD_URL
 ##   to override the default localhost endpoints.
-dashboard-ts-e2e:
+dashboard-ts-e2e: _reclaim-e2e start-stack
 	cd Dashboard/dashboard-ts && pnpm install --frozen-lockfile --silent && pnpm e2e
 
 ## dashboard-ts-check: Typecheck + lint + test + build for the new TypeScript dashboard
@@ -438,7 +447,7 @@ export START_LOCAL_RUNNER
 ## start-local: Run all APIs locally against the docker Postgres dev DB
 ##   Builds API projects, installs dashboard packages, then runs everything in
 ##   the foreground with prefixed log output. Ctrl+C cleans up all children.
-start-local: db-up
+start-local: _reclaim-ports db-up
 	@echo "==> Setting up Python environment..."
 	@if [ ! -d ICD10/.venv ]; then python3 -m venv ICD10/.venv; fi
 	@ICD10/.venv/bin/pip install -q -r ICD10/embedding-service/requirements.txt psycopg2-binary click requests

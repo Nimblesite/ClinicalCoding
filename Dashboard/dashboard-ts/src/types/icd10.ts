@@ -14,8 +14,10 @@ export interface Icd10Block {
 export interface Icd10Code {
   readonly Id: string;
   readonly Code: string;
-  readonly Title: string;
-  readonly Description: string;
+  readonly Title?: string;
+  readonly Description?: string;
+  readonly ShortDescription?: string;
+  readonly LongDescription?: string;
   readonly BlockCode: string;
 }
 

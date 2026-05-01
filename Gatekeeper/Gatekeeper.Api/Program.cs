@@ -658,6 +658,32 @@ authzGroup.MapPost(
     }
 );
 
+// Dev-mode only: issues a real JWT signed with the dev key so E2E tests can
+// authenticate without WebAuthn. Returns 404 when a non-dev signing key is in use.
+authGroup.MapGet(
+    "/dev-token",
+    (JwtConfig jwtConfig) =>
+    {
+        if (!IsDevKey(jwtConfig.SigningKey))
+        {
+            return Results.NotFound();
+        }
+
+        var token = TokenService.CreateToken(
+            userId: "e2e-test-user",
+            displayName: "E2E Test User",
+            email: "e2etest@example.com",
+            roles: ["admin", "user"],
+            signingKey: jwtConfig.SigningKey,
+            lifetime: TimeSpan.FromHours(1)
+        );
+
+        return Results.Ok(new { Token = token });
+    }
+);
+
+static bool IsDevKey(byte[] key) => key.Length == 32 && key.All(b => b == 0);
+
 app.MapGet("/health", () => Results.Ok(new { Status = "healthy", Service = "Gatekeeper.Api" }));
 
 app.Run();

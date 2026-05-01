@@ -1,4 +1,4 @@
-import { generateTestToken } from './jwt';
+import { fetchDevToken } from './jwt';
 
 export interface ApiResponse {
   status: number;
@@ -7,9 +7,10 @@ export interface ApiResponse {
   body: string;
 }
 
-function authHeaders(extra?: Record<string, string>): Record<string, string> {
+async function authHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
+  const token = await fetchDevToken();
   return {
-    Authorization: `Bearer ${generateTestToken()}`,
+    Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
     ...extra,
   };
@@ -19,7 +20,7 @@ export async function apiGet(
   url: string,
   extraHeaders?: Record<string, string>,
 ): Promise<ApiResponse> {
-  const res = await fetch(url, { method: 'GET', headers: authHeaders(extraHeaders) });
+  const res = await fetch(url, { method: 'GET', headers: await authHeaders(extraHeaders) });
   const body = await res.text();
   return { status: res.status, ok: res.ok, headers: res.headers, body };
 }
@@ -40,7 +41,7 @@ export async function apiPost(
   const payload = typeof body === 'string' ? body : JSON.stringify(body);
   const res = await fetch(url, {
     method: 'POST',
-    headers: authHeaders(extraHeaders),
+    headers: await authHeaders(extraHeaders),
     body: payload,
   });
   const text = await res.text();
@@ -57,7 +58,7 @@ export async function apiPostEnsure(url: string, body: unknown): Promise<ApiResp
 
 export async function apiPut(url: string, body: unknown): Promise<ApiResponse> {
   const payload = typeof body === 'string' ? body : JSON.stringify(body);
-  const res = await fetch(url, { method: 'PUT', headers: authHeaders(), body: payload });
+  const res = await fetch(url, { method: 'PUT', headers: await authHeaders(), body: payload });
   const text = await res.text();
   return { status: res.status, ok: res.ok, headers: res.headers, body: text };
 }

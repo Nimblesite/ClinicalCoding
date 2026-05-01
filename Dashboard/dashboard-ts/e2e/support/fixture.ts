@@ -3,8 +3,8 @@
  * Provides authenticated page fixture and API URL constants
  */
 
-import { test as base, expect, type Page } from '@playwright/test';
-import { generateTestToken } from './jwt';
+import { test as base, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { fetchDevToken, generateTestToken } from './jwt';
 import { CLINICAL_URL, DASHBOARD_URL, GATEKEEPER_URL, ICD10_URL, SCHEDULING_URL } from './urls';
 
 // Re-export URLs for test files
@@ -42,9 +42,10 @@ export async function createAuthenticatedPage(
   // Reload to pick up auth state
   await page.reload();
 
-  // Navigate to specific hash if provided
-  if (navigateTo && navigateTo.includes('#')) {
-    const hash = navigateTo.slice(navigateTo.indexOf('#'));
+  const target = navigateTo ?? `${DASHBOARD_URL}#dashboard`;
+
+  if (target.includes('#')) {
+    const hash = target.slice(target.indexOf('#'));
     await page.evaluate((h) => {
       window.location.hash = h;
     }, hash);
@@ -59,7 +60,20 @@ export async function createAuthenticatedPage(
  */
 export const test = base.extend<{
   authenticatedPage: Page;
+  request: APIRequestContext;
 }>({
+  request: async ({ playwright }, use) => {
+    const token = await fetchDevToken();
+    const request = await playwright.request.newContext({
+      extraHTTPHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await use(request);
+    await request.dispose();
+  },
+
   authenticatedPage: async ({ browser }, use) => {
     const page = await browser.newPage();
 

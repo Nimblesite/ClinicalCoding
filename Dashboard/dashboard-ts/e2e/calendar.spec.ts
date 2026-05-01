@@ -152,9 +152,11 @@ test.describe('Calendar E2E Tests', () => {
     await todayCell.click();
     await page.waitForSelector(`text=${uniqueServiceType}`, { timeout: 10000 });
 
-    const editButton = await page.locator(
-      `.calendar-appointment-item:has-text('${uniqueServiceType}') button:has-text('Edit')`,
-    ).first;
+    const editButton = page
+      .locator(
+        `.calendar-appointment-item:has-text('${uniqueServiceType}') button:has-text('Edit')`,
+      )
+      .first();
     expect(editButton).toBeTruthy();
     await editButton.click();
 
@@ -184,7 +186,7 @@ test.describe('Calendar E2E Tests', () => {
     const newMonthYear = await page.textContent('.text-lg.font-semibold');
     expect(newMonthYear).not.toEqual(currentMonthYear);
 
-    const prevButton = headerControls.locator('button.btn-secondary').first;
+    const prevButton = headerControls.locator('button.btn-secondary').first();
     await prevButton.click();
     await page.waitForTimeout(300);
     await prevButton.click();

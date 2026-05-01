@@ -66,6 +66,9 @@ export const EditPatientPage = ({ id }: EditPatientPageProps): ReactElement => {
 
       <PatientForm
         {...(data !== undefined ? { initial: data } : {})}
+        onCancel={() => {
+          globalThis.history.back();
+        }}
         onSubmit={handleSubmit}
         submitLabel={isEdit ? 'Save Changes' : 'Create Patient'}
       />
