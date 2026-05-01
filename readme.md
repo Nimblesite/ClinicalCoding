@@ -4,6 +4,8 @@
 
 **Agentic ICD coding powered by patient encounters, clinical notes, and semantic search**
 
+[![Watch the demo](docs/designs/screenshot.png)](https://dataprovider.tech/assets/images/cc.mp4)
+
 [![CI](https://github.com/MelbourneDeveloper/HealthcareSamples/actions/workflows/ci.yml/badge.svg)](https://github.com/MelbourneDeveloper/HealthcareSamples/actions/workflows/ci.yml)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512bd4)](https://dotnet.microsoft.com/)
 [![FHIR R5](https://img.shields.io/badge/FHIR-R5-e34f26)](https://build.fhir.org/resourcelist.html)
