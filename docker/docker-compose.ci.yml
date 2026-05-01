@@ -1,16 +1,26 @@
-# CI override: app uses host networking so it can reach the already-running Postgres
-# container (started by make db-up / db-migrate) on localhost:5432.
-# network_mode: host is incompatible with ports:, so we clear them here.
-# dashboard keeps bridge networking with 5173:80 mapping (unchanged from base compose).
-# Usage: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --no-deps app dashboard
+# CI override: joins the app container to the db-only network so it can reach
+# healthcaresamples-db (started by make db-up) by hostname, while still
+# exposing API ports to the host for C# integration tests and Playwright.
+#
+# The db service from docker-compose.yml is suppressed (scale: 0) because
+# Postgres is already running via docker-compose.db.yml.
+#
+# Usage: docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml \
+#          up -d --build --no-deps app dashboard
 services:
   app:
-    network_mode: host
-    ports: []
+    networks:
+      - default
+      - dbnet
     environment:
-      ConnectionStrings__Postgres: Host=localhost;Database=gatekeeper;Username=postgres;Password=${DB_PASSWORD:-changeme}
-      ConnectionStrings__Postgres_Clinical: Host=localhost;Database=clinical;Username=postgres;Password=${DB_PASSWORD:-changeme}
-      ConnectionStrings__Postgres_Scheduling: Host=localhost;Database=scheduling;Username=postgres;Password=${DB_PASSWORD:-changeme}
-      ConnectionStrings__Postgres_ICD10: Host=localhost;Database=icd10;Username=postgres;Password=${DB_PASSWORD:-changeme}
-      CLINICAL_CONNECTION_STRING: Host=localhost;Database=clinical;Username=postgres;Password=${DB_PASSWORD:-changeme}
-      SCHEDULING_CONNECTION_STRING: Host=localhost;Database=scheduling;Username=postgres;Password=${DB_PASSWORD:-changeme}
+      ConnectionStrings__Postgres: Host=healthcaresamples-db;Database=gatekeeper;Username=postgres;Password=${DB_PASSWORD:-changeme}
+      ConnectionStrings__Postgres_Clinical: Host=healthcaresamples-db;Database=clinical;Username=postgres;Password=${DB_PASSWORD:-changeme}
+      ConnectionStrings__Postgres_Scheduling: Host=healthcaresamples-db;Database=scheduling;Username=postgres;Password=${DB_PASSWORD:-changeme}
+      ConnectionStrings__Postgres_ICD10: Host=healthcaresamples-db;Database=icd10;Username=postgres;Password=${DB_PASSWORD:-changeme}
+      CLINICAL_CONNECTION_STRING: Host=healthcaresamples-db;Database=clinical;Username=postgres;Password=${DB_PASSWORD:-changeme}
+      SCHEDULING_CONNECTION_STRING: Host=healthcaresamples-db;Database=scheduling;Username=postgres;Password=${DB_PASSWORD:-changeme}
+
+networks:
+  dbnet:
+    name: docker_default
+    external: true

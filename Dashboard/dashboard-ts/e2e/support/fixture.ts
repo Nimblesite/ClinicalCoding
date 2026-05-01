@@ -73,3 +73,9 @@ export const test = base.extend<{
 });
 
 export { expect };
+
+export { generateTestToken } from './jwt';
+
+export async function setupAuth(page: Page): Promise<void> {
+  await createAuthenticatedPage(page);
+}
