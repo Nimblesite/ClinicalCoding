@@ -1,6 +1,4 @@
 using System.Globalization;
-using Npgsql;
-using Outcome;
 
 namespace Gatekeeper.Api.Tests;
 
@@ -436,7 +434,10 @@ public sealed class GatekeeperTestFixture : IDisposable
                 now,
                 null, // last_login_at
                 true, // is_active
-                null // metadata
+                0,    // token_version
+                0,    // failed_login_count
+                null, // locked_until
+                null  // metadata
             )
             .ConfigureAwait(false);
 
@@ -484,7 +485,10 @@ public sealed class GatekeeperTestFixture : IDisposable
                 now,
                 null, // last_login_at
                 true, // is_active
-                null // metadata
+                0,    // token_version
+                0,    // failed_login_count
+                null, // locked_until
+                null  // metadata
             )
             .ConfigureAwait(false);
 

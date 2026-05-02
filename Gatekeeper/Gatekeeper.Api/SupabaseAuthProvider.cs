@@ -251,7 +251,7 @@ public sealed class SupabaseAuthProvider : ITokenExchangeProvider, IDisposable
             else
             {
                 await using var tx = await conn.BeginTransactionAsync().ConfigureAwait(false);
-                _ = await tx.Insertgk_userAsync(newUserId, displayName ?? email, email, now, null, true, null).ConfigureAwait(false);
+                _ = await tx.Insertgk_userAsync(newUserId, displayName ?? email, email, now, null, true, 0, 0, null, null).ConfigureAwait(false);
                 _ = await tx.Insertgk_user_roleAsync(newUserId, "role-user", now, null, null).ConfigureAwait(false);
                 await tx.CommitAsync().ConfigureAwait(false);
             }

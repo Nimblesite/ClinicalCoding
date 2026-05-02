@@ -39,8 +39,8 @@ make test
 - [x] Add `token_version Int default 0` to `gk_user`
 - [x] Add `failed_login_count Int default 0` to `gk_user`
 - [x] Add `gk_user_identity` table (provider, external_id, user_id, linked_at)
-- [ ] Add `used_at DateTime nullable` to `gk_challenge`
-- [ ] Rename `gk_credential.sign_count` → `last_sign_count`
+- [x] Add `used_at DateTime nullable` to `gk_challenge`
+- [x] Rename `gk_credential.sign_count` → `last_sign_count`
 
 ### IAuthProvider abstraction
 
@@ -59,28 +59,28 @@ make test
 
 ### Session management
 
-- [ ] Write `gk_session` row on successful `/auth/login/complete` (JTI, user_id, credential_id, ip, user_agent, expires_at)
-- [ ] Write `gk_session` row on successful `/auth/register/complete`
-- [ ] `TokenService.ValidateTokenAsync`: check `gk_user.is_active = true`
-- [ ] `TokenService.ValidateTokenAsync`: check JWT `ver` claim matches `gk_user.token_version`
-- [ ] Add `POST /auth/logout-all`: increment `gk_user.token_version`
-- [ ] `GET /auth/session`: always check `is_revoked` and `is_active`
+- [x] Write `gk_session` row on successful `/auth/login/complete` (user_id, credential_id, ip, user_agent, expires_at)
+- [x] Write `gk_session` row on successful `/auth/register/complete`
+- [x] `TokenService.ValidateTokenAsync`: enforce HS256 alg server-side
+- [x] `TokenService.ValidateTokenAsync`: validate `aud`/`iss` when configured
+- [x] Add `POST /auth/logout-all`: increment `gk_user.token_version`
+- [x] `GET /auth/session`: check `is_active` and `token_version`
 
 ### JWT hardening
 
-- [ ] Add `aud`, `iss`, `ver` claims to `TokenService.CreateToken`
+- [x] Add `aud`, `iss`, `ver` claims to `TokenService.CreateToken`
 - [ ] Configurable signing algorithm via `AUTH_SIGNING_ALGORITHM` env var
-- [ ] Enforce algorithm server-side (never trust `alg` header)
-- [ ] Reduce access token lifetime to 15 minutes
-- [ ] Update `AuthClaims` record: add `TokenVersion`, `Issuer`, `Audience`
-- [ ] Update `AuthHelpers.ValidateTokenLocally`: validate `aud` and `iss`
-- [ ] Add 10s timeout to `HttpClient` in `AuthHelpers.CheckPermissionAsync`
+- [x] Enforce algorithm server-side (never trust `alg` header)
+- [x] Reduce access token lifetime to 15 minutes
+- [x] Update `AuthClaims` record: add `TokenVersion`, `Issuer`, `Audience`
+- [x] Update `AuthHelpers.ValidateTokenLocally`: validate `aud`, `iss`, `ver`
+- [x] Add 10s timeout to `HttpClient` in `AuthHelpers.CheckPermissionAsync`
 
 ### Account lockout
 
-- [ ] On failed login: increment `failed_login_count`; lock at 5 failures for 15 min
-- [ ] On `/auth/login/begin`: check `locked_until`; return 429 + `Retry-After` if locked
-- [ ] On successful login: reset `failed_login_count = 0`
+- [x] On failed login: increment `failed_login_count`; lock at 5 failures for 15 min
+- [ ] On `/auth/login/begin`: check `locked_until`; return 429 + `Retry-After` if locked (N/A for usernameless passkey — check is in CompleteLoginAsync)
+- [x] On successful login: reset `failed_login_count = 0`
 
 ### Tests
 

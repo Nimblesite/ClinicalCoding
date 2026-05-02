@@ -42,7 +42,7 @@ tables:
     type: Text
   - name: public_key
     type: Blob
-  - name: sign_count
+  - name: last_sign_count
     type: Int
     defaultValue: 0
   - name: aaguid
@@ -138,6 +138,8 @@ tables:
   - name: created_at
     type: Text
   - name: expires_at
+    type: Text
+  - name: used_at
     type: Text
   primaryKey:
     name: PK_gk_challenge

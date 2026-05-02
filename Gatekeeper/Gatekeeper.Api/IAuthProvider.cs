@@ -43,7 +43,8 @@ public sealed record AuthCompleteResult(
     string UserId,
     string? DisplayName,
     string? Email,
-    IReadOnlyList<string> Roles
+    IReadOnlyList<string> Roles,
+    string? CredentialId = null
 );
 
 /// <summary>Authentication failure.</summary>

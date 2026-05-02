@@ -34,12 +34,14 @@ var connectionString =
     ?? throw new InvalidOperationException("Connection string 'Postgres' is required");
 builder.Services.AddSingleton(new DbConfig(connectionString));
 
-// JWT
+// JWT — 15 minute access tokens, configurable issuer/audience
 var signingKeyBase64 = builder.Configuration["Jwt:SigningKey"];
 var signingKey = string.IsNullOrEmpty(signingKeyBase64)
     ? new byte[32]
     : Convert.FromBase64String(signingKeyBase64);
-builder.Services.AddSingleton(new JwtConfig(signingKey, TimeSpan.FromHours(24)));
+var jwtIssuer   = builder.Configuration["Jwt:Issuer"]   ?? "gatekeeper";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "gatekeeper";
+builder.Services.AddSingleton(new JwtConfig(signingKey, TimeSpan.FromMinutes(15), jwtIssuer, jwtAudience));
 
 // Auth providers
 builder.Services.AddScoped<PasskeyAuthProvider>();
@@ -85,7 +87,7 @@ auth.MapPost("/register/begin",
     });
 
 auth.MapPost("/register/complete",
-    async (RegisterCompleteRequest req, PasskeyAuthProvider passkey, DbConfig db, JwtConfig jwt) =>
+    async (RegisterCompleteRequest req, PasskeyAuthProvider passkey, DbConfig db, JwtConfig jwt, HttpContext ctx) =>
     {
         using var conn = OpenConnection(db);
         var result = await passkey.CompleteAsync(
@@ -93,6 +95,8 @@ auth.MapPost("/register/complete",
                 new AuthCompleteRequest(req.ChallengeId, req.OptionsJson, req.AttestationResponse, req.DeviceName),
                 jwt)
             .ConfigureAwait(false);
+        if (result is Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok)
+            await WriteSessionAsync(conn, ok.Value, null, ctx, jwt).ConfigureAwait(false);
         return ToResult(result);
     });
 
@@ -111,7 +115,7 @@ auth.MapPost("/login/begin",
     });
 
 auth.MapPost("/login/complete",
-    async (LoginCompleteRequest req, PasskeyAuthProvider passkey, DbConfig db, JwtConfig jwt) =>
+    async (LoginCompleteRequest req, PasskeyAuthProvider passkey, DbConfig db, JwtConfig jwt, HttpContext ctx) =>
     {
         using var conn = OpenConnection(db);
         var result = await passkey.CompleteLoginAsync(
@@ -119,22 +123,25 @@ auth.MapPost("/login/complete",
                 new AuthCompleteRequest(req.ChallengeId, req.OptionsJson, req.AssertionResponse),
                 jwt)
             .ConfigureAwait(false);
+        if (result is Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok)
+            await WriteSessionAsync(conn, ok.Value, null, ctx, jwt).ConfigureAwait(false);
         return ToResult(result);
     });
 
 // Supabase token exchange — fully independent of passkey
 auth.MapPost("/supabase/exchange",
-    async (SupabaseExchangeRequest req, SupabaseAuthProvider supabase, DbConfig db, JwtConfig jwt) =>
+    async (SupabaseExchangeRequest req, SupabaseAuthProvider supabase, DbConfig db, JwtConfig jwt, HttpContext ctx) =>
     {
         if (string.IsNullOrEmpty(supabase.ProviderName) || string.IsNullOrEmpty(req.SupabaseToken))
             return Results.BadRequest(new { Error = "Missing token" });
         using var conn = OpenConnection(db);
         var result = await supabase.ExchangeAsync(conn, req.SupabaseToken, jwt).ConfigureAwait(false);
+        if (result is Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok)
+            await WriteSessionAsync(conn, ok.Value, null, ctx, jwt).ConfigureAwait(false);
         return ToResult(result);
     });
 
 // Link a Supabase identity to an existing passkey account (or vice-versa).
-// Requires a valid Gatekeeper token (the user must already be authenticated).
 auth.MapPost("/identity/link/supabase",
     async (LinkSupabaseRequest req, HttpContext ctx, SupabaseAuthProvider supabase, DbConfig db, JwtConfig jwt) =>
     {
@@ -144,19 +151,15 @@ auth.MapPost("/identity/link/supabase",
 
         using var conn = OpenConnection(db);
         var validateResult = await TokenService
-            .ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true)
+            .ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true, jwt.Issuer, jwt.Audience)
             .ConfigureAwait(false);
-        if (validateResult is not TokenService.TokenValidationOk ok)
+        if (validateResult is not TokenService.TokenValidationOk)
             return Results.Unauthorized();
 
-        // Validate the Supabase token and extract the sub
         var exchangeResult = await supabase.ExchangeAsync(conn, req.SupabaseToken, jwt).ConfigureAwait(false);
         if (exchangeResult is not Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError>)
             return Results.BadRequest(new { Error = "Invalid Supabase token" });
 
-        // The exchange already handled identity linking via ResolveUserAsync.
-        // If the Supabase sub resolved to a *different* user we do not merge accounts —
-        // providers are decoupled and account merging is an admin operation.
         return Results.Ok(new { Linked = true });
     });
 
@@ -168,9 +171,19 @@ auth.MapGet("/session",
             return Results.Unauthorized();
 
         using var conn = OpenConnection(db);
-        var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true)
+        var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true, jwt.Issuer, jwt.Audience)
             .ConfigureAwait(false);
         if (result is not TokenService.TokenValidationOk ok)
+            return Results.Unauthorized();
+
+        // [AUTH-SESSION-ACTIVE] Verify user is still active
+        var npgsql = (NpgsqlConnection)conn;
+        var userResult = await npgsql.GetUserByIdAsync(ok.Claims.UserId).ConfigureAwait(false);
+        if (userResult is not GetUserByIdOk { Value.Count: > 0 } userOk || userOk.Value[0].is_active != true)
+            return Results.Unauthorized();
+
+        // [AUTH-TOKEN-VER] Verify token version matches current user version
+        if (ok.Claims.TokenVersion != (userOk.Value[0].token_version ?? 0))
             return Results.Unauthorized();
 
         return Results.Ok(new
@@ -200,6 +213,25 @@ auth.MapPost("/logout",
         return Results.NoContent();
     });
 
+// [AUTH-LOGOUT-ALL] Increment token_version to invalidate all existing tokens for the user
+auth.MapPost("/logout-all",
+    async (HttpContext ctx, DbConfig db, JwtConfig jwt) =>
+    {
+        var token = TokenService.ExtractBearerToken(ctx.Request.Headers.Authorization);
+        if (string.IsNullOrEmpty(token))
+            return Results.Unauthorized();
+
+        using var conn = OpenConnection(db);
+        var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: false)
+            .ConfigureAwait(false);
+        if (result is not TokenService.TokenValidationOk ok)
+            return Results.Unauthorized();
+
+        _ = await DbExtensions.IncrementTokenVersionAsync(conn, ok.Claims.UserId).ConfigureAwait(false);
+
+        return Results.NoContent();
+    });
+
 // Dev-only token (returns 404 when a real signing key is configured)
 auth.MapGet("/dev-token",
     (JwtConfig jwt) =>
@@ -209,7 +241,8 @@ auth.MapGet("/dev-token",
 
         var token = TokenService.CreateToken(
             "e2e-test-user", "E2E Test User", "e2etest@example.com",
-            ["admin", "user"], jwt.SigningKey, TimeSpan.FromHours(1));
+            ["admin", "user"], jwt.SigningKey, TimeSpan.FromHours(1),
+            jwt.Issuer, jwt.Audience);
         return Results.Ok(new { Token = token });
     });
 
@@ -296,20 +329,31 @@ static IDbConnection OpenConnection(DbConfig db)
 
 static bool IsDevKey(byte[] key) => key.Length == 32 && key.All(b => b == 0);
 
-static IResult ToResult(Result<AuthCompleteResult, AuthError> result) =>
-    result switch
-    {
-        Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok => Results.Ok(new
+static string GetClientIp(HttpContext ctx) =>
+    ctx.Request.Headers["CF-Connecting-IP"].FirstOrDefault()
+    ?? ctx.Request.Headers["X-Real-IP"].FirstOrDefault()
+    ?? ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim()
+    ?? ctx.Connection.RemoteIpAddress?.ToString()
+    ?? "unknown";
+
+static IResult ToResult(Result<AuthCompleteResult, AuthError> result)
+{
+    if (result is Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok)
+        return Results.Ok(new
         {
             ok.Value.Token,
             ok.Value.UserId,
             ok.Value.DisplayName,
             ok.Value.Email,
             ok.Value.Roles,
-        }),
-        Result<AuthCompleteResult, AuthError>.Error<AuthCompleteResult, AuthError> err =>
-            Results.BadRequest(new { Error = err.Value.Reason }),
-    };
+        });
+
+    var err = (Result<AuthCompleteResult, AuthError>.Error<AuthCompleteResult, AuthError>)result;
+    // [AUTH-LOCKOUT-429] Return 429 with Retry-After header for locked accounts
+    if (err.Value.Reason == "Account locked")
+        return new AccountLockedResult();
+    return Results.BadRequest(new { Error = err.Value.Reason });
+}
 
 static async Task<TokenService.TokenClaims?> ValidateRequestAsync(HttpContext ctx, DbConfig db, JwtConfig jwt)
 {
@@ -318,73 +362,36 @@ static async Task<TokenService.TokenClaims?> ValidateRequestAsync(HttpContext ct
         return null;
 
     using var conn = OpenConnection(db);
-    var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true)
+    var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true, jwt.Issuer, jwt.Audience)
         .ConfigureAwait(false);
     return result is TokenService.TokenValidationOk ok ? ok.Claims : null;
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-namespace Gatekeeper.Api
+// [AUTH-SESSION-WRITE] Write a session row after every successful authentication
+static async Task WriteSessionAsync(
+    IDbConnection conn,
+    AuthCompleteResult authResult,
+    string? credentialId,
+    HttpContext ctx,
+    JwtConfig jwt)
 {
-    /// <summary>Program entry point marker for WebApplicationFactory.</summary>
-    public partial class Program { }
-
-    /// <summary>Database connection configuration.</summary>
-    public sealed record DbConfig(string ConnectionString);
-
-    /// <summary>JWT signing configuration.</summary>
-    public sealed record JwtConfig(byte[] SigningKey, TimeSpan TokenLifetime);
-
-    /// <summary>Request to begin passkey registration.</summary>
-    public sealed record RegisterBeginRequest(string Email, string DisplayName);
-
-    /// <summary>Request to complete passkey registration.</summary>
-    public sealed record RegisterCompleteRequest(
-        string ChallengeId,
-        string OptionsJson,
-        AuthenticatorAttestationRawResponse AttestationResponse,
-        string? DeviceName
-    );
-
-    /// <summary>Request to complete passkey login.</summary>
-    public sealed record LoginCompleteRequest(
-        string ChallengeId,
-        string OptionsJson,
-        AuthenticatorAssertionRawResponse AssertionResponse
-    );
-
-    /// <summary>Request to exchange a Supabase JWT for a Gatekeeper token.</summary>
-    public sealed record SupabaseExchangeRequest(string SupabaseToken);
-
-    /// <summary>Request to link a Supabase identity to the current authenticated user.</summary>
-    public sealed record LinkSupabaseRequest(string SupabaseToken);
-
-    /// <summary>Bulk permission evaluation request.</summary>
-    public sealed record EvaluateRequest(List<PermissionCheck> Checks);
-
-    /// <summary>Single permission check item.</summary>
-    public sealed record PermissionCheck(string Permission, string? ResourceType, string? ResourceId);
-
-    /// <summary>Base64URL encoding utilities for WebAuthn credential IDs.</summary>
-    public static class Base64Url
+    try
     {
-        /// <summary>Encodes bytes to base64url string.</summary>
-        public static string Encode(byte[] input) =>
-            Convert.ToBase64String(input)
-                .Replace("+", "-", StringComparison.Ordinal)
-                .Replace("/", "_", StringComparison.Ordinal)
-                .TrimEnd('=');
+        var sessionId = Guid.NewGuid().ToString();
+        var now = Now();
+        var expires = DateTimeOffset.UtcNow.Add(jwt.TokenLifetime)
+            .ToString("o", CultureInfo.InvariantCulture);
+        var ip = GetClientIp(ctx);
+        var userAgent = ctx.Request.Headers.UserAgent.FirstOrDefault();
 
-        /// <summary>Decodes base64url string to bytes.</summary>
-        public static byte[] Decode(string input)
-        {
-            var padded = input
-                .Replace("-", "+", StringComparison.Ordinal)
-                .Replace("_", "/", StringComparison.Ordinal);
-            var padding = (4 - (padded.Length % 4)) % 4;
-            padded += new string('=', padding);
-            return Convert.FromBase64String(padded);
-        }
+        _ = await DbExtensions.InsertSessionAdapterAsync(
+            conn, sessionId, authResult.UserId, credentialId, now, expires, now, ip, userAgent, false
+        ).ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+        // Session write failures must never fail the caller — log and continue
+        var logger = ctx.RequestServices.GetService<ILogger<Program>>();
+        logger?.LogWarning(ex, "Failed to write session row for user {UserId}", authResult.UserId);
     }
 }

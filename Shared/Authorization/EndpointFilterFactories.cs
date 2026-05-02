@@ -51,7 +51,7 @@ public static class EndpointFilterFactories
                     return AuthHelpers.Unauthorized("Missing authorization header");
                 }
 
-                return AuthHelpers.ValidateTokenLocally(token, signingKey, logger) switch
+                return AuthHelpers.ValidateTokenLocally(token, signingKey, logger: logger) switch
                 {
                     AuthSuccess success => await InvokeWithClaims(
                             invocationContext,
@@ -95,7 +95,7 @@ public static class EndpointFilterFactories
                     return AuthHelpers.Unauthorized("Missing authorization header");
                 }
 
-                var validationResult = AuthHelpers.ValidateTokenLocally(token, signingKey, logger);
+                var validationResult = AuthHelpers.ValidateTokenLocally(token, signingKey, logger: logger);
                 if (validationResult is not AuthSuccess authSuccess)
                 {
                     return AuthHelpers.Unauthorized(((AuthFailure)validationResult).Reason);

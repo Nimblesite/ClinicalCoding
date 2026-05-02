@@ -3,9 +3,12 @@
 global using System.Net;
 global using System.Net.Http.Json;
 global using System.Text.Json;
+global using Gatekeeper.Api;
 global using Generated;
 global using Microsoft.AspNetCore.Mvc.Testing;
 global using Nimblesite.Sql.Model;
+global using Npgsql;
+global using Outcome;
 global using Xunit;
 global using GetPermissionByCodeError = Outcome.Result<
     System.Collections.Immutable.ImmutableList<Generated.GetPermissionByCode>,

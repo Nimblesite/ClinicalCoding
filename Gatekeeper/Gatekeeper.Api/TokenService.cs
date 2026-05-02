@@ -14,7 +14,10 @@ public static class TokenService
         string? Email,
         IReadOnlyList<string> Roles,
         string Jti,
-        long Exp
+        long Exp,
+        int TokenVersion,
+        string? Issuer,
+        string? Audience
     );
 
     /// <summary>Successful token validation result.</summary>
@@ -36,7 +39,10 @@ public static class TokenService
         string? email,
         IReadOnlyList<string> roles,
         byte[] signingKey,
-        TimeSpan lifetime
+        TimeSpan lifetime,
+        string? issuer = null,
+        string? audience = null,
+        int tokenVersion = 0
     )
     {
         var now = DateTimeOffset.UtcNow;
@@ -48,19 +54,33 @@ public static class TokenService
         );
         var payload = Base64UrlEncode(
             JsonSerializer.SerializeToUtf8Bytes(
-                new { sub = userId, name = displayName, email, roles, jti, iat = now.ToUnixTimeSeconds(), exp = exp.ToUnixTimeSeconds() }
+                new
+                {
+                    sub = userId,
+                    name = displayName,
+                    email,
+                    roles,
+                    jti,
+                    iat = now.ToUnixTimeSeconds(),
+                    exp = exp.ToUnixTimeSeconds(),
+                    iss = issuer,
+                    aud = audience,
+                    ver = tokenVersion,
+                }
             )
         );
         var signature = ComputeSignature(header, payload, signingKey);
         return $"{header}.{payload}.{signature}";
     }
 
-    /// <summary>Validates a JWT token, optionally checking revocation.</summary>
+    /// <summary>Validates a JWT token, optionally checking revocation and user state.</summary>
     public static async Task<object> ValidateTokenAsync(
         IDbConnection conn,
         string token,
         byte[] signingKey,
         bool checkRevocation,
+        string? expectedIssuer = null,
+        string? expectedAudience = null,
         ILogger? logger = null
     )
     {
@@ -69,6 +89,15 @@ public static class TokenService
             var parts = token.Split('.');
             if (parts.Length != 3)
                 return new TokenValidationError("Invalid token format");
+
+            // Enforce algorithm server-side — never trust the header alg claim
+            var headerBytes = Base64UrlDecode(parts[0]);
+            using var headerDoc = JsonDocument.Parse(headerBytes);
+            var alg = headerDoc.RootElement.TryGetProperty("alg", out var algEl)
+                ? algEl.GetString()
+                : null;
+            if (!string.Equals(alg, "HS256", StringComparison.Ordinal))
+                return new TokenValidationError("Unsupported signing algorithm");
 
             var expectedSignature = ComputeSignature(parts[0], parts[1], signingKey);
             if (!CryptographicOperations.FixedTimeEquals(
@@ -84,7 +113,22 @@ public static class TokenService
             if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > exp)
                 return new TokenValidationError("Token expired");
 
+            if (expectedIssuer is not null)
+            {
+                var iss = root.TryGetProperty("iss", out var issEl) ? issEl.GetString() : null;
+                if (!string.Equals(iss, expectedIssuer, StringComparison.Ordinal))
+                    return new TokenValidationError("Invalid issuer");
+            }
+
+            if (expectedAudience is not null)
+            {
+                var aud = root.TryGetProperty("aud", out var audEl) ? audEl.GetString() : null;
+                if (!string.Equals(aud, expectedAudience, StringComparison.Ordinal))
+                    return new TokenValidationError("Invalid audience");
+            }
+
             var jti = root.GetProperty("jti").GetString() ?? string.Empty;
+            var ver = root.TryGetProperty("ver", out var verEl) ? verEl.GetInt32() : 0;
 
             if (checkRevocation && await IsTokenRevokedAsync(conn, jti).ConfigureAwait(false))
                 return new TokenValidationError("Token revoked");
@@ -99,7 +143,10 @@ public static class TokenService
                 Email: root.TryGetProperty("email", out var emailEl) ? emailEl.GetString() : null,
                 Roles: roles,
                 Jti: jti,
-                Exp: exp
+                Exp: exp,
+                TokenVersion: ver,
+                Issuer: root.TryGetProperty("iss", out var issEl2) ? issEl2.GetString() : null,
+                Audience: root.TryGetProperty("aud", out var audEl2) ? audEl2.GetString() : null
             ));
         }
         catch (Exception ex)

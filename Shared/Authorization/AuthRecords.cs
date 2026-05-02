@@ -11,13 +11,19 @@ using System.Collections.Immutable;
 /// <param name="Roles">The roles assigned to the user.</param>
 /// <param name="Jti">The JWT token ID.</param>
 /// <param name="ExpiresAt">The Unix timestamp when the token expires.</param>
+/// <param name="TokenVersion">The token version for logout-all invalidation.</param>
+/// <param name="Issuer">The token issuer (iss claim).</param>
+/// <param name="Audience">The token audience (aud claim).</param>
 public sealed record AuthClaims(
     string UserId,
     string? DisplayName,
     string? Email,
     ImmutableArray<string> Roles,
     string Jti,
-    long ExpiresAt
+    long ExpiresAt,
+    int TokenVersion = 0,
+    string? Issuer = null,
+    string? Audience = null
 );
 
 /// <summary>
