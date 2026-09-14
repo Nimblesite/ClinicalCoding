@@ -126,6 +126,10 @@ public sealed class TokenServiceTests
         var (conn, dbPath) = CreateTestDb();
         try
         {
+            // Insert user so CheckUserActiveAsync can find them
+            var now = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+            await conn.Insertgk_userAsync("user-valid", "Valid User", "valid@example.com", now, null, true, 0, 0, null, null);
+
             var token = TokenService.CreateToken(
                 "user-valid",
                 "Valid User",

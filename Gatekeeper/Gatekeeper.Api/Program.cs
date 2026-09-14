@@ -96,7 +96,7 @@ auth.MapPost("/register/complete",
                 jwt)
             .ConfigureAwait(false);
         if (result is Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok)
-            await WriteSessionAsync(conn, ok.Value, null, ctx, jwt).ConfigureAwait(false);
+            await WriteSessionAsync(conn, ok.Value, ok.Value.CredentialId, ctx, jwt).ConfigureAwait(false);
         return ToResult(result);
     });
 
@@ -124,7 +124,7 @@ auth.MapPost("/login/complete",
                 jwt)
             .ConfigureAwait(false);
         if (result is Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok)
-            await WriteSessionAsync(conn, ok.Value, null, ctx, jwt).ConfigureAwait(false);
+            await WriteSessionAsync(conn, ok.Value, ok.Value.CredentialId, ctx, jwt).ConfigureAwait(false);
         return ToResult(result);
     });
 
@@ -137,7 +137,7 @@ auth.MapPost("/supabase/exchange",
         using var conn = OpenConnection(db);
         var result = await supabase.ExchangeAsync(conn, req.SupabaseToken, jwt).ConfigureAwait(false);
         if (result is Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError> ok)
-            await WriteSessionAsync(conn, ok.Value, null, ctx, jwt).ConfigureAwait(false);
+            await WriteSessionAsync(conn, ok.Value, ok.Value.CredentialId, ctx, jwt).ConfigureAwait(false);
         return ToResult(result);
     });
 
@@ -174,16 +174,6 @@ auth.MapGet("/session",
         var result = await TokenService.ValidateTokenAsync(conn, token, jwt.SigningKey, checkRevocation: true, jwt.Issuer, jwt.Audience)
             .ConfigureAwait(false);
         if (result is not TokenService.TokenValidationOk ok)
-            return Results.Unauthorized();
-
-        // [AUTH-SESSION-ACTIVE] Verify user is still active
-        var npgsql = (NpgsqlConnection)conn;
-        var userResult = await npgsql.GetUserByIdAsync(ok.Claims.UserId).ConfigureAwait(false);
-        if (userResult is not GetUserByIdOk { Value.Count: > 0 } userOk || userOk.Value[0].is_active != true)
-            return Results.Unauthorized();
-
-        // [AUTH-TOKEN-VER] Verify token version matches current user version
-        if (ok.Claims.TokenVersion != (userOk.Value[0].token_version ?? 0))
             return Results.Unauthorized();
 
         return Results.Ok(new

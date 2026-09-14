@@ -366,8 +366,21 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
             var email = $"locked-{Guid.NewGuid():N}@example.com";
             var (_, userId) = await fixture.CreateTestUserAndGetTokenWithId(email);
 
-            // Set failed_login_count = 5 and locked_until in the future
+            // Insert a real credential so the lockout check is reached (credential lookup comes first)
+            var credentialId = Base64UrlEncode(System.Text.Encoding.UTF8.GetBytes(userId));
+            var now2 = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
             using var conn = fixture.OpenConnection();
+            using var credCmd = conn.CreateCommand();
+            credCmd.CommandText =
+                "INSERT INTO gk_credential (id, user_id, public_key, last_sign_count, aaguid, credential_type, created_at, is_backup_eligible, is_backed_up) " +
+                "VALUES (@id, @uid, @pk, 0, 'aaguid', 'public-key', @now, false, false)";
+            credCmd.Parameters.AddWithValue("@id", credentialId);
+            credCmd.Parameters.AddWithValue("@uid", userId);
+            credCmd.Parameters.AddWithValue("@pk", new byte[77]);
+            credCmd.Parameters.AddWithValue("@now", now2);
+            await credCmd.ExecuteNonQueryAsync();
+
+            // Set failed_login_count = 5 and locked_until in the future
             using var cmd = conn.CreateCommand();
             var lockedUntil = DateTime.UtcNow.AddMinutes(15).ToString("o", CultureInfo.InvariantCulture);
             cmd.CommandText = "UPDATE gk_user SET failed_login_count = 5, locked_until = @lu WHERE id = @id";
@@ -388,8 +401,8 @@ public sealed class AuthenticationTests : IClassFixture<GatekeeperTestFixture>
                 OptionsJson = optionsJson,
                 AssertionResponse = new
                 {
-                    Id = Base64UrlEncode(System.Text.Encoding.UTF8.GetBytes(userId)),
-                    RawId = Base64UrlEncode(System.Text.Encoding.UTF8.GetBytes(userId)),
+                    Id = credentialId,
+                    RawId = credentialId,
                     Type = "public-key",
                     Response = new
                     {
@@ -586,8 +599,9 @@ public sealed class SessionManagementTests
 
             // Extract JTI and insert matching session row (as login endpoint would)
             var parts = token.Split('.');
-            var payloadBytes = DecodeBase64Url(parts[1]);
-            using var doc = JsonDocument.Parse(payloadBytes);
+            var b64 = parts[1].Replace("-", "+", StringComparison.Ordinal).Replace("_", "/", StringComparison.Ordinal);
+            b64 += new string('=', (4 - b64.Length % 4) % 4);
+            using var doc = JsonDocument.Parse(Convert.FromBase64String(b64));
             var jti = doc.RootElement.GetProperty("jti").GetString()!;
 
             await conn.Insertgk_sessionAsync(jti, userId, null, now, exp, now, null, null, false);
@@ -612,13 +626,6 @@ public sealed class SessionManagementTests
         {
             CleanupSessionTestDb(conn, dbName);
         }
-    }
-
-    private static byte[] DecodeBase64Url(string input)
-    {
-        var padded = input.Replace("-", "+", StringComparison.Ordinal).Replace("_", "/", StringComparison.Ordinal);
-        padded += new string('=', (4 - padded.Length % 4) % 4);
-        return Convert.FromBase64String(padded);
     }
 
     private static (NpgsqlConnection Connection, string DbName) CreateSessionTestDb()
@@ -892,6 +899,13 @@ public sealed class SupabaseAuthProviderTests
                 }
             }
         }
+
+        // Seed the "role-user" role required by ResolveUserAsync's Insertgk_user_roleAsync call
+        using var roleCmd = conn.CreateCommand();
+        roleCmd.CommandText = "INSERT INTO gk_role (id, name, is_system, created_at) VALUES ('role-user', 'role-user', true, @now)";
+        roleCmd.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+        roleCmd.ExecuteNonQuery();
+
         return (conn, dbName);
     }
 

@@ -140,7 +140,8 @@ public sealed class PasskeyAuthProvider : IChallengeAuthProvider
         // Consume challenge atomically (delete after use)
         await DeleteChallengeAsync(npgsql, request.ChallengeId).ConfigureAwait(false);
 
-        return await BuildResultAsync(npgsql, stored.user_id, jwt, now).ConfigureAwait(false);
+        var credentialId = Base64Url.Encode(credResult.Id);
+        return await BuildResultAsync(npgsql, stored.user_id, jwt, now, credentialId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -261,14 +262,15 @@ public sealed class PasskeyAuthProvider : IChallengeAuthProvider
         // Consume challenge
         await DeleteChallengeAsync(npgsql, request.ChallengeId).ConfigureAwait(false);
 
-        return await BuildResultAsync(npgsql, storedCred.user_id ?? string.Empty, jwt, now).ConfigureAwait(false);
+        return await BuildResultAsync(npgsql, storedCred.user_id ?? string.Empty, jwt, now, assertion.Id).ConfigureAwait(false);
     }
 
     private static async Task<Result<AuthCompleteResult, AuthError>> BuildResultAsync(
         NpgsqlConnection conn,
         string userId,
         JwtConfig jwt,
-        string now
+        string now,
+        string? credentialId = null
     )
     {
         var userResult = await conn.GetUserByIdAsync(userId).ConfigureAwait(false);
@@ -279,9 +281,10 @@ public sealed class PasskeyAuthProvider : IChallengeAuthProvider
             ? rOk.Value.Where(r => r.name is not null).Select(r => r.name!).ToList()
             : new List<string>();
 
-        var token = TokenService.CreateToken(userId, user?.display_name, user?.email, roles, jwt.SigningKey, jwt.TokenLifetime);
+        var tokenVersion = user?.token_version ?? 0;
+        var token = TokenService.CreateToken(userId, user?.display_name, user?.email, roles, jwt.SigningKey, jwt.TokenLifetime, jwt.Issuer, jwt.Audience, tokenVersion);
         return new Result<AuthCompleteResult, AuthError>.Ok<AuthCompleteResult, AuthError>(
-            new AuthCompleteResult(token, userId, user?.display_name, user?.email, roles)
+            new AuthCompleteResult(token, userId, user?.display_name, user?.email, roles, credentialId)
         );
     }
 

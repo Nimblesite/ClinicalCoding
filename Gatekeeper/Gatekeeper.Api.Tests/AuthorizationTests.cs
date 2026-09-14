@@ -459,7 +459,9 @@ public sealed class GatekeeperTestFixture : IDisposable
             email,
             ["user"],
             _signingKey,
-            TimeSpan.FromHours(1)
+            TimeSpan.FromHours(1),
+            issuer: "gatekeeper",
+            audience: "gatekeeper"
         );
 
         return (token, userId);
@@ -510,7 +512,9 @@ public sealed class GatekeeperTestFixture : IDisposable
             email,
             ["admin"],
             _signingKey,
-            TimeSpan.FromHours(1)
+            TimeSpan.FromHours(1),
+            issuer: "gatekeeper",
+            audience: "gatekeeper"
         );
 
         return token;

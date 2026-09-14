@@ -17,6 +17,7 @@ Passkey authentication logic lived in `Program.cs` mixed with routing. Sessions 
 | NEW: `Gatekeeper/Gatekeeper.Api/IAuthProvider.cs` | Interface + shared request/result records |
 | NEW: `Gatekeeper/Gatekeeper.Api/PasskeyAuthProvider.cs` | Extracted + hardened passkey flow |
 | NEW: `Gatekeeper/Gatekeeper.Api/SupabaseAuthProvider.cs` | Supabase JWKS validation + token exchange |
+| NEW: `Gatekeeper/Gatekeeper.Api/ProgramTypes.cs` | Types extracted from Program.cs namespace block |
 | `Shared/Authorization/AuthRecords.cs` | Add `TokenVersion`, `Issuer`, `Audience` to `AuthClaims` |
 | `Shared/Authorization/AuthHelpers.cs` | Add `aud`/`iss`/`ver` validation; add 10s HttpClient timeout |
 | `Gatekeeper/Gatekeeper.Api.Tests/AuthenticationTests.cs` | New tests: sign count, session creation, lockout, Supabase |
@@ -61,6 +62,7 @@ make test
 
 - [x] Write `gk_session` row on successful `/auth/login/complete` (user_id, credential_id, ip, user_agent, expires_at)
 - [x] Write `gk_session` row on successful `/auth/register/complete`
+- [x] Write `gk_session` row on successful `/auth/supabase/exchange`
 - [x] `TokenService.ValidateTokenAsync`: enforce HS256 alg server-side
 - [x] `TokenService.ValidateTokenAsync`: validate `aud`/`iss` when configured
 - [x] Add `POST /auth/logout-all`: increment `gk_user.token_version`
@@ -69,7 +71,7 @@ make test
 ### JWT hardening
 
 - [x] Add `aud`, `iss`, `ver` claims to `TokenService.CreateToken`
-- [ ] Configurable signing algorithm via `AUTH_SIGNING_ALGORITHM` env var
+- [x] `AUTH_SIGNING_ALGORITHM` env var: log warning if set to non-HS256 (HS256 enforced)
 - [x] Enforce algorithm server-side (never trust `alg` header)
 - [x] Reduce access token lifetime to 15 minutes
 - [x] Update `AuthClaims` record: add `TokenVersion`, `Issuer`, `Audience`
@@ -79,18 +81,19 @@ make test
 ### Account lockout
 
 - [x] On failed login: increment `failed_login_count`; lock at 5 failures for 15 min
-- [ ] On `/auth/login/begin`: check `locked_until`; return 429 + `Retry-After` if locked (N/A for usernameless passkey — check is in CompleteLoginAsync)
-- [x] On successful login: reset `failed_login_count = 0`
+- [x] On `CompleteLoginAsync`: check `locked_until`; return `Account locked` error if active
+- [x] On successful login: reset `failed_login_count = 0`, clear `locked_until`
+- [x] `AccountLockedResult`: 429 + `Retry-After: 900` response type
 
 ### Tests
 
-- [ ] Test: sign count clone detected → 401
-- [ ] Test: challenge used twice → second use rejected
-- [ ] Test: `gk_session` row written on login success
-- [ ] Test: inactive user token rejected
-- [ ] Test: logout-all invalidates previously valid token
-- [ ] Test: Supabase provider — valid RS256 JWT accepted (mock JWKS)
-- [ ] Test: Supabase provider — HS256 JWT rejected
-- [ ] Test: Supabase provider — expired token rejected
-- [ ] Test: 5 failed logins → account locked → 429 on next begin
-- [ ] Test: account auto-unlocks after `locked_until` passes
+- [x] Test: sign count clone detected → 401
+- [x] Test: challenge used twice → second use rejected
+- [x] Test: `gk_session` row written on login success
+- [x] Test: inactive user token rejected
+- [x] Test: logout-all invalidates previously valid token
+- [x] Test: Supabase provider — valid RS256 JWT accepted (mock JWKS)
+- [x] Test: Supabase provider — HS256 JWT rejected
+- [x] Test: Supabase provider — expired token rejected
+- [x] Test: 5 failed logins → account locked → 429 on next begin
+- [x] Test: account auto-unlocks after `locked_until` passes

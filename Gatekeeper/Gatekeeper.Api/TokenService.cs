@@ -33,6 +33,10 @@ public static class TokenService
             : null;
 
     /// <summary>Creates a JWT for the given user.</summary>
+    /// <remarks>
+    /// Only HS256 is supported. If AUTH_SIGNING_ALGORITHM env var is set to anything else
+    /// the call still uses HS256 and logs a warning via the returned header claim.
+    /// </remarks>
     public static string CreateToken(
         string userId,
         string? displayName,
@@ -42,12 +46,21 @@ public static class TokenService
         TimeSpan lifetime,
         string? issuer = null,
         string? audience = null,
-        int tokenVersion = 0
+        int tokenVersion = 0,
+        ILogger? logger = null
     )
     {
         var now = DateTimeOffset.UtcNow;
         var exp = now.Add(lifetime);
         var jti = Guid.NewGuid().ToString();
+
+        var requestedAlg = Environment.GetEnvironmentVariable("AUTH_SIGNING_ALGORITHM");
+        if (!string.IsNullOrEmpty(requestedAlg) &&
+            !string.Equals(requestedAlg, "HS256", StringComparison.OrdinalIgnoreCase))
+        {
+            logger?.LogWarning(
+                "AUTH_SIGNING_ALGORITHM={Alg} is not supported; using HS256", requestedAlg);
+        }
 
         var header = Base64UrlEncode(
             JsonSerializer.SerializeToUtf8Bytes(new { alg = "HS256", typ = "JWT" })
@@ -130,6 +143,12 @@ public static class TokenService
             var jti = root.GetProperty("jti").GetString() ?? string.Empty;
             var ver = root.TryGetProperty("ver", out var verEl) ? verEl.GetInt32() : 0;
 
+            // [AUTH-USER-ACTIVE] Verify user is active and token version matches
+            var userId = root.GetProperty("sub").GetString() ?? string.Empty;
+            var userCheck = await CheckUserActiveAsync(conn, userId, ver).ConfigureAwait(false);
+            if (userCheck is not null)
+                return new TokenValidationError(userCheck);
+
             if (checkRevocation && await IsTokenRevokedAsync(conn, jti).ConfigureAwait(false))
                 return new TokenValidationError("Token revoked");
 
@@ -168,6 +187,20 @@ public static class TokenService
             GetSessionRevokedOk ok => ok.Value.FirstOrDefault()?.is_revoked == true,
             GetSessionRevokedError => false,
         };
+    }
+
+    // Returns null on success, or an error reason string.
+    private static async Task<string?> CheckUserActiveAsync(IDbConnection conn, string userId, int ver)
+    {
+        var result = await DbExtensions.GetUserByIdAdapterAsync(conn, userId).ConfigureAwait(false);
+        if (result is not GetUserByIdOk ok || ok.Value.Count == 0)
+            return "User not found";
+        var user = ok.Value[0];
+        if (user.is_active != true)
+            return "User inactive";
+        if (ver != (user.token_version ?? 0))
+            return "Token version mismatch";
+        return null;
     }
 
     internal static string Base64UrlEncode(byte[] input) =>
